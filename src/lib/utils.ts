@@ -14,10 +14,12 @@ import { type ClassValue, clsx } from "clsx";
 import { randomUUID } from "crypto";
 import { twMerge } from "tailwind-merge";
 
+// Tailwind 样式合并核心工具
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// 项目路由导航核心
 export async function generateBreadcrumbs(pathname: string) {
   const paths = pathname.split("/").filter(Boolean);
   const breadcrumbs = [];
@@ -43,26 +45,36 @@ export async function generateBreadcrumbs(pathname: string) {
   return breadcrumbs;
 }
 
+/**
+ * 精简移除的无关函数
+ * 
+
+// 首字母大写
 export function capitalizeFirstLetter(string: string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
+// 蛇形命名转换
 export function snakeCase(string: string) {
   return string.toLowerCase().replace(/ /g, "_");
 }
 
+// 短横线命名转换
 export function kebabCase(string: string) {
   return string.toLowerCase().replace(/ /g, "-");
 }
 
+// 句子格式转换
 export const sentenceCase = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
+// 全小写转换
 export const lowerCase = (str: string): string => {
   return str.charAt(0).toLowerCase() + str.slice(1).toLowerCase();
 };
 
+// 标题格式转换
 export const titleCase = (str: string): string => {
   return str
     .toLowerCase()
@@ -71,6 +83,7 @@ export const titleCase = (str: string): string => {
     .join(" ");
 };
 
+// URL 有效性检查 
 export const isValidUrl = (string: string) => {
   try {
     new URL(string);
@@ -80,6 +93,7 @@ export const isValidUrl = (string: string) => {
   }
 };
 
+// 数字简写格式化
 export function formatNumberShort(num: number | string): string {
   // Convert string numbers with commas to number type
   const normalizedNum =
@@ -103,23 +117,30 @@ export function formatNumberShort(num: number | string): string {
   return normalizedNum.toString();
 }
 
+// 绝对 URL 生成
 export const absoluteUrl = (path: string) => {
   return new URL(path, process.env.NEXT_PUBLIC_APP_URL).toString();
 };
 
+*/
+
+// 随机卡片背景色获取
 export const getCardBgColor = (theme: string | undefined) => {
   const palette = theme === "dark" ? darkCardColors : lightCardColors;
   return palette[Math.floor(Math.random() * palette.length)];
 };
 
+// 课堂代码生成
 export const generateClassroomCode = () => {
   return randomUUID().slice(0, 6);
 };
 
+// 复制文本到剪贴板
 export const copyToClipboard = (text: string) => {
   navigator.clipboard.writeText(text);
 };
 
+// 状态映射函数
 export function mapStatus(status: string): "passed" | "failed" | "running" {
   switch (status) {
     case "PASSED":
@@ -131,6 +152,7 @@ export function mapStatus(status: string): "passed" | "failed" | "running" {
   }
 }
 
+// 导出评分表为 CSV 文件
 export function exportGradingTableToCSV(
   filteredData: GradingTableStudent[],
   data: GradingTableData,
@@ -170,6 +192,7 @@ export function exportGradingTableToCSV(
   window.URL.revokeObjectURL(url);
 }
 
+// 随机教育图标获取
 export const getRandomEducationIcon = (): string => {
   const educationIcons = [
     "CalculatorIcon",
@@ -187,6 +210,7 @@ export const getRandomEducationIcon = (): string => {
   return educationIcons[randomIndex];
 };
 
+// 学生评分数据转换
 export function transformStudentDataForGrading(
   students: StudentProgress[],
   assignmentData: GradingTableHeaderData,
