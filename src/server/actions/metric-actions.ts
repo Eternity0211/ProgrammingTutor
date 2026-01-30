@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ROUTES } from "@/config/route";
 
 export const getUserMetrics = async () => {
   const session = await auth();
@@ -55,7 +56,7 @@ export const createMetric = async (data: {
       },
     });
 
-    revalidatePath("/classes");
+    revalidatePath(ROUTES.CLASSES);
     return { status: "success", metric };
   } catch (error) {
     console.error("Error creating metric:", error);

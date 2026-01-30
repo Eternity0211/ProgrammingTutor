@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { getClassIdFromCode } from "./utility-actions";
 import { SubmissionStatus } from "@prisma/client";
 import { GradingTableHeaderResponse } from "@/lib/types/assignment-tyes";
+import { ROUTES } from "@/config/route";
 
 export const createAssignment = async (formData: AssignmentSchema) => {
   const session = await auth();
@@ -110,7 +111,7 @@ export const createAssignment = async (formData: AssignmentSchema) => {
       }),
     });
     console.log("success", assignment);
-    revalidatePath(`/classes/${classCode}`); // Refresh cache for updated data
+    revalidatePath(ROUTES.CLASS_DETAILS(classCode)); // Refresh cache for updated data
     return { status: "success", assignment };
   } catch (error) {
     throw new Error("Failed to create assignment" + error);

@@ -10,6 +10,7 @@ import {
 import { evaluateCodeWithLLM } from "@/lib/services/code-evaluation-llm-service";
 import { updateSubmissionStatus } from "./submission-actions";
 import { revalidatePath } from "next/cache";
+import { ROUTES } from "@/config/route";
 
 //code submission grading - Test case evaluation
 export async function evaluateSubmissionTestCases(codeSubmissionId: string) {
@@ -349,7 +350,7 @@ export const updateStudentScore = async (
       // Update submission final score
       await updateSubmissionStatus(codeSubmission.submissionId);
 
-      revalidatePath(`/assignments/${assignment.id}/grading`);
+      revalidatePath(ROUTES.ASSIGNMENT_GRADING(assignment.id));
     }
 
     return { success: true };

@@ -6,6 +6,7 @@ import { classCreation, UserClassroom } from "@/lib/types/class-types";
 import { generateClassroomCode } from "@/lib/utils";
 import { isCodeUnique } from "./utility-actions";
 import { getUserRole } from "./user-actions";
+import { ROUTES } from "@/config/route";
 
 export const createClass = async (data: classCreation) => {
   const session = await auth();
@@ -30,7 +31,7 @@ export const createClass = async (data: classCreation) => {
       code = generateClassroomCode();
     } while (!(await isCodeUnique(code)));
 
-    const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${code}`;
+    const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}${ROUTES.INVITE(code)}`;
     const newclass = await prisma.classroom.create({
       data: {
         facultyId: faculty.id,
