@@ -74,8 +74,11 @@ export const lowerCase = (str: string): string => {
   return str.charAt(0).toLowerCase() + str.slice(1).toLowerCase();
 };
 
+<<<<<<< HEAD
 */
 
+=======
+>>>>>>> 07670141ac2679adaa4185b516b68d7560dd48da
 // 标题格式转换
 export const titleCase = (str: string): string => {
   return str
@@ -124,6 +127,11 @@ export const absoluteUrl = (path: string) => {
   return new URL(path, process.env.NEXT_PUBLIC_APP_URL).toString();
 };
 
+<<<<<<< HEAD
+=======
+*/
+
+>>>>>>> 07670141ac2679adaa4185b516b68d7560dd48da
 // 随机卡片背景色获取
 export const getCardBgColor = (theme: string | undefined) => {
   const palette = theme === "dark" ? darkCardColors : lightCardColors;
