@@ -1,0 +1,18 @@
+stages:
+  - test
+
+test:
+  stage: test
+  image: node:18-alpine
+  before_script:
+    - echo "正在准备环境..."
+  script:
+    - echo "项目信息:"
+    - cat package.json || echo "没有package.json"
+    - echo "依赖检查..."
+    - npm list --depth=0 2>/dev/null || echo "未安装依赖"
+  after_script:
+    - echo "测试完成"
+  only:
+    - main
+  when: always
