@@ -18,37 +18,37 @@ export const featureCards = [
     icon: Code,
     title: "Monaco Code Editor",
     description:
-      "VSCode-powered editor with syntax highlighting, IntelliSense auto-completion, and support for 11 programming languages.",
+      "基于 VSCode 核心引擎，深度支持 C++ 11/17 标准，提供语法高亮、IntelliSense 智能补全及实时错误诊断。",
   },
   {
     icon: CheckCircle,
     title: "Dual-Mode Grading",
     description:
-      "Automated test case evaluation (60%) combined with AI-powered code quality assessment (40%) for comprehensive grading.",
+      "自动化测试用例评测（60%）与 AI 代码质量深度评估（40%）有机结合，构建全方位的学术评价体系。",
   },
   {
     icon: Brain,
     title: "AI-Powered Features",
     description:
-      "Generate test cases automatically and evaluate code quality using Groq's Llama 3.3 70B model.",
+      "结合深度学习的语义理解与符号逻辑的严谨性，为学生代码提供精准的因果反馈与逻辑缺陷分析。",
   },
   {
     icon: Shield,
     title: "Academic Integrity",
     description:
-      "Copy-paste prevention, fullscreen enforcement, and submission tracking to maintain assessment security.",
+      "集成剪贴板管控、全屏强制模式及多维度行为追踪，有效维护在线测评的公平性与严肃性。",
   },
   {
     icon: Zap,
     title: "Real-Time Execution",
     description:
-      "Sandboxed code execution via Judge0 with instant feedback on compilation, runtime, and memory usage.",
+      "基于 Judge0 的安全沙箱环境，实现毫秒级代码编译运行，并提供 CPU 占用与内存消耗的精确度量。",
   },
   {
     icon: BookOpen,
     title: "Comprehensive Analytics",
     description:
-      "Track submission history, score distributions, completion rates, and performance metrics with export capabilities.",
+      "追踪提交历史、分数分布及知识点掌握情况，支持一键导出结构化分析数据，辅助精准教学决策。",
   },
 ];
 
