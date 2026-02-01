@@ -1,0 +1,1635 @@
+{
+  "definitions": {
+    "CPP_ARRAY_OOB_LITERAL": {
+      "display_name": "数组下标越界（字面量）",
+      "pedagogical_label": "边界安全检查",
+      "knowledge_concept": "Array_Indexing_Fundamentals",
+      "severity": "Critical",
+      "description": "检测到直接使用超出声明范围的常数索引访问数组。"
+    },
+    "CPP_DOUBLE_FREE": {
+      "display_name": "重复释放内存",
+      "pedagogical_label": "动态内存管理",
+      "knowledge_concept": "Memory_Allocation_Fundamentals",
+      "severity": "Critical",
+      "description": "同一内存块通过delete/delete[]或free被多次释放，导致内存损坏。"
+    },
+    "CPP_STACK_OVERFLOW": {
+      "display_name": "栈溢出",
+      "pedagogical_label": "内存栈空间管理",
+      "knowledge_concept": "Stack_Memory_Basics",
+      "severity": "Critical",
+      "description": "递归深度过大或局部变量占用栈空间超出系统限制，导致程序崩溃。"
+    },
+    "CPP_BUFFER_OVERFLOW_STATIC": {
+      "display_name": "静态缓冲区溢出",
+      "pedagogical_label": "缓冲区安全",
+      "knowledge_concept": "Buffer_Management",
+      "severity": "Critical",
+      "description": "向固定大小的静态数组写入超出容量的数据，覆盖相邻内存。"
+    },
+    "CPP_ACCESS_VIOLATION": {
+      "display_name": "内存访问违规",
+      "pedagogical_label": "内存权限管理",
+      "knowledge_concept": "Memory_Protection",
+      "severity": "Critical",
+      "description": "尝试访问无权限的内存区域（如内核空间、已释放内存）。"
+    },
+    "CPP_DIVISION_BY_ZERO_LITERAL": {
+      "display_name": "字面量除零",
+      "pedagogical_label": "算术运算安全",
+      "knowledge_concept": "Arithmetic_Fundamentals",
+      "severity": "Critical",
+      "description": "除法或取模运算中除数为0字面量，运行时触发算术异常。"
+    },
+    "CPP_INVALID_CAST_ACCESS": {
+      "display_name": "非法类型转换后访问",
+      "pedagogical_label": "类型转换安全",
+      "knowledge_concept": "Type_Casting_Safety",
+      "severity": "Critical",
+      "description": "通过reinterpret_cast等进行不兼容类型转换后，解引用指针访问成员。"
+    },
+    "CPP_VECTOR_OUT_OF_BOUNDS_AT": {
+      "display_name": "vector at()越界访问",
+      "pedagogical_label": "容器边界安全",
+      "knowledge_concept": "STL_Container_Basics",
+      "severity": "Critical",
+      "description": "使用vector的at()方法访问超出size()的索引，触发out_of_range异常。"
+    },
+    "CPP_MEMCPY_OVERLAP_DEST": {
+      "display_name": "memcpy目标缓冲区重叠",
+      "pedagogical_label": "内存拷贝安全",
+      "knowledge_concept": "Memory_Copy_Functions",
+      "severity": "Critical",
+      "description": "memcpy拷贝时目标缓冲区与源缓冲区重叠，导致数据损坏。"
+    },
+    "CPP_UNALIGNED_MEMORY_ACCESS": {
+      "display_name": "未对齐内存访问",
+      "pedagogical_label": "内存对齐规则",
+      "knowledge_concept": "Memory_Alignment_Fundamentals",
+      "severity": "Critical",
+      "description": "在要求内存对齐的平台上，访问未按数据类型对齐的内存地址。"
+    },
+    "CPP_NULL_REFERENCE_BIND": {
+      "display_name": "绑定空指针到引用",
+      "pedagogical_label": "引用安全规则",
+      "knowledge_concept": "Reference_Basics",
+      "severity": "Critical",
+      "description": "将nullptr或未初始化指针绑定到引用，导致后续访问非法内存。"
+    },
+    "CPP_FILE_DESCRIPTOR_INVALID": {
+      "display_name": "使用无效文件描述符",
+      "pedagogical_label": "文件IO安全",
+      "knowledge_concept": "File_Handling_Fundamentals",
+      "severity": "Critical",
+      "description": "使用已关闭、未打开或非法的文件描述符进行读写操作。"
+    },
+    "CPP_MUTEX_DOUBLE_LOCK": {
+      "display_name": "互斥锁重复锁定",
+      "pedagogical_label": "并发同步安全",
+      "knowledge_concept": "Thread_Synchronization",
+      "severity": "Critical",
+      "description": "同一线程对未解锁的互斥锁再次调用lock()，导致死锁。"
+    },
+    "CPP_THREAD_JOIN_DETACHED": {
+      "display_name": "join已detach的线程",
+      "pedagogical_label": "线程生命周期管理",
+      "knowledge_concept": "Thread_Management",
+      "severity": "Critical",
+      "description": "尝试join已调用detach()的线程，导致程序行为未定义。"
+    },
+    "CPP_VIRTUAL_CALL_FROM_CONSTRUCTOR": {
+      "display_name": "构造函数中调用虚函数",
+      "pedagogical_label": "面向对象继承机制",
+      "knowledge_concept": "Virtual_Function_Basics",
+      "severity": "Critical",
+      "description": "构造函数执行期间调用虚函数，此时派生类未完全初始化，行为未定义。"
+    },
+    "CPP_CORRUPTED_VTABLE": {
+      "display_name": "虚函数表损坏",
+      "pedagogical_label": "面向对象内存布局",
+      "knowledge_concept": "VTable_Fundamentals",
+      "severity": "Critical",
+      "description": "意外修改包含虚函数的类实例内存，导致虚函数表指针失效。"
+    },
+    "CPP_ALLOC_ZERO_SIZE_ARRAY": {
+      "display_name": "分配零大小数组",
+      "pedagogical_label": "动态内存分配规则",
+      "knowledge_concept": "Dynamic_Array_Basics",
+      "severity": "Critical",
+      "description": "使用new[]分配零大小数组，返回指针可能非空但访问非法。"
+    },
+    "CPP_PTR_ARITHMETIC_OUT_OF_BOUNDS": {
+      "display_name": "指针算术越界",
+      "pedagogical_label": "指针运算安全",
+      "knowledge_concept": "Pointer_Arithmetic",
+      "severity": "Critical",
+      "description": "通过指针加减运算使指针超出数组或分配内存范围，后续解引用非法。"
+    },
+    "CPP_STATIC_ASSERT_FAILURE": {
+      "display_name": "静态断言失败",
+      "pedagogical_label": "编译期校验机制",
+      "knowledge_concept": "Static_Assert_Fundamentals",
+      "severity": "Critical",
+      "description": "static_assert表达式结果为false，编译直接失败。"
+    },
+    "CPP_EXCEPTION_NOT_CAUGHT": {
+      "display_name": "未捕获的异常",
+      "pedagogical_label": "异常处理机制",
+      "knowledge_concept": "Exception_Handling_Basics",
+      "severity": "Critical",
+      "description": "抛出的异常未被任何try-catch块捕获，导致程序终止。"
+    },
+    "CPP_BAD_ALLOC_UNHANDLED": {
+      "display_name": "未处理的内存分配失败",
+      "pedagogical_label": "动态内存管理",
+      "knowledge_concept": "Memory_Allocation_Error_Handling",
+      "severity": "Critical",
+      "description": "new分配内存失败抛出bad_alloc异常，未捕获导致程序崩溃。"
+    },
+    "CPP_INVALID_ITERATOR_DEREF": {
+      "display_name": "无效迭代器解引用",
+      "pedagogical_label": "STL迭代器安全",
+      "knowledge_concept": "Iterator_Basics",
+      "severity": "Critical",
+      "description": "使用已失效的迭代器（如容器扩容后、元素删除后）进行解引用。"
+    },
+    "CPP_RANGE_BASED_FOR_INVALID": {
+      "display_name": "范围for循环遍历无效容器",
+      "pedagogical_label": "STL容器遍历",
+      "knowledge_concept": "Range_Based_For_Fundamentals",
+      "severity": "Critical",
+      "description": "对未初始化、已释放或无效的STL容器使用范围for循环。"
+    },
+    "CPP_ATOMIC_DOUBLE_FREE": {
+      "display_name": "原子变量重复释放",
+      "pedagogical_label": "并发内存管理",
+      "knowledge_concept": "Atomic_Variable_Management",
+      "severity": "Critical",
+      "description": "对std::atomic对象重复调用delete，导致内存损坏。"
+    },
+    "CPP_SEMAPHORE_INVALID_OP": {
+      "display_name": "信号量无效操作",
+      "pedagogical_label": "并发同步机制",
+      "knowledge_concept": "Semaphore_Fundamentals",
+      "severity": "Critical",
+      "description": "对未初始化或已销毁的信号量执行wait/post操作。"
+    },
+    "CPP_SHARED_PTR_CYCLIC_REF": {
+      "display_name": "shared_ptr循环引用导致内存泄漏",
+      "pedagogical_label": "智能指针管理",
+      "knowledge_concept": "Smart_Pointer_Basics",
+      "severity": "Critical",
+      "description": "多个shared_ptr相互引用，导致引用计数无法归零，对象无法析构。"
+    },
+    "CPP_WEAK_PTR_EXPIRED_DEREF": {
+      "display_name": "解引用已过期的weak_ptr",
+      "pedagogical_label": "智能指针安全",
+      "knowledge_concept": "Weak_Pointer_Fundamentals",
+      "severity": "Critical",
+      "description": "weak_ptr指向的对象已被销毁，未通过lock()检查直接解引用。"
+    },
+    "CPP_UNIQUE_PTR_MOVE_AFTER_USE": {
+      "display_name": "unique_ptr移动后继续使用",
+      "pedagogical_label": "智能指针所有权",
+      "knowledge_concept": "Unique_Pointer_Basics",
+      "severity": "Critical",
+      "description": "unique_ptr被std::move后，继续通过原指针访问对象。"
+    },
+    "CPP_TYPE_TRAITS_INVALID": {
+      "display_name": "类型萃取非法使用",
+      "pedagogical_label": "模板元编程",
+      "knowledge_concept": "Type_Traits_Fundamentals",
+      "severity": "Critical",
+      "description": "对不满足条件的类型使用std::enable_if等类型萃取，导致编译失败。"
+    },
+    "CPP_CONSTEXPR_EVALUATION_FAILURE": {
+      "display_name": "常量表达式求值失败",
+      "pedagogical_label": "编译期计算",
+      "knowledge_concept": "Constexpr_Fundamentals",
+      "severity": "Critical",
+      "description": "constexpr函数或变量在编译期求值时触发非法操作（如除零）。"
+    },
+    "CPP_MODULE_IMPORT_CYCLE": {
+      "display_name": "模块导入循环",
+      "pedagogical_label": "C++20模块机制",
+      "knowledge_concept": "Module_Fundamentals",
+      "severity": "Critical",
+      "description": "多个C++20模块相互导入，导致编译时循环依赖错误。"
+    },
+    "CPP_CONCEPT_VIOLATION": {
+      "display_name": "概念约束违反",
+      "pedagogical_label": "模板约束机制",
+      "knowledge_concept": "Concepts_Fundamentals",
+      "severity": "Critical",
+      "description": "模板实例化时类型不满足concept定义的约束条件，编译失败。"
+    },
+    "CPP_BIT_FIELD_OUT_OF_RANGE": {
+      "display_name": "位域访问越界",
+      "pedagogical_label": "位操作安全",
+      "knowledge_concept": "Bit_Field_Basics",
+      "severity": "Critical",
+      "description": "尝试访问超出位域定义范围的位，导致内存访问异常。"
+    },
+    "CPP_UNION_TYPE_MISMATCH_ACCESS": {
+      "display_name": "联合体类型不匹配访问",
+      "pedagogical_label": "联合体使用规则",
+      "knowledge_concept": "Union_Fundamentals",
+      "severity": "Critical",
+      "description": "联合体存储某一类型数据后，以不兼容类型读取，导致数据损坏。"
+    },
+    "CPP_FUNCTION_POINTER_INVALID_CALL": {
+      "display_name": "调用无效函数指针",
+      "pedagogical_label": "函数指针安全",
+      "knowledge_concept": "Function_Pointer_Basics",
+      "severity": "Critical",
+      "description": "函数指针未指向有效函数（如未初始化、已释放）时调用。"
+    },
+    "CPP_LAMBDA_CAPTURE_INVALID": {
+      "display_name": "Lambda捕获无效变量",
+      "pedagogical_label": "Lambda表达式机制",
+      "knowledge_concept": "Lambda_Fundamentals",
+      "severity": "Critical",
+      "description": "Lambda捕获已销毁的局部变量或非法内存地址，后续调用异常。"
+    },
+    "CPP_COROUTINE_INVALID_RESUME": {
+      "display_name": "协程无效恢复",
+      "pedagogical_label": "C++20协程机制",
+      "knowledge_concept": "Coroutine_Fundamentals",
+      "severity": "Critical",
+      "description": "对已完成或未初始化的协程调用resume()，导致程序崩溃。"
+    },
+    "CPP_RTTI_INVALID_CAST": {
+      "display_name": "RTTI无效类型转换",
+      "pedagogical_label": "运行时类型识别",
+      "knowledge_concept": "RTTI_Fundamentals",
+      "severity": "Critical",
+      "description": "dynamic_cast转换不兼容类型且目标为指针时返回nullptr，未检查直接解引用。"
+    },
+    "CPP_STATIC_CAST_DOWNCAST_INVALID": {
+      "display_name": "静态向下转型无效",
+      "pedagogical_label": "继承类型转换",
+      "knowledge_concept": "Static_Cast_Fundamentals",
+      "severity": "Critical",
+      "description": "static_cast将基类指针向下转型为无关派生类指针，解引用非法。"
+    },
+    "CPP_CONST_CAST_MODIFY_CONST": {
+      "display_name": "const_cast修改const对象",
+      "pedagogical_label": "const修饰符规则",
+      "knowledge_concept": "Const_Cast_Fundamentals",
+      "severity": "Critical",
+      "description": "通过const_cast移除const限定后修改对象，行为未定义。"
+    },
+    "CPP_REINTERPRET_CAST_ACCESS": {
+      "display_name": "reinterpret_cast非法访问",
+      "pedagogical_label": "底层类型转换",
+      "knowledge_concept": "Reinterpret_Cast_Fundamentals",
+      "severity": "Critical",
+      "description": "reinterpret_cast转换后指针指向不兼容类型，解引用导致内存损坏。"
+    },
+    "CPP_VARIANT_GET_INVALID_INDEX": {
+      "display_name": "variant访问无效索引",
+      "pedagogical_label": "变体类型使用",
+      "knowledge_concept": "Variant_Fundamentals",
+      "severity": "Critical",
+      "description": "使用std::get访问variant中不存在的索引，抛出bad_variant_access异常。"
+    },
+    "CPP_OPTIONAL_VALUE_OR_THROW": {
+      "display_name": "optional无值时调用value()",
+      "pedagogical_label": "可选值类型",
+      "knowledge_concept": "Optional_Fundamentals",
+      "severity": "Critical",
+      "description": "std::optional为空时调用value()，抛出bad_optional_access异常。"
+    },
+    "CPP_ANY_CAST_INVALID_TYPE": {
+      "display_name": "any_cast无效类型转换",
+      "pedagogical_label": "任意类型存储",
+      "knowledge_concept": "Any_Fundamentals",
+      "severity": "Critical",
+      "description": "std::any_cast转换为与存储类型不兼容的类型，抛出bad_any_cast异常。"
+    },
+    "CPP_STRING_VIEW_DANGLING": {
+      "display_name": "悬垂string_view访问",
+      "pedagogical_label": "字符串视图安全",
+      "knowledge_concept": "String_View_Fundamentals",
+      "severity": "Critical",
+      "description": "string_view指向的字符串已销毁，继续访问其内容。"
+    },
+    "CPP_SPAN_OUT_OF_BOUNDS": {
+      "display_name": "span越界访问",
+      "pedagogical_label": "跨度视图安全",
+      "knowledge_concept": "Span_Fundamentals",
+      "severity": "Critical",
+      "description": "std::span访问超出其指定范围的元素，导致内存访问违规。"
+    },
+    "CPP_FILE_WRITE_TO_READ_ONLY": {
+      "display_name": "向只读文件写入",
+      "pedagogical_label": "文件权限管理",
+      "knowledge_concept": "File_Permissions",
+      "severity": "Critical",
+      "description": "以只读模式打开文件后尝试执行写入操作，触发IO异常。"
+    },
+    "CPP_SOCKET_INVALID_OP": {
+      "display_name": "套接字无效操作",
+      "pedagogical_label": "网络编程安全",
+      "knowledge_concept": "Socket_Fundamentals",
+      "severity": "Critical",
+      "description": "对未初始化、已关闭或错误状态的套接字执行读写操作。"
+    },
+    "CPP_REGEX_INVALID_PATTERN": {
+      "display_name": "正则表达式无效模式",
+      "pedagogical_label": "正则表达式使用",
+      "knowledge_concept": "Regex_Fundamentals",
+      "severity": "Critical",
+      "description": "正则表达式模式语法错误，编译时抛出regex_error异常。"
+    },
+    "CPP_TIME_INVALID_CLOCK": {
+      "display_name": "无效时钟类型使用",
+      "pedagogical_label": "时间库使用",
+      "knowledge_concept": "Clock_Fundamentals",
+      "severity": "Critical",
+      "description": "使用已被销毁或未初始化的时钟对象获取时间，行为未定义。"
+    },
+    "CPP_RANDOM_INVALID_ENGINE": {
+      "display_name": "随机数引擎无效使用",
+      "pedagogical_label": "随机数生成",
+      "knowledge_concept": "Random_Fundamentals",
+      "severity": "Critical",
+      "description": "对未初始化或已销毁的随机数引擎调用生成函数。"
+    },
+    "CPP_MATH_DOMAIN_ERROR": {
+      "display_name": "数学域错误",
+      "pedagogical_label": "数学函数使用",
+      "knowledge_concept": "Math_Function_Basics",
+      "severity": "Critical",
+      "description": "数学函数参数超出定义域（如sqrt(-1)），触发domain_error异常。"
+    },
+    "CPP_MATH_OVERFLOW_ERROR": {
+      "display_name": "数学溢出错误",
+      "pedagogical_label": "数值范围管理",
+      "knowledge_concept": "Numeric_Limits",
+      "severity": "Critical",
+      "description": "数学运算结果超出数据类型表示范围，触发overflow_error异常。"
+    },
+    "CPP_MATH_UNDERFLOW_ERROR": {
+      "display_name": "数学下溢错误",
+      "pedagogical_label": "数值精度管理",
+      "knowledge_concept": "Floating_Point_Basics",
+      "severity": "Critical",
+      "description": "浮点运算结果接近零且超出精度范围，触发underflow_error异常。"
+    },
+    "CPP_LOCALE_INVALID": {
+      "display_name": "无效区域设置",
+      "pedagogical_label": "本地化支持",
+      "knowledge_concept": "Locale_Fundamentals",
+      "severity": "Critical",
+      "description": "使用不存在或无效的区域设置（locale），导致程序异常。"
+    },
+    "CPP_CODECVT_INVALID_CONVERSION": {
+      "display_name": "字符编码转换无效",
+      "pedagogical_label": "字符编码处理",
+      "knowledge_concept": "Code_Conversion_Fundamentals",
+      "severity": "Critical",
+      "description": "字符编码转换过程中遇到无法转换的字符，未处理导致程序崩溃。"
+    },
+    "CPP_ATOMIC_INVALID_ORDER": {
+      "display_name": "原子操作内存顺序无效",
+      "pedagogical_label": "并发内存模型",
+      "knowledge_concept": "Atomic_Memory_Order",
+      "severity": "Critical",
+      "description": "原子操作指定的内存顺序不合法或不支持，导致程序行为未定义。"
+    },
+    "CPP_FUTURE_INVALID_GET": {
+      "display_name": "future无效get()调用",
+      "pedagogical_label": "异步编程模型",
+      "knowledge_concept": "Future_Fundamentals",
+      "severity": "Critical",
+      "description": "对已调用get()或无效的std::future再次调用get()，行为未定义。"
+    },
+    "CPP_PROMISE_SET_VALUE_TWICE": {
+      "display_name": "promise重复设置值",
+      "pedagogical_label": "异步数据传递",
+      "knowledge_concept": "Promise_Fundamentals",
+      "severity": "Critical",
+      "description": "对同一std::promise多次调用set_value/set_exception，行为未定义。"
+    },
+    "CPP_PACKAGED_TASK_INVALID_INVOKE": {
+      "display_name": "packaged_task无效调用",
+      "pedagogical_label": "任务封装机制",
+      "knowledge_concept": "Packaged_Task_Fundamentals",
+      "severity": "Critical",
+      "description": "对已移动或无效的std::packaged_task调用operator()，行为未定义。"
+    },
+    "CPP_THREAD_LOCAL_INIT_FAILURE": {
+      "display_name": "线程局部变量初始化失败",
+      "pedagogical_label": "线程局部存储",
+      "knowledge_concept": "Thread_Local_Fundamentals",
+      "severity": "Critical",
+      "description": "thread_local变量初始化过程中抛出未捕获异常，导致线程终止。"
+    },
+    "CPP_DYNAMIC_INIT_ORDER_FIASCO": {
+      "display_name": "动态初始化顺序灾难",
+      "pedagogical_label": "全局变量初始化",
+      "knowledge_concept": "Dynamic_Initialization",
+      "severity": "Critical",
+      "description": "不同编译单元的全局变量初始化顺序依赖，导致使用未初始化变量。"
+    },
+    "CPP_STATIC_INIT_FAILURE": {
+      "display_name": "静态初始化失败",
+      "pedagogical_label": "静态变量初始化",
+      "knowledge_concept": "Static_Initialization",
+      "severity": "Critical",
+      "description": "静态变量初始化过程中触发非法操作（如除零），导致程序启动失败。"
+    },
+    "CPP_DESTRUCTOR_EXCEPTION_UNHANDLED": {
+      "display_name": "析构函数未处理异常",
+      "pedagogical_label": "析构函数规则",
+      "knowledge_concept": "Destructor_Basics",
+      "severity": "Critical",
+      "description": "析构函数执行期间抛出未捕获异常，导致程序终止。"
+    },
+    "CPP_ASSIGNMENT_OPERATOR_SELF_ASSIGN": {
+      "display_name": "赋值运算符自赋值",
+      "pedagogical_label": "赋值运算符重载",
+      "knowledge_concept": "Assignment_Operator_Basics",
+      "severity": "Critical",
+      "description": "赋值运算符未处理自赋值情况，导致动态内存重复释放或损坏。"
+    },
+    "CPP_COPY_CONSTRUCTOR_SHALLOW": {
+      "display_name": "拷贝构造函数浅拷贝",
+      "pedagogical_label": "拷贝构造机制",
+      "knowledge_concept": "Copy_Constructor_Basics",
+      "severity": "Critical",
+      "description": "包含动态内存成员的类未自定义拷贝构造函数，默认浅拷贝导致双重释放。"
+    },
+    "CPP_MOVE_CONSTRUCTOR_INVALID": {
+      "display_name": "移动构造函数无效实现",
+      "pedagogical_label": "移动语义",
+      "knowledge_concept": "Move_Constructor_Basics",
+      "severity": "Critical",
+      "description": "移动构造函数未将源对象置为有效状态，导致后续访问非法。"
+    },
+    "CPP_MOVE_ASSIGNMENT_INVALID": {
+      "display_name": "移动赋值运算符无效实现",
+      "pedagogical_label": "移动语义",
+      "knowledge_concept": "Move_Assignment_Basics",
+      "severity": "Critical",
+      "description": "移动赋值运算符未释放目标对象资源或未置源对象为有效状态。"
+    },
+    "CPP_INHERITANCE_VIRTUAL_BASE_CONFLICT": {
+      "display_name": "虚基类继承冲突",
+      "pedagogical_label": "多重继承机制",
+      "knowledge_concept": "Virtual_Base_Class_Basics",
+      "severity": "Critical",
+      "description": "多重继承中虚基类初始化顺序冲突，导致对象构造异常。"
+    },
+    "CPP_ACCESS_PRIVATE_MEMBER": {
+      "display_name": "非法访问私有成员",
+      "pedagogical_label": "访问控制规则",
+      "knowledge_concept": "Access_Control_Fundamentals",
+      "severity": "Critical",
+      "description": "通过指针强制转换等方式绕过访问控制，访问类的私有成员。"
+    },
+    "CPP_TEMPLATE_SPECIALIZATION_INVALID": {
+      "display_name": "模板特化无效",
+      "pedagogical_label": "模板特化机制",
+      "knowledge_concept": "Template_Specialization_Basics",
+      "severity": "Critical",
+      "description": "模板特化的签名与主模板不匹配，导致编译失败。"
+    },
+    "CPP_TEMPLATE_PARTIAL_SPECIALIZATION_CONFLICT": {
+      "display_name": "模板部分特化冲突",
+      "pedagogical_label": "模板部分特化",
+      "knowledge_concept": "Partial_Template_Specialization",
+      "severity": "Critical",
+      "description": "多个模板部分特化对同一实例化请求都匹配，导致歧义编译错误。"
+    },
+    "CPP_CONDITIONAL_OPERATOR_TYPE_MISMATCH": {
+      "display_name": "三目运算符类型不匹配",
+      "pedagogical_label": "条件运算符规则",
+      "knowledge_concept": "Conditional_Operator_Basics",
+      "severity": "Critical",
+      "description": "三目运算符两个结果表达式类型无法隐式转换，导致编译失败。"
+    },
+    "CPP_DECLTYPE_INVALID_EXPRESSION": {
+      "display_name": "decltype无效表达式",
+      "pedagogical_label": "类型推导机制",
+      "knowledge_concept": "Decltype_Fundamentals",
+      "severity": "Critical",
+      "description": "decltype作用于无效或非法表达式，导致编译失败。"
+    },
+    "CPP_AUTO_TYPE_DEDUCTION_FAILURE": {
+      "display_name": "auto类型推导失败",
+      "pedagogical_label": "自动类型推导",
+      "knowledge_concept": "Auto_Type_Deduction",
+      "severity": "Critical",
+      "description": "auto变量初始化表达式类型模糊或无效，导致编译失败。"
+    },
+    "CPP_USING_DECLARATION_CONFLICT": {
+      "display_name": "using声明冲突",
+      "pedagogical_label": "命名空间使用",
+      "knowledge_concept": "Using_Declaration_Fundamentals",
+      "severity": "Critical",
+      "description": "using声明引入的名称与当前作用域标识符冲突，导致编译歧义。"
+    },
+    "CPP_NAMESPACE_ALIAS_CONFLICT": {
+      "display_name": "命名空间别名冲突",
+      "pedagogical_label": "命名空间管理",
+      "knowledge_concept": "Namespace_Alias_Fundamentals",
+      "severity": "Critical",
+      "description": "命名空间别名与已有标识符重名，导致编译错误。"
+    },
+    "CPP_MACRO_REDEFINITION_CONFLICT": {
+      "display_name": "宏重复定义冲突",
+      "pedagogical_label": "预处理宏使用",
+      "knowledge_concept": "Macro_Fundamentals",
+      "severity": "Critical",
+      "description": "同一宏在不同位置被重复定义且内容不同，导致编译歧义。"
+    },
+    "CPP_PRAGMA_INVALID_DIRECTIVE": {
+      "display_name": "无效编译指示",
+      "pedagogical_label": "预处理编译指示",
+      "knowledge_concept": "Pragma_Fundamentals",
+      "severity": "Critical",
+      "description": "使用编译器不支持的#pragma指令，导致编译失败。"
+    },
+    "CPP_NULL_POINTER_DEREF": {
+      "display_name": "空指针解引用风险",
+      "pedagogical_label": "内存指针安全",
+      "knowledge_concept": "Pointer_Safety",
+      "severity": "High",
+      "description": "指针在未分配有效地址或显式设为nullptr后尝试访问其内容。"
+    },
+    "CPP_DIVISION_BY_ZERO_VAR": {
+      "display_name": "变量除零风险",
+      "pedagogical_label": "算术运算安全",
+      "knowledge_concept": "Arithmetic_Fundamentals",
+      "severity": "High",
+      "description": "除法或取模运算中除数为变量且未做非零校验，运行时可能触发异常。"
+    },
+    "CPP_ARRAY_OOB_VAR": {
+      "display_name": "数组下标越界（变量索引）",
+      "pedagogical_label": "边界安全检查",
+      "knowledge_concept": "Array_Indexing_Fundamentals",
+      "severity": "High",
+      "description": "使用变量作为数组索引，未校验索引是否超出数组声明范围。"
+    },
+    "CPP_BUFFER_OVERFLOW_DYNAMIC": {
+      "display_name": "动态缓冲区溢出",
+      "pedagogical_label": "缓冲区安全",
+      "knowledge_concept": "Buffer_Management",
+      "severity": "High",
+      "description": "向动态分配的缓冲区写入超出其容量的数据，导致内存损坏。"
+    },
+    "CPP_MEMORY_LEAK_DYNAMIC": {
+      "display_name": "动态内存泄漏",
+      "pedagogical_label": "动态内存管理",
+      "knowledge_concept": "Memory_Allocation_Fundamentals",
+      "severity": "High",
+      "description": "使用new/new[]分配的内存未通过delete/delete[]释放，长期运行导致内存耗尽。"
+    },
+    "CPP_DANGLING_POINTER": {
+      "display_name": "悬垂指针",
+      "pedagogical_label": "指针安全规则",
+      "knowledge_concept": "Pointer_Safety",
+      "severity": "High",
+      "description": "指针指向的对象已被释放，但指针未置空，后续可能解引用非法内存。"
+    },
+    "CPP_INVALID_ITERATOR_USE": {
+      "display_name": "无效迭代器使用",
+      "pedagogical_label": "STL迭代器规则",
+      "knowledge_concept": "Iterator_Basics",
+      "severity": "High",
+      "description": "容器元素修改（插入/删除）后未更新迭代器，继续使用已失效迭代器。"
+    },
+    "CPP_STD_STRING_INVALID_ACCESS": {
+      "display_name": "字符串无效访问",
+      "pedagogical_label": "字符串操作安全",
+      "knowledge_concept": "String_Basics",
+      "severity": "High",
+      "description": "使用[]访问std::string超出size()的索引，行为未定义。"
+    },
+    "CPP_MUTEX_UNLOCK_NOT_OWNED": {
+      "display_name": "解锁未持有互斥锁",
+      "pedagogical_label": "并发同步安全",
+      "knowledge_concept": "Thread_Synchronization",
+      "severity": "High",
+      "description": "线程尝试解锁未被其持有的互斥锁，导致程序行为未定义。"
+    },
+    "CPP_THREAD_DATA_RACE": {
+      "display_name": "线程数据竞争",
+      "pedagogical_label": "并发数据访问",
+      "knowledge_concept": "Data_Race_Prevention",
+      "severity": "High",
+      "description": "多个线程同时访问同一共享数据，且至少一个线程进行修改，未加同步保护。"
+    },
+    "CPP_VIRTUAL_DESTRUCTOR_MISSING": {
+      "display_name": "基类析构函数未声明为virtual",
+      "pedagogical_label": "面向对象继承机制",
+      "knowledge_concept": "Destructor_Basics",
+      "severity": "High",
+      "description": "基类指针指向派生类对象时，删除指针仅调用基类析构函数，导致派生类资源泄漏。"
+    },
+    "CPP_COPY_CONSTRUCTOR_MISSING": {
+      "display_name": "缺少拷贝构造函数",
+      "pedagogical_label": "拷贝构造机制",
+      "knowledge_concept": "Copy_Constructor_Basics",
+      "severity": "High",
+      "description": "包含动态内存成员的类未自定义拷贝构造函数，默认浅拷贝导致资源管理异常。"
+    },
+    "CPP_ASSIGNMENT_OPERATOR_MISSING": {
+      "display_name": "缺少赋值运算符重载",
+      "pedagogical_label": "赋值运算符机制",
+      "knowledge_concept": "Assignment_Operator_Basics",
+      "severity": "High",
+      "description": "包含动态内存成员的类未重载赋值运算符，默认赋值导致资源管理异常。"
+    },
+    "CPP_STATIC_MEMBER_UNINITIALIZED": {
+      "display_name": "静态成员未初始化",
+      "pedagogical_label": "静态成员管理",
+      "knowledge_concept": "Static_Member_Basics",
+      "severity": "High",
+      "description": "类的静态成员变量在类外未定义初始化，链接时可能触发未定义引用错误。"
+    },
+    "CPP_FRIEND_DECLARATION_INVALID": {
+      "display_name": "无效友元声明",
+      "pedagogical_label": "友元机制",
+      "knowledge_concept": "Friend_Fundamentals",
+      "severity": "High",
+      "description": "友元声明中指定的函数或类不存在，导致编译或链接错误。"
+    },
+    "CPP_INHERITANCE_ACCESS_CONFLICT": {
+      "display_name": "继承访问权限冲突",
+      "pedagogical_label": "继承访问控制",
+      "knowledge_concept": "Inheritance_Access_Control",
+      "severity": "High",
+      "description": "派生类继承基类成员时，访问权限设置不当导致无法访问所需成员。"
+    },
+    "CPP_VIRTUAL_FUNCTION_SIGNATURE_MISMATCH": {
+      "display_name": "虚函数签名不匹配",
+      "pedagogical_label": "虚函数重写规则",
+      "knowledge_concept": "Virtual_Function_Basics",
+      "severity": "High",
+      "description": "派生类重写基类虚函数时，返回值、参数列表或cv限定符不一致，未真正重写。"
+    },
+    "CPP_OBJECT_SLICE": {
+      "display_name": "对象切片",
+      "pedagogical_label": "继承对象赋值",
+      "knowledge_concept": "Object_Slicing_Fundamentals",
+      "severity": "High",
+      "description": "将派生类对象赋值给基类对象，派生类独有的成员被截断，多态行为失效。"
+    },
+    "CPP_FUNCTION_RETURN_LOCAL_REF": {
+      "display_name": "返回局部变量引用",
+      "pedagogical_label": "函数返回规则",
+      "knowledge_concept": "Reference_Return_Fundamentals",
+      "severity": "High",
+      "description": "函数返回栈上局部变量的引用，函数执行完毕后变量销毁，引用悬垂。"
+    },
+    "CPP_FUNCTION_RETURN_LOCAL_PTR": {
+      "display_name": "返回局部变量指针",
+      "pedagogical_label": "函数返回规则",
+      "knowledge_concept": "Pointer_Return_Fundamentals",
+      "severity": "High",
+      "description": "函数返回栈上局部变量的指针，函数执行完毕后变量销毁，指针悬垂。"
+    },
+    "CPP_DEFAULT_PARAMETER_MISMATCH": {
+      "display_name": "默认参数声明定义不匹配",
+      "pedagogical_label": "函数参数规则",
+      "knowledge_concept": "Default_Parameter_Basics",
+      "severity": "High",
+      "description": "函数声明和定义中默认参数设置不一致，导致编译错误。"
+    },
+    "CPP_FUNCTION_OVERLOAD_AMBIGUOUS": {
+      "display_name": "函数重载歧义",
+      "pedagogical_label": "函数重载规则",
+      "knowledge_concept": "Function_Overloading_Basics",
+      "severity": "High",
+      "description": "函数调用时实参与多个重载函数的形参都匹配且优先级相同，导致编译歧义。"
+    },
+    "CPP_TYPE_IMPLICIT_CONVERSION_DANGEROUS": {
+      "display_name": "危险的类型隐式转换",
+      "pedagogical_label": "类型转换规则",
+      "knowledge_concept": "Implicit_Type_Conversion",
+      "severity": "High",
+      "description": "高精度类型向低精度类型隐式转换（如long转int），可能导致数值溢出或精度丢失。"
+    },
+    "CPP_CHAR_SIGNED_UNSIGNED_CONFUSION": {
+      "display_name": "char类型符号混淆",
+      "pedagogical_label": "字符类型规则",
+      "knowledge_concept": "Char_Type_Basics",
+      "severity": "High",
+      "description": "未明确char为signed或unsigned，不同编译器默认行为不同，可能导致字符值超出预期。"
+    },
+    "CPP_FLOAT_COMPARISON_DIRECT": {
+      "display_name": "浮点数直接比较相等",
+      "pedagogical_label": "浮点运算规则",
+      "knowledge_concept": "Floating_Point_Comparison",
+      "severity": "High",
+      "description": "浮点数存在精度误差，直接使用==或!=比较相等性，可能导致逻辑判断错误。"
+    },
+    "CPP_ENUM_TO_INT_CONVERSION": {
+      "display_name": "枚举向整数隐式转换",
+      "pedagogical_label": "枚举类型规则",
+      "knowledge_concept": "Enum_Type_Basics",
+      "severity": "High",
+      "description": "将枚举值隐式转换为整数参与运算，可能导致超出枚举定义范围的数值。"
+    },
+    "CPP_POINTER_TO_INT_CONVERSION": {
+      "display_name": "指针向整数转换",
+      "pedagogical_label": "指针类型规则",
+      "knowledge_concept": "Pointer_Type_Basics",
+      "severity": "High",
+      "description": "将指针直接转换为整数存储或运算，依赖平台指针长度，存在移植性风险。"
+    },
+    "CPP_INT_TO_POINTER_CONVERSION": {
+      "display_name": "整数向指针转换",
+      "pedagogical_label": "指针类型规则",
+      "knowledge_concept": "Pointer_Type_Basics",
+      "severity": "High",
+      "description": "将整数强制转换为指针，可能指向非法内存地址，解引用导致崩溃。"
+    },
+    "CPP_REINTERPRET_CAST_UNSAFE": {
+      "display_name": "不安全的reinterpret_cast转换",
+      "pedagogical_label": "类型转换安全",
+      "knowledge_concept": "Reinterpret_Cast_Fundamentals",
+      "severity": "High",
+      "description": "使用reinterpret_cast进行不兼容类型转换（如不同类指针互转），破坏类型安全。"
+    },
+    "CPP_CONST_CAST_ABUSE": {
+      "display_name": "滥用const_cast",
+      "pedagogical_label": "const修饰符规则",
+      "knowledge_concept": "Const_Cast_Fundamentals",
+      "severity": "High",
+      "description": "使用const_cast移除const限定以修改本应只读的对象，行为未定义。"
+    },
+    "CPP_STATIC_CAST_DOWNCAST_UNSAFE": {
+      "display_name": "不安全的静态向下转型",
+      "pedagogical_label": "继承类型转换",
+      "knowledge_concept": "Static_Cast_Fundamentals",
+      "severity": "High",
+      "description": "static_cast将基类指针向下转型为派生类指针，但基类对象并非派生类实例，解引用非法。"
+    },
+    "CPP_DYNAMIC_CAST_NULL": {
+      "display_name": "dynamic_cast返回nullptr未检查",
+      "pedagogical_label": "RTTI使用规则",
+      "knowledge_concept": "Dynamic_Cast_Fundamentals",
+      "severity": "High",
+      "description": "dynamic_cast转换失败返回nullptr，未检查直接解引用。"
+    },
+    "CPP_AUTO_DEDUCTION_AMBIGUOUS": {
+      "display_name": "auto类型推导模糊",
+      "pedagogical_label": "自动类型推导",
+      "knowledge_concept": "Auto_Type_Deduction",
+      "severity": "High",
+      "description": "auto变量的初始化表达式类型复杂，推导结果与预期不符，隐藏类型错误。"
+    },
+    "CPP_DECLTYPE_TYPE_MISMATCH": {
+      "display_name": "decltype类型推导不匹配",
+      "pedagogical_label": "类型推导机制",
+      "knowledge_concept": "Decltype_Fundamentals",
+      "severity": "High",
+      "description": "decltype推导的类型与实际预期类型不一致，导致编译或运行时错误。"
+    },
+    "CPP_USING_DIRECTIVE_POLLUTION": {
+      "display_name": "using指令污染命名空间",
+      "pedagogical_label": "命名空间使用",
+      "knowledge_concept": "Using_Directive_Fundamentals",
+      "severity": "High",
+      "description": "在头文件中使用using namespace，导致全局命名空间污染，可能引发命名冲突。"
+    },
+    "CPP_NAMESPACE_NESTED_INVALID": {
+      "display_name": "嵌套命名空间定义无效",
+      "pedagogical_label": "命名空间管理",
+      "knowledge_concept": "Nested_Namespace_Basics",
+      "severity": "High",
+      "description": "C++17之前的编译器使用嵌套命名空间语法（如namespace A::B{}），导致编译错误。"
+    },
+    "CPP_MACRO_PARAMETER_NO_PARENS": {
+      "display_name": "宏参数未加括号",
+      "pedagogical_label": "宏定义规则",
+      "knowledge_concept": "Macro_Fundamentals",
+      "severity": "High",
+      "description": "宏定义中使用参数时未包裹括号，当参数为表达式时因运算符优先级导致替换错误。"
+    },
+    "CPP_MACRO_WITH_SIDE_EFFECTS": {
+      "display_name": "宏包含副作用",
+      "pedagogical_label": "宏定义规则",
+      "knowledge_concept": "Macro_Fundamentals",
+      "severity": "High",
+      "description": "宏定义中包含自增、自减等副作用操作，多次调用导致非预期结果。"
+    },
+    "CPP_PRAGMA_DIRECTIVE_ABUSE": {
+      "display_name": "滥用编译指示",
+      "pedagogical_label": "预处理编译指示",
+      "knowledge_concept": "Pragma_Fundamentals",
+      "severity": "High",
+      "description": "过度使用编译器特定的#pragma指令，导致代码移植性极差。"
+    },
+    "CPP_INCLUDE_CIRCULAR": {
+      "display_name": "头文件循环包含",
+      "pedagogical_label": "头文件管理",
+      "knowledge_concept": "Include_Guard_Fundamentals",
+      "severity": "High",
+      "description": "多个头文件相互包含，导致预编译时无限递归，触发重复定义错误。"
+    },
+    "CPP_INCLUDE_GUARD_MISSING": {
+      "display_name": "头文件缺少包含保护",
+      "pedagogical_label": "头文件管理",
+      "knowledge_concept": "Include_Guard_Fundamentals",
+      "severity": "High",
+      "description": "自定义头文件未添加#ifndef/#define/#endif包含保护，多次包含导致重复声明。"
+    },
+    "CPP_INCLUDE_GUARD_INVALID": {
+      "display_name": "头文件包含保护无效",
+      "pedagogical_label": "头文件管理",
+      "knowledge_concept": "Include_Guard_Fundamentals",
+      "severity": "High",
+      "description": "包含保护的宏定义重复或未正确闭合#endif，保护机制失效。"
+    },
+    "CPP_TEMPLATE_TYPE_CONSTRAINT_VIOLATION": {
+      "display_name": "模板类型约束违反",
+      "pedagogical_label": "模板约束机制",
+      "knowledge_concept": "Template_Constraints",
+      "severity": "High",
+      "description": "模板实例化时类型不满足模板参数的约束条件，导致编译失败。"
+    },
+    "CPP_TEMPLATE_NON_TYPE_PARAMETER_INVALID": {
+      "display_name": "模板非类型参数无效",
+      "pedagogical_label": "模板参数规则",
+      "knowledge_concept": "Non_Type_Template_Parameters",
+      "severity": "High",
+      "description": "模板非类型参数的值超出允许范围或类型不合法，导致编译失败。"
+    },
+    "CPP_VARIADIC_TEMPLATE_ARGUMENT_MISMATCH": {
+      "display_name": "变长模板参数不匹配",
+      "pedagogical_label": "变长模板机制",
+      "knowledge_concept": "Variadic_Template_Basics",
+      "severity": "High",
+      "description": "变长模板展开时参数类型或数量与预期不匹配，导致编译错误。"
+    },
+    "CPP_CONCEPT_DEFINITION_INVALID": {
+      "display_name": "概念定义无效",
+      "pedagogical_label": "模板概念机制",
+      "knowledge_concept": "Concepts_Fundamentals",
+      "severity": "High",
+      "description": "concept定义的约束表达式语法错误或逻辑无效，导致编译失败。"
+    },
+    "CPP_COROUTINE_PROMISE_INVALID": {
+      "display_name": "协程Promise类型无效",
+      "pedagogical_label": "C++20协程机制",
+      "knowledge_concept": "Coroutine_Promise",
+      "severity": "High",
+      "description": "协程的Promise类型未满足必要的要求（如无return_value成员），导致编译失败。"
+    },
+    "CPP_COROUTINE_RETURN_TYPE_INVALID": {
+      "display_name": "协程返回类型无效",
+      "pedagogical_label": "C++20协程机制",
+      "knowledge_concept": "Coroutine_Return_Type",
+      "severity": "High",
+      "description": "协程返回类型不是合法的协程类型（如未特化coroutine_traits），导致编译失败。"
+    },
+    "CPP_SPAN_CONSTRUCT_INVALID": {
+      "display_name": "span构造无效",
+      "pedagogical_label": "跨度视图使用",
+      "knowledge_concept": "Span_Fundamentals",
+      "severity": "High",
+      "description": "使用无效的指针和大小构造std::span（如大小为负），导致运行时异常。"
+    },
+    "CPP_STRING_VIEW_CONSTRUCT_INVALID": {
+      "display_name": "string_view构造无效",
+      "pedagogical_label": "字符串视图使用",
+      "knowledge_concept": "String_View_Fundamentals",
+      "severity": "High",
+      "description": "使用空指针或无效长度构造std::string_view，导致运行时异常。"
+    },
+    "CPP_OPTIONAL_EMPLACE_INVALID": {
+      "display_name": "optional emplace参数无效",
+      "pedagogical_label": "可选值类型使用",
+      "knowledge_concept": "Optional_Fundamentals",
+      "severity": "High",
+      "description": "std::optional::emplace传入的参数无法构造目标类型，导致编译失败。"
+    },
+    "CPP_VARIANT_EMPLACE_INVALID": {
+      "display_name": "variant emplace参数无效",
+      "pedagogical_label": "变体类型使用",
+      "knowledge_concept": "Variant_Fundamentals",
+      "severity": "High",
+      "description": "std::variant::emplace传入的参数无法构造指定类型，导致编译失败。"
+    },
+    "CPP_ANY_EMPLACE_INVALID": {
+      "display_name": "any emplace参数无效",
+      "pedagogical_label": "任意类型存储",
+      "knowledge_concept": "Any_Fundamentals",
+      "severity": "High",
+      "description": "std::any::emplace传入的参数无法构造目标类型，导致编译失败。"
+    },
+    "CPP_ATOMIC_VAR_NOT_INITIALIZED": {
+      "display_name": "原子变量未初始化",
+      "pedagogical_label": "并发原子操作",
+      "knowledge_concept": "Atomic_Variable_Basics",
+      "severity": "High",
+      "description": "std::atomic变量未初始化直接使用，导致运行时行为未定义。"
+    },
+    "CPP_FUTURE_WAIT_FOR_INVALID_DURATION": {
+      "display_name": "future wait_for无效时长",
+      "pedagogical_label": "异步编程模型",
+      "knowledge_concept": "Future_Fundamentals",
+      "severity": "High",
+      "description": "std::future::wait_for传入的时长为负数或无效，导致运行时异常。"
+    },
+    "CPP_PROMISE_SET_EXCEPTION_INVALID": {
+      "display_name": "promise设置无效异常",
+      "pedagogical_label": "异步数据传递",
+      "knowledge_concept": "Promise_Fundamentals",
+      "severity": "High",
+      "description": "std::promise::set_exception传入的异常指针为空或无效，导致运行时异常。"
+    },
+    "CPP_PACKAGED_TASK_GET_FUTURE_TWICE": {
+      "display_name": "packaged_task重复获取future",
+      "pedagogical_label": "任务封装机制",
+      "knowledge_concept": "Packaged_Task_Fundamentals",
+      "severity": "High",
+      "description": "对同一std::packaged_task多次调用get_future()，导致运行时异常。"
+    },
+    "CPP_THREAD_CONSTRUCT_INVALID_CALLABLE": {
+      "display_name": "线程构造无效可调用对象",
+      "pedagogical_label": "线程管理",
+      "knowledge_concept": "Thread_Fundamentals",
+      "severity": "High",
+      "description": "创建线程时传入的可调用对象（函数、lambda等）无效或无法调用，导致编译失败。"
+    },
+    "CPP_THREAD_DESTRUCTOR_JOINABLE": {
+      "display_name": "销毁可join的线程",
+      "pedagogical_label": "线程生命周期管理",
+      "knowledge_concept": "Thread_Destruction",
+      "severity": "High",
+      "description": "线程对象销毁时仍处于joinable状态，导致程序终止。"
+    },
+    "CPP_MUTEX_CONSTRUCT_COPY": {
+      "display_name": "拷贝构造互斥锁",
+      "pedagogical_label": "并发同步机制",
+      "knowledge_concept": "Mutex_Fundamentals",
+      "severity": "High",
+      "description": "尝试拷贝构造std::mutex（不可拷贝），导致编译失败。"
+    },
+    "CPP_SEMAPHORE_CONSTRUCT_INVALID_COUNT": {
+      "display_name": "信号量构造无效计数",
+      "pedagogical_label": "并发同步机制",
+      "knowledge_concept": "Semaphore_Fundamentals",
+      "severity": "High",
+      "description": "构造信号量时传入的初始计数为负数，导致编译或运行时错误。"
+    },
+    "CPP_CONDITION_VARIABLE_WAIT_WITHOUT_LOCK": {
+      "display_name": "未持有锁时调用condition_variable wait",
+      "pedagogical_label": "并发同步机制",
+      "knowledge_concept": "Condition_Variable_Fundamentals",
+      "severity": "High",
+      "description": "调用std::condition_variable::wait时未持有对应的互斥锁，导致运行时异常。"
+    },
+    "CPP_FILE_OPEN_MODE_INVALID": {
+      "display_name": "文件打开模式无效",
+      "pedagogical_label": "文件IO管理",
+      "knowledge_concept": "File_Open_Modes",
+      "severity": "High",
+      "description": "文件打开时指定的模式组合无效（如同时读和写但无对应权限），导致IO失败。"
+    },
+    "CPP_FILE_SEEK_INVALID_POSITION": {
+      "display_name": "文件定位无效位置",
+      "pedagogical_label": "文件IO操作",
+      "knowledge_concept": "File_Seek_Fundamentals",
+      "severity": "High",
+      "description": "使用fseek或seekg/seekp定位到文件超出大小的位置，导致IO失败。"
+    },
+    "CPP_SOCKET_BIND_INVALID_ADDRESS": {
+      "display_name": "套接字绑定无效地址",
+      "pedagogical_label": "网络编程",
+      "knowledge_concept": "Socket_Bind_Fundamentals",
+      "severity": "High",
+      "description": "套接字绑定到无效的IP地址或端口（如端口0-1023未授权），导致绑定失败。"
+    },
+    "CPP_SOCKET_LISTEN_INVALID_BACKLOG": {
+      "display_name": "套接字监听无效backlog",
+      "pedagogical_label": "网络编程",
+      "knowledge_concept": "Socket_Listen_Fundamentals",
+      "severity": "High",
+      "description": "listen函数的backlog参数为负数或超出系统限制，导致监听失败。"
+    },
+    "CPP_REGEX_MATCH_INVALID_INPUT": {
+      "display_name": "正则表达式匹配无效输入",
+      "pedagogical_label": "正则表达式使用",
+      "knowledge_concept": "Regex_Match_Fundamentals",
+      "severity": "High",
+      "description": "向regex_match传入无效的字符串或迭代器范围，导致运行时异常。"
+    },
+    "CPP_REGEX_SEARCH_INVALID_INPUT": {
+      "display_name": "正则表达式搜索无效输入",
+      "pedagogical_label": "正则表达式使用",
+      "knowledge_concept": "Regex_Search_Fundamentals",
+      "severity": "High",
+      "description": "向regex_search传入无效的字符串或迭代器范围，导致运行时异常。"
+    },
+    "CPP_MATH_FUNCTION_INVALID_ARG": {
+      "display_name": "数学函数无效参数",
+      "pedagogical_label": "数学函数使用",
+      "knowledge_concept": "Math_Function_Basics",
+      "severity": "High",
+      "description": "数学函数传入无效参数（如log(0)），导致运行时行为未定义。"
+    },
+    "CPP_RANDOM_ENGINE_SEED_INVALID": {
+      "display_name": "随机数引擎种子无效",
+      "pedagogical_label": "随机数生成",
+      "knowledge_concept": "Random_Seed_Fundamentals",
+      "severity": "High",
+      "description": "使用无效的种子值初始化随机数引擎，导致生成的随机数序列不符合预期。"
+    },
+    "CPP_TIME_POINT_INVALID": {
+      "display_name": "无效时间点",
+      "pedagogical_label": "时间库使用",
+      "knowledge_concept": "Time_Point_Fundamentals",
+      "severity": "High",
+      "description": "使用超出时钟范围的时间点进行运算，导致运行时异常。"
+    },
+    "CPP_DURATION_CAST_INVALID": {
+      "display_name": "时长转换无效",
+      "pedagogical_label": "时间库使用",
+      "knowledge_concept": "Duration_Cast_Fundamentals",
+      "severity": "High",
+      "description": "std::duration_cast转换导致溢出，或转换到不兼容的时长类型。"
+    },
+    "CPP_LOCALE_CONSTRUCT_INVALID": {
+      "display_name": "构造无效区域设置",
+      "pedagogical_label": "本地化支持",
+      "knowledge_concept": "Locale_Fundamentals",
+      "severity": "High",
+      "description": "使用不存在的区域设置名称构造locale对象，导致运行时异常。"
+    },
+    "CPP_CODECVT_CONVERT_INVALID": {
+      "display_name": "字符编码转换无效",
+      "pedagogical_label": "字符编码处理",
+      "knowledge_concept": "Code_Conversion_Fundamentals",
+      "severity": "High",
+      "description": "字符编码转换过程中目标缓冲区不足，导致转换失败或数据截断。"
+    },
+    "CPP_ATOMIC_FETCH_OP_INVALID": {
+      "display_name": "原子获取操作无效",
+      "pedagogical_label": "并发原子操作",
+      "knowledge_concept": "Atomic_Fetch_Operations",
+      "severity": "High",
+      "description": "对不支持的原子类型执行fetch_add等操作（如对bool类型），导致编译失败。"
+    },
+    "CPP_ATOMIC_STORE_INVALID": {
+      "display_name": "原子存储操作无效",
+      "pedagogical_label": "并发原子操作",
+      "knowledge_concept": "Atomic_Store_Operations",
+      "severity": "High",
+      "description": "向原子变量存储不兼容类型的值，导致编译失败。"
+    },
+    "CPP_THREAD_LOCAL_INIT_EXCEPTION": {
+      "display_name": "线程局部变量初始化异常",
+      "pedagogical_label": "线程局部存储",
+      "knowledge_concept": "Thread_Local_Fundamentals",
+      "severity": "High",
+      "description": "thread_local变量初始化过程中抛出异常，导致线程启动失败。"
+    },
+    "CPP_DYNAMIC_INIT_EXCEPTION": {
+      "display_name": "动态初始化异常",
+      "pedagogical_label": "全局变量初始化",
+      "knowledge_concept": "Dynamic_Initialization",
+      "severity": "High",
+      "description": "全局或静态变量动态初始化过程中抛出未捕获异常，导致程序终止。"
+    },
+    "CPP_STATIC_ASSERT_INVALID_EXPRESSION": {
+      "display_name": "静态断言无效表达式",
+      "pedagogical_label": "编译期校验",
+      "knowledge_concept": "Static_Assert_Fundamentals",
+      "severity": "High",
+      "description": "static_assert的表达式不是编译期常量，导致编译失败。"
+    },
+    "CPP_CONDITIONAL_OPERATOR_SIDE_EFFECTS": {
+      "display_name": "三目运算符包含副作用",
+      "pedagogical_label": "条件运算符规则",
+      "knowledge_concept": "Conditional_Operator_Basics",
+      "severity": "High",
+      "description": "三目运算符的表达式包含自增、自减等副作用，求值顺序不确定导致结果异常。"
+    },
+    "CPP_DECLTYPE_AUTO_DEDUCTION_FAILURE": {
+      "display_name": "decltype(auto)类型推导失败",
+      "pedagogical_label": "类型推导机制",
+      "knowledge_concept": "Decltype_Auto_Fundamentals",
+      "severity": "High",
+      "description": "decltype(auto)无法推导表达式类型（如无效表达式），导致编译失败。"
+    },
+    "CPP_UNINIT_VAR_USAGE": {
+      "display_name": "变量未初始化使用",
+      "pedagogical_label": "变量生命周期管理",
+      "knowledge_concept": "Variable_Basics",
+      "severity": "Medium",
+      "description": "在局部变量被赋予确定的初值前读取其内容。"
+    },
+    "CPP_LOGIC_SWITCH_NO_DEFAULT": {
+      "display_name": "switch语句缺少default分支",
+      "pedagogical_label": "控制流管理",
+      "knowledge_concept": "Switch_Statement_Basics",
+      "severity": "Medium",
+      "description": "switch语句未包含default分支，当所有case条件均不匹配时，程序无对应执行逻辑，降低代码鲁棒性。"
+    },
+    "CPP_LOGIC_SWITCH_NO_BREAK": {
+      "display_name": "switch-case缺少break语句",
+      "pedagogical_label": "控制流管理",
+      "knowledge_concept": "Switch_Statement_Basics",
+      "severity": "Medium",
+      "description": "switch语句中case分支执行后未添加break，导致程序继续执行后续case（穿透效应），引发逻辑错误。"
+    },
+    "CPP_LOGIC_INFINITE_LOOP_RISK": {
+      "display_name": "无限循环风险",
+      "pedagogical_label": "循环结构管理",
+      "knowledge_concept": "Loop_Statement_Basics",
+      "severity": "Medium",
+      "description": "循环条件依赖外部变量但未做边界校验，或终止逻辑隐藏过深，可能导致程序陷入死循环。"
+    },
+    "CPP_LOGIC_WRONG_CONDITION_OPERATOR": {
+      "display_name": "条件运算符使用错误",
+      "pedagogical_label": "条件表达式使用",
+      "knowledge_concept": "Conditional_Expression_Basics",
+      "severity": "Medium",
+      "description": "将赋值运算符=误用作相等判断==，或逻辑与&&和按位与&、逻辑或||和按位或|混淆，导致执行路径错误。"
+    },
+    "CPP_LOGIC_LOOP_BOUNDS_INCORRECT": {
+      "display_name": "循环边界错误",
+      "pedagogical_label": "循环结构管理",
+      "knowledge_concept": "Loop_Bounds_Basics",
+      "severity": "Medium",
+      "description": "循环起始值、终止条件或步长设置错误（如i从1开始遍历0下标数组），导致遍历不完整或冗余迭代。"
+    },
+    "CPP_LOGIC_RETURN_VALUE_IGNORED": {
+      "display_name": "忽略函数返回值",
+      "pedagogical_label": "函数调用规则",
+      "knowledge_concept": "Function_Return_Value_Basics",
+      "severity": "Medium",
+      "description": "函数返回值包含关键状态（如错误码、运算结果）但未接收或处理，可能导致后续逻辑基于错误假设执行。"
+    },
+    "CPP_LOGIC_GLOBAL_VARIABLE_ABUSE": {
+      "display_name": "滥用全局变量",
+      "pedagogical_label": "变量作用域管理",
+      "knowledge_concept": "Global_Variable_Basics",
+      "severity": "Medium",
+      "description": "不必要地使用全局变量传递数据，增加模块耦合度，且易被意外修改导致状态不可控。"
+    },
+    "CPP_LOGIC_FUNCTION_SIDE_EFFECT": {
+      "display_name": "函数存在未声明的副作用",
+      "pedagogical_label": "函数设计规则",
+      "knowledge_concept": "Function_Side_Effects",
+      "severity": "Medium",
+      "description": "函数除返回值外，还修改全局变量、静态变量或输入参数状态，但未在接口文档中声明，导致调用者误用。"
+    },
+    "CPP_LOGIC_COMPARISON_OF_UNRELATED_TYPES": {
+      "display_name": "不相关类型比较",
+      "pedagogical_label": "类型安全",
+      "knowledge_concept": "Type_Comparison_Basics",
+      "severity": "Medium",
+      "description": "将指针与整数、不同枚举类型或不兼容数据类型直接比较，编译可能通过但比较结果无意义。"
+    },
+    "CPP_LOGIC_ARRAY_INITIALIZATION_INCOMPLETE": {
+      "display_name": "数组初始化不完整",
+      "pedagogical_label": "数组使用规则",
+      "knowledge_concept": "Array_Initialization_Basics",
+      "severity": "Medium",
+      "description": "数组定义时指定大小但初始化列表元素不足，未初始化的元素值为随机垃圾值，可能导致后续访问结果异常。"
+    },
+    "CPP_TYPE_NARROWING_CONVERSION": {
+      "display_name": "窄化转换",
+      "pedagogical_label": "类型转换规则",
+      "knowledge_concept": "Narrowing_Conversion",
+      "severity": "Medium",
+      "description": "高精度类型向低精度类型转换（如long转int、double转float），可能导致精度丢失或数值溢出，编译器可能仅给出警告。"
+    },
+    "CPP_TYPE_AUTO_OVERUSE": {
+      "display_name": "过度使用auto类型",
+      "pedagogical_label": "自动类型推导",
+      "knowledge_concept": "Auto_Type_Deduction",
+      "severity": "Medium",
+      "description": "变量类型不明确时（如复杂模板返回值）未显式声明，过度依赖auto导致代码可读性降低，不利于团队协作。"
+    },
+    "CPP_TYPE_CV_QUALIFIER_DROPPED": {
+      "display_name": "丢弃const/volatile限定符",
+      "pedagogical_label": "const/volatile规则",
+      "knowledge_concept": "CV_Qualifier_Basics",
+      "severity": "Medium",
+      "description": "通过非const指针或引用间接修改const对象，或丢弃volatile限定符，破坏类型安全，部分场景行为未定义。"
+    },
+    "CPP_TYPE_TEMPLATE_ARGUMENT_MISMATCH": {
+      "display_name": "模板参数类型不匹配",
+      "pedagogical_label": "模板使用规则",
+      "knowledge_concept": "Template_Argument_Basics",
+      "severity": "Medium",
+      "description": "模板实例化时传入的参数类型与模板定义的约束不兼容，可能导致编译警告或运行时类型相关错误。"
+    },
+    "CPP_TYPE_CHAR_SIGNED_UNSIGNED_CONFUSION": {
+      "display_name": "char类型符号混淆",
+      "pedagogical_label": "字符类型规则",
+      "knowledge_concept": "Char_Type_Basics",
+      "severity": "Medium",
+      "description": "未明确指定char为signed或unsigned，不同编译器默认行为不同，可能导致字符值超出预期范围（如负数）。"
+    },
+    "CPP_TYPE_FLOAT_COMPARISON_DIRECT": {
+      "display_name": "浮点数直接比较相等",
+      "pedagogical_label": "浮点运算规则",
+      "knowledge_concept": "Floating_Point_Comparison",
+      "severity": "Medium",
+      "description": "浮点数存在精度误差，直接使用==或!=比较相等性，可能导致逻辑判断错误，应通过差值阈值比较。"
+    },
+    "CPP_CLASS_CONSTRUCTOR_EXPLICIT_MISSING": {
+      "display_name": "单参数构造函数未加explicit",
+      "pedagogical_label": "构造函数规则",
+      "knowledge_concept": "Explicit_Constructor_Basics",
+      "severity": "Medium",
+      "description": "单参数构造函数未声明为explicit，允许隐式类型转换，可能导致意外的类型转换，破坏类型安全。"
+    },
+    "CPP_CLASS_MEMBER_INITIALIZATION_ORDER": {
+      "display_name": "成员初始化顺序错误",
+      "pedagogical_label": "构造函数使用",
+      "knowledge_concept": "Member_Initialization_Order",
+      "severity": "Medium",
+      "description": "构造函数初始化列表中成员初始化顺序与类中声明顺序不一致，可能导致依赖初始化的成员使用未初始化的值。"
+    },
+    "CPP_CLASS_MEMBER_FUNCTION_HIDING": {
+      "display_name": "成员函数隐藏",
+      "pedagogical_label": "继承机制",
+      "knowledge_concept": "Member_Function_Hiding",
+      "severity": "Medium",
+      "description": "派生类定义与基类同名但参数列表不同的函数，未加override关键字，导致基类函数被隐藏，调用时不符合预期。"
+    },
+    "CPP_CLASS_VIRTUAL_FUNCTION_NOT_OVERRIDDEN": {
+      "display_name": "虚函数未正确重写",
+      "pedagogical_label": "虚函数规则",
+      "knowledge_concept": "Virtual_Function_Override",
+      "severity": "Medium",
+      "description": "派生类重写基类虚函数时，函数签名（返回值、参数列表、cv限定符）不一致，导致未真正重写，多态行为失效。"
+    },
+    "CPP_CLASS_STATIC_MEMBER_INIT_IN_CLASS": {
+      "display_name": "静态成员在类内初始化（非constexpr）",
+      "pedagogical_label": "静态成员管理",
+      "knowledge_concept": "Static_Member_Basics",
+      "severity": "Medium",
+      "description": "非constexpr静态成员变量在类内直接初始化，不符合C++标准（需在类外定义），部分编译器支持但存在移植性问题。"
+    },
+    "CPP_CLASS_FRIEND_FUNCTION_NOT_DECLARED": {
+      "display_name": "友元函数未提前声明",
+      "pedagogical_label": "友元机制",
+      "knowledge_concept": "Friend_Fundamentals",
+      "severity": "Medium",
+      "description": "类内声明友元函数，但该函数未在类外提前声明，可能导致链接错误或函数调用不符合预期。"
+    },
+    "CPP_CLASS_OBJECT_SLICE": {
+      "display_name": "对象切片",
+      "pedagogical_label": "继承对象赋值",
+      "knowledge_concept": "Object_Slicing_Fundamentals",
+      "severity": "Medium",
+      "description": "将派生类对象赋值给基类对象，派生类独有的成员被截断，导致对象状态不完整，多态行为失效。"
+    },
+    "CPP_CLASS_COPY_CONSTRUCTOR_DELETED_USE": {
+      "display_name": "尝试使用被删除的拷贝构造函数",
+      "pedagogical_label": "拷贝构造机制",
+      "knowledge_concept": "Copy_Constructor_Basics",
+      "severity": "Medium",
+      "description": "类的拷贝构造函数被delete声明，但代码中仍尝试通过拷贝初始化或传值方式创建对象，编译可能报错。"
+    },
+    "CPP_CLASS_ASSIGNMENT_OPERATOR_DELETED_USE": {
+      "display_name": "尝试使用被删除的赋值运算符",
+      "pedagogical_label": "赋值运算符机制",
+      "knowledge_concept": "Assignment_Operator_Basics",
+      "severity": "Medium",
+      "description": "类的赋值运算符被delete声明，但代码中仍尝试使用赋值操作，编译可能报错或运行时异常。"
+    },
+    "CPP_CLASS_INHERITANCE_ACCESS_CONFLICT": {
+      "display_name": "继承访问权限冲突",
+      "pedagogical_label": "继承访问控制",
+      "knowledge_concept": "Inheritance_Access_Control",
+      "severity": "Medium",
+      "description": "派生类继承基类的成员时，因访问权限（public/protected/private）设置不当，导致无法访问所需成员。"
+    },
+    "CPP_CLASS_VIRTUAL_BASE_CLASS_CONFLICT": {
+      "display_name": "虚基类继承冲突",
+      "pedagogical_label": "多重继承机制",
+      "knowledge_concept": "Virtual_Base_Class_Basics",
+      "severity": "Medium",
+      "description": "多继承场景下，多个基类继承自同一非虚基类，导致派生类包含多个基类实例，成员访问歧义。"
+    },
+    "CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_REDEFINED": {
+      "display_name": "默认参数重复定义",
+      "pedagogical_label": "函数参数规则",
+      "knowledge_concept": "Default_Parameter_Basics",
+      "severity": "Medium",
+      "description": "函数声明和定义中都指定了默认参数，违反C++标准，部分编译器允许但可能导致行为不一致。"
+    },
+    "CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_NOT_LAST": {
+      "display_name": "默认参数未在参数列表末尾",
+      "pedagogical_label": "函数参数规则",
+      "knowledge_concept": "Default_Parameter_Basics",
+      "severity": "Medium",
+      "description": "函数默认参数后面仍有非默认参数，违反C++语法规则，部分编译器可能报错或编译行为异常。"
+    },
+    "CPP_FUNCTION_RETURN_LOCAL_POINTER": {
+      "display_name": "返回局部变量指针",
+      "pedagogical_label": "函数返回规则",
+      "knowledge_concept": "Pointer_Return_Fundamentals",
+      "severity": "Medium",
+      "description": "函数返回栈上局部变量的指针，函数执行完毕后变量销毁，返回的指针变为悬垂，访问时非法。"
+    },
+    "CPP_FUNCTION_VARARGS_UNSAFE": {
+      "display_name": "不安全的变长参数函数",
+      "pedagogical_label": "变长参数使用",
+      "knowledge_concept": "Varargs_Fundamentals",
+      "severity": "Medium",
+      "description": "使用va_list实现变长参数函数，但未在接口中明确参数类型和数量，可能导致参数解析错误或类型不匹配。"
+    },
+    "CPP_FUNCTION_ARGUMENT_EVALUATION_ORDER": {
+      "display_name": "函数参数求值顺序不确定",
+      "pedagogical_label": "函数调用规则",
+      "knowledge_concept": "Argument_Evaluation_Order",
+      "severity": "Medium",
+      "description": "函数多个参数的求值顺序未定义（C++未规定），若参数包含副作用操作（如i++），可能导致结果不一致。"
+    },
+    "CPP_FUNCTION_UNUSED_PARAMETER": {
+      "display_name": "函数参数未使用",
+      "pedagogical_label": "函数设计规则",
+      "knowledge_concept": "Function_Parameter_Basics",
+      "severity": "Medium",
+      "description": "函数声明了参数但函数体内未使用，浪费资源且可能暗示逻辑不完整，部分编译器会给出警告。"
+    },
+    "CPP_FUNCTION_DECLARATION_MISMATCH": {
+      "display_name": "函数声明与定义不完全匹配",
+      "pedagogical_label": "函数定义规则",
+      "knowledge_concept": "Function_Declaration_Definition",
+      "severity": "Medium",
+      "description": "函数声明与定义的cv限定符、异常说明或属性不一致（如声明为const成员函数，定义时未加const），导致编译错误。"
+    },
+    "CPP_ARRAY_SIZE_NON_CONSTANT": {
+      "display_name": "数组大小为非常量表达式",
+      "pedagogical_label": "数组定义规则",
+      "knowledge_concept": "Array_Size_Basics",
+      "severity": "Medium",
+      "description": "C++11之前的编译器中，静态数组的大小使用变量或非常量表达式，违反数组定义规则，编译失败。"
+    },
+    "CPP_ARRAY_POINTER_CONFUSION": {
+      "display_name": "数组与指针混淆",
+      "pedagogical_label": "数组指针关系",
+      "knowledge_concept": "Array_Pointer_Basics",
+      "severity": "Medium",
+      "description": "将数组名当作指针修改（如arr++），或指针未指向有效内存却当作数组访问，导致逻辑错误或运行时异常。"
+    },
+    "CPP_POINTER_TYPE_MISMATCH": {
+      "display_name": "指针类型不匹配",
+      "pedagogical_label": "指针类型规则",
+      "knowledge_concept": "Pointer_Type_Basics",
+      "severity": "Medium",
+      "description": "将一种类型的指针赋值给另一种不兼容类型的指针（无显式转换），或通过指针访问不匹配类型的成员，存在风险。"
+    },
+    "CPP_REFERENCE_REASSIGN_ATTEMPT": {
+      "display_name": "尝试重新赋值引用",
+      "pedagogical_label": "引用使用规则",
+      "knowledge_concept": "Reference_Basics",
+      "severity": "Medium",
+      "description": "引用变量绑定对象后尝试重新赋值（实际修改原对象的值而非绑定关系），导致逻辑误解或错误。"
+    },
+    "CPP_MULTIDIMENSIONAL_ARRAY_INVALID": {
+      "display_name": "多维数组定义无效",
+      "pedagogical_label": "多维数组使用",
+      "knowledge_concept": "Multidimensional_Array_Basics",
+      "severity": "Medium",
+      "description": "多维数组定义时除第一维外其他维度未指定大小（如int arr[][];），或初始化列表与数组维度不匹配。"
+    },
+    "CPP_STD_CONTAINER_INVALID_ACCESS": {
+      "display_name": "STL容器无效访问",
+      "pedagogical_label": "STL容器使用",
+      "knowledge_concept": "STL_Container_Basics",
+      "severity": "Medium",
+      "description": "使用std::vector、std::list等容器时，通过[]访问超出size()的元素，或使用已失效的迭代器。"
+    },
+    "CPP_STD_STRING_EMPTY_ACCESS": {
+      "display_name": "空字符串访问",
+      "pedagogical_label": "字符串使用规则",
+      "knowledge_concept": "String_Basics",
+      "severity": "Medium",
+      "description": "std::string为空时，通过[]或at()访问元素，at()会抛出异常，[]行为未定义。"
+    },
+    "CPP_STD_ITERATOR_INVALID": {
+      "display_name": "无效迭代器使用",
+      "pedagogical_label": "迭代器使用规则",
+      "knowledge_concept": "Iterator_Basics",
+      "severity": "Medium",
+      "description": "容器元素修改（插入/删除）后未更新迭代器，继续使用已失效的迭代器访问容器。"
+    },
+    "CPP_MEMORY_SMART_PTR_RAW_MIX": {
+      "display_name": "智能指针与裸指针混用",
+      "pedagogical_label": "智能指针使用",
+      "knowledge_concept": "Smart_Pointer_Basics",
+      "severity": "Medium",
+      "description": "shared_ptr管理的对象同时通过裸指针访问或释放，可能导致双重释放或悬垂指针，破坏内存管理逻辑。"
+    },
+    "CPP_MEMORY_WEAK_PTR_EXPIRED": {
+      "display_name": "weak_ptr已过期未检查",
+      "pedagogical_label": "智能指针使用",
+      "knowledge_concept": "Weak_Pointer_Basics",
+      "severity": "Medium",
+      "description": "weak_ptr指向的对象已被销毁，未通过lock()检查直接访问，导致获取无效的shared_ptr。"
+    },
+    "CPP_MEMORY_RESOURCE_LEAK": {
+      "display_name": "资源泄漏（非内存）",
+      "pedagogical_label": "资源管理规则",
+      "knowledge_concept": "Resource_Management_Basics",
+      "severity": "Medium",
+      "description": "打开的文件、网络连接、数据库连接等资源未正确关闭，导致资源耗尽。"
+    },
+    "CPP_MACRO_REDEFINITION": {
+      "display_name": "宏重复定义",
+      "pedagogical_label": "宏定义规则",
+      "knowledge_concept": "Macro_Fundamentals",
+      "severity": "Medium",
+      "description": "同一宏在多个位置被重复定义（无#undef），导致宏替换结果与预期不符，部分编译器会给出警告。"
+    },
+    "CPP_INCLUDE_UNNECESSARY": {
+      "display_name": "多余的头文件包含",
+      "pedagogical_label": "头文件管理",
+      "knowledge_concept": "Include_Fundamentals",
+      "severity": "Medium",
+      "description": "包含了未使用的头文件，增加编译时间和潜在的命名冲突风险。"
+    },
+    "CPP_INCLUDE_ORDER_INCONSISTENT": {
+      "display_name": "头文件包含顺序不一致",
+      "pedagogical_label": "头文件管理",
+      "knowledge_concept": "Include_Fundamentals",
+      "severity": "Medium",
+      "description": "未按“标准库→第三方库→自定义库”的顺序包含头文件，影响代码规范性和可读性。"
+    },
+    "CPP_NAMESPACE_USING_IN_HEADER": {
+      "display_name": "头文件中使用using namespace",
+      "pedagogical_label": "命名空间使用",
+      "knowledge_concept": "Namespace_Fundamentals",
+      "severity": "Medium",
+      "description": "头文件中使用using namespace会污染全局命名空间，导致命名冲突，推荐在.cpp文件中使用。"
+    },
+    "CPP_TYPEDEF_NAME_CONFLICT": {
+      "display_name": "typedef别名冲突",
+      "pedagogical_label": "类型别名管理",
+      "knowledge_concept": "Typedef_Fundamentals",
+      "severity": "Medium",
+      "description": "typedef定义的类型别名与变量名、函数名重名，导致标识符歧义，编译报错或逻辑错误。"
+    },
+    "CPP_CONSTEXPR_INVALID_EXPRESSION": {
+      "display_name": "constexpr无效表达式",
+      "pedagogical_label": "编译期计算",
+      "knowledge_concept": "Constexpr_Fundamentals",
+      "severity": "Medium",
+      "description": "constexpr函数或变量包含非编译期可计算的表达式，导致无法在编译期求值，退化为普通变量或函数。"
+    },
+    "CPP_AUTO_TYPE_DEDUCTION_AMBIGUOUS": {
+      "display_name": "auto类型推导模糊",
+      "pedagogical_label": "自动类型推导",
+      "knowledge_concept": "Auto_Type_Deduction",
+      "severity": "Medium",
+      "description": "auto变量的初始化表达式类型复杂（如函数返回值为引用、指针），导致推导结果与预期不符。"
+    },
+    "CPP_THREAD_DATA_RACE_RISK": {
+      "display_name": "线程数据竞争风险",
+      "pedagogical_label": "并发编程",
+      "knowledge_concept": "Thread_Synchronization",
+      "severity": "Medium",
+      "description": "多个线程访问共享数据时，未加同步保护（如互斥锁），可能导致数据竞争和结果不一致。"
+    },
+    "CPP_THREAD_MUTEX_UNLOCK_NOT_OWNED": {
+      "display_name": "解锁未持有互斥锁",
+      "pedagogical_label": "并发同步",
+      "knowledge_concept": "Mutex_Fundamentals",
+      "severity": "Medium",
+      "description": "线程尝试解锁未被其持有的互斥锁，导致程序行为未定义。"
+    },
+    "CPP_THREAD_CONSTRUCT_INVALID": {
+      "display_name": "线程构造无效",
+      "pedagogical_label": "线程管理",
+      "knowledge_concept": "Thread_Fundamentals",
+      "severity": "Medium",
+      "description": "创建线程时传入的可调用对象无效（如空指针、已销毁的对象），导致编译或运行时错误。"
+    },
+    "CPP_FILE_OPEN_MODE_CONFLICT": {
+      "display_name": "文件打开模式冲突",
+      "pedagogical_label": "文件IO管理",
+      "knowledge_concept": "File_Open_Modes",
+      "severity": "Medium",
+      "description": "文件打开时指定的模式组合无效（如同时读和写但无对应权限），导致IO操作失败。"
+    },
+    "CPP_FILE_READ_WRITE_MISMATCH": {
+      "display_name": "文件读写不匹配",
+      "pedagogical_label": "文件IO操作",
+      "knowledge_concept": "File_IO_Basics",
+      "severity": "Medium",
+      "description": "以读模式打开文件却尝试写入，或以写模式打开却尝试读取，导致IO操作失败。"
+    },
+    "CPP_REGEX_PATTERN_INVALID": {
+      "display_name": "正则表达式模式无效",
+      "pedagogical_label": "正则表达式使用",
+      "knowledge_concept": "Regex_Fundamentals",
+      "severity": "Medium",
+      "description": "正则表达式模式语法错误，导致编译时抛出regex_error异常或匹配结果不符合预期。"
+    },
+    "CPP_MATH_FUNCTION_DOMAIN_ERROR": {
+      "display_name": "数学函数域错误",
+      "pedagogical_label": "数学函数使用",
+      "knowledge_concept": "Math_Function_Basics",
+      "severity": "Medium",
+      "description": "数学函数参数超出定义域（如sqrt(-1)、log(0)），导致运行时行为未定义或抛出异常。"
+    },
+    "CPP_TIME_DURATION_CAST_INVALID": {
+      "display_name": "时长转换无效",
+      "pedagogical_label": "时间库使用",
+      "knowledge_concept": "Duration_Cast_Fundamentals",
+      "severity": "Medium",
+      "description": "std::duration_cast转换导致溢出，或转换到不兼容的时长类型，导致时间计算错误。"
+    },
+    "CPP_CODECVT_CONVERT_TRUNCATION": {
+      "display_name": "字符编码转换截断",
+      "pedagogical_label": "字符编码处理",
+      "knowledge_concept": "Code_Conversion_Fundamentals",
+      "severity": "Medium",
+      "description": "字符编码转换过程中目标缓冲区不足，导致转换失败或数据截断，丢失部分字符。"
+    },
+    "CPP_ATOMIC_OPERATION_INVALID": {
+      "display_name": "原子操作无效",
+      "pedagogical_label": "并发原子操作",
+      "knowledge_concept": "Atomic_Operation_Basics",
+      "severity": "Medium",
+      "description": "对不支持的原子类型执行原子操作（如对bool类型执行fetch_add），导致编译失败。"
+    },
+    "CPP_FUTURE_GET_MULTIPLE": {
+      "display_name": "future重复调用get()",
+      "pedagogical_label": "异步编程模型",
+      "knowledge_concept": "Future_Fundamentals",
+      "severity": "Medium",
+      "description": "对同一std::future多次调用get()，导致运行时异常。"
+    },
+    "CPP_PROMISE_SET_VALUE_AFTER_GET": {
+      "display_name": "promise在get()后设置值",
+      "pedagogical_label": "异步数据传递",
+      "knowledge_concept": "Promise_Fundamentals",
+      "severity": "Medium",
+      "description": "std::future已调用get()后，仍通过对应的promise设置值，导致行为未定义。"
+    },
+    "CPP_PACKAGED_TASK_INVOKE_MULTIPLE": {
+      "display_name": "packaged_task重复调用",
+      "pedagogical_label": "任务封装机制",
+      "knowledge_concept": "Packaged_Task_Fundamentals",
+      "severity": "Medium",
+      "description": "对同一std::packaged_task多次调用operator()，导致运行时异常。"
+    },
+    "CPP_COROUTINE_RESUME_AFTER_COMPLETE": {
+      "display_name": "协程完成后重复恢复",
+      "pedagogical_label": "C++20协程机制",
+      "knowledge_concept": "Coroutine_Fundamentals",
+      "severity": "Medium",
+      "description": "对已完成的协程再次调用resume()，导致程序行为未定义。"
+    },
+    "CPP_COROUTINE_PROMISE_MISSING": {
+      "display_name": "协程Promise缺少必要成员",
+      "pedagogical_label": "C++20协程机制",
+      "knowledge_concept": "Coroutine_Promise",
+      "severity": "Medium",
+      "description": "协程的Promise类型未满足必要要求（如无return_void或return_value成员），导致编译失败。"
+    },
+    "CPP_VARIANT_GET_WRONG_TYPE": {
+      "display_name": "variant获取错误类型",
+      "pedagogical_label": "变体类型使用",
+      "knowledge_concept": "Variant_Fundamentals",
+      "severity": "Medium",
+      "description": "使用std::get<T>获取variant中不存在的类型，抛出bad_variant_access异常。"
+    },
+    "CPP_OPTIONAL_VALUE_OR_DEFAULT": {
+      "display_name": "optional无值时使用value_or默认值不当",
+      "pedagogical_label": "可选值类型使用",
+      "knowledge_concept": "Optional_Fundamentals",
+      "severity": "Medium",
+      "description": "std::optional为空时，value_or的默认值构造成本高或存在副作用，导致性能问题或逻辑错误。"
+    },
+    "CPP_ANY_CAST_WRONG_TYPE": {
+      "display_name": "any_cast转换错误类型",
+      "pedagogical_label": "任意类型存储",
+      "knowledge_concept": "Any_Fundamentals",
+      "severity": "Medium",
+      "description": "std::any_cast转换为与存储类型不兼容的类型，抛出bad_any_cast异常。"
+    },
+    "CPP_DYNAMIC_INIT_ORDER_DEPENDENCY": {
+      "display_name": "动态初始化顺序依赖",
+      "pedagogical_label": "全局变量初始化",
+      "knowledge_concept": "Dynamic_Initialization",
+      "severity": "Medium",
+      "description": "不同编译单元的全局变量初始化顺序存在依赖，导致使用未初始化的变量。"
+    },
+    "CPP_DECLTYPE_AUTO_DEDUCTION_AMBIGUOUS": {
+      "display_name": "decltype(auto)类型推导模糊",
+      "pedagogical_label": "类型推导机制",
+      "knowledge_concept": "Decltype_Auto_Fundamentals",
+      "severity": "Medium",
+      "description": "decltype(auto)无法明确推导表达式类型（如函数返回值为引用+指针），导致编译警告或逻辑错误。"
+    }
+  }
+}
