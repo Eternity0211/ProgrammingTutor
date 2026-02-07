@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+const CppStandardEnum = z.enum(["c++11", "c++14", "c++17", "c++20"], {
+  errorMap: () => ({ message: "请选择有效的 C++ 标准" }),
+});
+
 export const assignmentSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
@@ -24,6 +28,7 @@ export const assignmentSchema = z.object({
       title: z.string().min(1, "Question title is required"),
       description: z.string().min(1, "Question description is required"),
       language: z.string().min(1, "Programming language is required"),
+      cppStandard: CppStandardEnum,
       testCases: z.array(
         z.object({
           input: z.string().min(1, "Test case input is required"),
