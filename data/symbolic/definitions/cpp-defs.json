@@ -1,25 +1,12 @@
 {
   "definitions": {
-    "CPP_ARRAY_OOB_LITERAL": {
-      "display_name": "数组下标越界（字面量）",
-      "pedagogical_label": "边界安全检查",
-      "knowledge_concept": "Array_Indexing_Fundamentals",
-      "severity": "Critical",
-      "description": "检测到直接使用超出声明范围的常数索引访问数组。"
-    },
-    "CPP_NULL_POINTER_DEREF": {
-      "display_name": "空指针解引用风险",
-      "pedagogical_label": "内存指针安全",
-      "knowledge_concept": "Pointer_Safety",
+    "CPP_ARRAY_OOB": {
+      "display_name": "If Condition Assignment",
       "severity": "High",
-      "description": "指针在未分配有效地址或显式设为nullptr后尝试访问其内容。"
-    },
-    "CPP_UNINIT_VAR_USAGE": {
-      "display_name": "变量未初始化使用",
-      "pedagogical_label": "变量生命周期管理",
-      "knowledge_concept": "Variable_Basics",
-      "severity": "Medium",
-      "description": "在局部变量被赋予确定的初值前读取其内容。"
+      "message": "You used an assignment operator '=' in an if condition. Did you mean '=='?",
+      "pedagogical_label": "Logic Error",
+      "description": "Using = instead of == causes assignment, not comparison.",
+      "remediation": "Change '=' to '=='."
     }
   }
 }
