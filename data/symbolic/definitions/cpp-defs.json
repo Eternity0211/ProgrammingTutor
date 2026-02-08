@@ -1,12 +1,13 @@
 {
   "definitions": {
-    "CPP_ARRAY_OOB": {
+    "CPP_ASSIGNMENT_IN_IF": {
       "display_name": "If Condition Assignment",
       "severity": "High",
-      "message": "You used an assignment operator '=' in an if condition. Did you mean '=='?",
+      "message": "You used an assignment operator '=' in an if condition...",
       "pedagogical_label": "Logic Error",
-      "description": "Using = instead of == causes assignment, not comparison.",
-      "remediation": "Change '=' to '=='."
+      "knowledge_concept": "Control Flow / Conditional Statements", 
+      "description": "...",
+      "remediation": "..."
     }
   }
 }
