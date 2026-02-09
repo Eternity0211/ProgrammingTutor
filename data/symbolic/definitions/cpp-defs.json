@@ -1,13 +1,238 @@
 {
   "definitions": {
     "CPP_ASSIGNMENT_IN_IF": {
-      "display_name": "If Condition Assignment",
+      "display_name": "Assignment in if condition",
       "severity": "High",
-      "message": "You used an assignment operator '=' in an if condition...",
+      "message": "You used an assignment operator '=' in an if condition; did you mean comparison '=='?",
       "pedagogical_label": "Logic Error",
-      "knowledge_concept": "Control Flow / Conditional Statements", 
-      "description": "...",
-      "remediation": "..."
+      "knowledge_concept": "Control_Flow_Conditional_Statements",
+      "description": "Using assignment instead of comparison in conditional expressions can make the condition always true or modify variables unexpectedly.",
+      "remediation": "Use == for comparison; if assignment is intended, make it explicit e.g. if ((x = get()) != 0)."
+    },
+    "CPP_ARRAY_OOB_LITERAL": {
+      "display_name": "Array index out of bounds (literal)",
+      "severity": "Critical",
+      "message": "Array accessed with a constant index beyond the declared size.",
+      "pedagogical_label": "Bounds Safety",
+      "knowledge_concept": "Array_Indexing_Fundamentals",
+      "description": "A constant index is used to access an array outside its declared range.",
+      "remediation": "Keep indices in [0, size-1]; for an array of length n, valid indices are 0 to n-1."
+    },
+    "CPP_ARRAY_OOB_VARIABLE": {
+      "display_name": "Array index out of bounds (variable)",
+      "severity": "Critical",
+      "message": "Variable index may be out of bounds; no range check before access.",
+      "pedagogical_label": "Bounds Safety",
+      "knowledge_concept": "Array_Indexing_Fundamentals",
+      "description": "Index is a variable or expression that is not guaranteed to be in [0, size-1] at runtime.",
+      "remediation": "Check 0 <= index && index < size before access, or use at() for bounds-checked access."
+    },
+    "CPP_NULL_POINTER_DEREF": {
+      "display_name": "Possible null pointer dereference",
+      "severity": "High",
+      "message": "Pointer may be nullptr; no null check before dereference.",
+      "pedagogical_label": "Pointer Safety",
+      "knowledge_concept": "Pointer_Safety",
+      "description": "A pointer is dereferenced without ensuring it points to valid memory or is not nullptr.",
+      "remediation": "Check if (ptr != nullptr) or if (ptr) before dereference; consider smart pointers."
+    },
+    "CPP_UNINIT_VAR_USAGE": {
+      "display_name": "Use of uninitialized variable",
+      "severity": "Medium",
+      "message": "Variable is read before being assigned a definite value.",
+      "pedagogical_label": "Variable Lifetime",
+      "knowledge_concept": "Variable_Basics",
+      "description": "A local variable is used before it has been given a well-defined initial value.",
+      "remediation": "Initialize before use or at declaration, e.g. int x = 0;"
+    },
+    "CPP_DANGLING_POINTER": {
+      "display_name": "Use of dangling pointer",
+      "severity": "Critical",
+      "message": "Pointer used after the pointed-to object has been destroyed or freed.",
+      "pedagogical_label": "Pointer Safety",
+      "knowledge_concept": "Pointer_Lifetime",
+      "description": "The memory or object the pointer referred to no longer exists; further use is undefined behavior.",
+      "remediation": "Set ptr = nullptr after delete; or use smart pointers/references to avoid manual lifetime management."
+    },
+    "CPP_DOUBLE_FREE": {
+      "display_name": "Double free",
+      "severity": "Critical",
+      "message": "Same memory is deleted or freed more than once.",
+      "pedagogical_label": "Memory Management",
+      "knowledge_concept": "Dynamic_Memory_Management",
+      "description": "The same pointer is freed multiple times, causing undefined behavior and heap corruption.",
+      "remediation": "Set pointer to nullptr after each delete; or use smart pointers and avoid manual delete."
+    },
+    "CPP_USE_AFTER_FREE": {
+      "display_name": "Use after free",
+      "severity": "Critical",
+      "message": "Memory is accessed through a pointer after it has been freed.",
+      "pedagogical_label": "Memory Management",
+      "knowledge_concept": "Pointer_Lifetime",
+      "description": "The pointer is used for read or write after delete/free has been called.",
+      "remediation": "Do not use the pointer after freeing; reassign it before reuse if needed."
+    },
+    "CPP_BUFFER_OVERFLOW": {
+      "display_name": "Buffer overflow",
+      "severity": "Critical",
+      "message": "Write exceeds buffer bounds and may overwrite adjacent memory.",
+      "pedagogical_label": "Bounds Safety",
+      "knowledge_concept": "Buffer_Safety",
+      "description": "Data is written to an array or fixed-size buffer without checking length, causing out-of-bounds write.",
+      "remediation": "Use length-bounded APIs (e.g. strncpy, snprintf) or std::string/std::vector."
+    },
+    "CPP_STR_NOT_NULL_TERMINATED": {
+      "display_name": "String not null-terminated",
+      "severity": "High",
+      "message": "Character array used as string does not guarantee a trailing '\\0'.",
+      "pedagogical_label": "String Safety",
+      "knowledge_concept": "String_Fundamentals",
+      "description": "When building or copying a string from a char array, a null terminator was not added after the valid content.",
+      "remediation": "Ensure a trailing '\\0', or use std::string to avoid manual management."
+    },
+    "CPP_SWITCH_NO_DEFAULT": {
+      "display_name": "Switch missing default",
+      "severity": "Medium",
+      "message": "Switch statement has no default branch; not all possible values are handled.",
+      "pedagogical_label": "Control Flow Completeness",
+      "knowledge_concept": "Control_Flow_Switch",
+      "description": "Switch does not cover all enum or possible values; missing default can lead to silent bugs.",
+      "remediation": "Add a default branch for unlisted values, or list all cases explicitly."
+    },
+    "CPP_MISSING_BREAK": {
+      "display_name": "Missing break in switch case",
+      "severity": "Medium",
+      "message": "A case does not end with break, causing unintended fall-through.",
+      "pedagogical_label": "Control Flow Completeness",
+      "knowledge_concept": "Control_Flow_Switch",
+      "description": "A switch case does not end with break/return, so execution falls through to the next case.",
+      "remediation": "Add break, return, or [[fallthrough]] at the end of each case to make intent clear."
+    },
+    "CPP_NON_VOID_NO_RETURN": {
+      "display_name": "Non-void function may not return",
+      "severity": "High",
+      "message": "A function with a return type has a control path that does not execute return.",
+      "pedagogical_label": "Function Contract",
+      "knowledge_concept": "Function_Return_Values",
+      "description": "Some branches do not return a value consistent with the declared return type, leading to undefined behavior.",
+      "remediation": "Ensure every path returns a value, or use [[noreturn]] for functions that never return."
+    },
+    "CPP_IMPLICIT_NARROWING": {
+      "display_name": "Implicit narrowing conversion",
+      "severity": "Medium",
+      "message": "Implicit type conversion may lose precision or range.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type_Conversion",
+      "description": "e.g. assigning long/double to int causes implicit narrowing and possible truncation or overflow.",
+      "remediation": "Use explicit static_cast to show intent, or use a larger type and range checks."
+    },
+    "CPP_UNSAFE_CAST": {
+      "display_name": "Unsafe cast",
+      "severity": "High",
+      "message": "C-style or reinterpret_cast used in a way that may be unsafe.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type_Conversion",
+      "description": "Inappropriate cast can cause undefined behavior or object slicing.",
+      "remediation": "Prefer static_cast; use dynamic_cast for polymorphic downcast and check the result."
+    },
+    "CPP_VOID_POINTER_USE": {
+      "display_name": "Dereference of void pointer without cast",
+      "severity": "High",
+      "message": "void* is dereferenced or used in pointer arithmetic without casting to a concrete type.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Pointer_Types",
+      "description": "void* has no type information; direct dereference or pointer arithmetic is invalid.",
+      "remediation": "Cast to a concrete pointer type with static_cast before dereferencing."
+    },
+    "CPP_UNREACHABLE_CODE": {
+      "display_name": "Unreachable code",
+      "severity": "Medium",
+      "message": "Code that can never be executed.",
+      "pedagogical_label": "Control Flow Clarity",
+      "knowledge_concept": "Control_Flow_Structure",
+      "description": "Code after return/throw or in a branch that is always false is unreachable.",
+      "remediation": "Remove dead code or fix the logic so the branch can be reached."
+    },
+    "CPP_INFINITE_LOOP_RISK": {
+      "display_name": "Potential infinite loop",
+      "severity": "High",
+      "message": "Loop condition may never become false or loop variable is not updated.",
+      "pedagogical_label": "Loop Structure",
+      "knowledge_concept": "Loop_Control",
+      "description": "The loop condition does not change, or the loop variable is not updated in the body.",
+      "remediation": "Ensure the condition can become false or the loop variable is updated correctly."
+    },
+    "CPP_SELF_ASSIGNMENT": {
+      "display_name": "Copy assignment does not check self-assignment",
+      "severity": "Medium",
+      "message": "operator= does not handle this == &other; self-assignment may corrupt the object.",
+      "pedagogical_label": "Copy Semantics",
+      "knowledge_concept": "Copy_Assignment",
+      "description": "Without a self-assignment check, freeing then copying in operator= can destroy the object.",
+      "remediation": "Add if (this == &other) return *this; at the start of operator=."
+    },
+    "CPP_VIRTUAL_DESTRUCTOR_MISSING": {
+      "display_name": "Polymorphic base class without virtual destructor",
+      "severity": "High",
+      "message": "Deleting a derived object via base pointer with non-virtual destructor is undefined behavior.",
+      "pedagogical_label": "Polymorphism and Destructors",
+      "knowledge_concept": "Polymorphism_Destructor",
+      "description": "If the base destructor is not virtual, delete via base pointer will not call the derived destructor.",
+      "remediation": "Declare the destructor virtual if the class is used as a polymorphic base."
+    },
+    "CPP_ITERATOR_INVALIDATION": {
+      "display_name": "Use of invalidated iterator",
+      "severity": "High",
+      "message": "Iterator is used after the container was modified; it may be invalid.",
+      "pedagogical_label": "STL Containers and Iterators",
+      "knowledge_concept": "Iterator_Validity",
+      "description": "After insert/erase/push_back etc., iterators may be invalidated; using them is undefined behavior.",
+      "remediation": "Re-obtain iterators after modifying the container, or use indices; check the documentation for invalidation rules."
+    },
+    "CPP_RESERVED_IDENTIFIER": {
+      "display_name": "Use of reserved identifier",
+      "severity": "Low",
+      "message": "Identifier starts with underscore or contains double underscore; reserved for the implementation.",
+      "pedagogical_label": "Naming Conventions",
+      "knowledge_concept": "Identifier_Rules",
+      "description": "Identifiers starting with _ or containing __ are reserved and may conflict with the implementation.",
+      "remediation": "Avoid leading underscore and __ in identifiers."
+    },
+    "CPP_DIVISION_BY_ZERO": {
+      "display_name": "Division by zero risk",
+      "severity": "Critical",
+      "message": "Divisor may be zero; no check before division or modulo.",
+      "pedagogical_label": "Arithmetic Safety",
+      "knowledge_concept": "Arithmetic_Safety",
+      "description": "In / or % the divisor may be 0, causing undefined behavior or exception.",
+      "remediation": "Check divisor != 0 before division, or use conditional logic to avoid division by zero."
+    },
+    "CPP_UNINIT_MEMBER": {
+      "display_name": "Uninitialized member variable",
+      "severity": "Medium",
+      "message": "Class member may be used before being initialized in the constructor.",
+      "pedagogical_label": "Object Lifetime",
+      "knowledge_concept": "Constructor_Initialization",
+      "description": "Constructor does not initialize all members or the initializer list omits some.",
+      "remediation": "Initialize all members in the constructor initializer list or give default values."
+    },
+    "CPP_RECURSION_NO_BASE": {
+      "display_name": "Recursion without base case",
+      "severity": "High",
+      "message": "Recursive function may not return on a boundary condition, leading to infinite recursion.",
+      "pedagogical_label": "Recursion and Termination",
+      "knowledge_concept": "Recursion_Base_Case",
+      "description": "Not all paths provide a base case, which can cause stack overflow.",
+      "remediation": "Handle the base case first and return; then handle the recursive case."
+    },
+    "CPP_NEGATIVE_INDEX": {
+      "display_name": "Negative array index",
+      "severity": "Critical",
+      "message": "A negative value is used as array or container index.",
+      "pedagogical_label": "Bounds Safety",
+      "knowledge_concept": "Array_Indexing_Fundamentals",
+      "description": "A negative index accesses memory before the array; severe out-of-bounds access.",
+      "remediation": "Ensure index is non-negative; if computed, check index >= 0 before use."
     }
   }
 }

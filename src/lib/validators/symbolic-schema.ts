@@ -18,6 +18,8 @@ export const symbolicDefinitionSchema = z.object({
     errorMap: () => ({ message: "severity 须为 Critical | High | Medium | Low" }),
   }),
   description: z.string().min(1, "description 必填"),
+  message: z.string().optional(),
+  remediation: z.string().optional(),
 });
 
 export type SymbolicDefinitionSchema = z.infer<typeof symbolicDefinitionSchema>;
