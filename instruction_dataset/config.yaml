@@ -1,0 +1,17 @@
+# 指令数据集配置
+# 用于 LoRA 微调（如 LLaMA-Factory、QLoRA 等）
+
+# 支持的输出格式
+# - alpaca: instruction + input + output（兼容 Alpaca/Stanford）
+# - sharegpt: 多轮对话 [{"from":"human","value":"..."},{"from":"gpt","value":"..."}]
+# - llama_factory: LLaMA-Factory 的 alpaca 格式
+
+output_format: alpaca
+output_file: data/instruction_train.jsonl
+encoding: utf-8
+
+# 每条样本的字段映射（若源数据字段名不同可在此配置）
+field_mapping:
+  instruction: instruction
+  input: input
+  output: output

@@ -1,0 +1,10 @@
+# LoRA 微调指令数据集构建
+# Python 3.8+
+
+# 数据处理
+pandas>=2.0.0
+pyyaml>=6.0
+
+# 可选：与 Hugging Face 集成
+# datasets>=2.14.0
+# transformers>=4.35.0
