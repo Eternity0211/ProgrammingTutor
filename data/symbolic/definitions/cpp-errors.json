@@ -1,0 +1,158 @@
+{
+  "definitions": {
+    "CPP_SYNTAX_ERROR": {
+      "severity": "High",
+      "display_name": "Syntax Error",
+      "message": "Compilation failed. Check for missing expressions, semicolons, or mismatched braces.",
+      "pedagogical_label": "Compilation",
+      "knowledge_concept": "Syntax",
+      "remediation": "Ensure all statements end with a semicolon and all braces are properly matched."
+    },
+
+    "CPP_ASSIGNMENT_IN_IF": {
+      "severity": "High",
+      "display_name": "Assignment in If Condition",
+      "message": "You used '=' inside an if condition. Did you mean '==' for comparison?",
+      "pedagogical_label": "Logic Error",
+      "knowledge_concept": "Conditional Statements",
+      "remediation": "Replace '=' with '==' if you intended comparison."
+    },
+
+    "CPP_ARRAY_OOB": {
+      "severity": "High",
+      "display_name": "Array Index Out of Bounds",
+      "message": "Index {index} is outside the valid range (0 to {maxIndex}) for array '{name}'.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Array Indexing",
+      "remediation": "Ensure the index stays within the declared array size.",
+      "remediation_code": "for(int i = 0; i < N; i++) { ... }"
+    },
+
+    "CPP_ARRAY_OOB_VARIABLE": {
+      "severity": "High",
+      "display_name": "Unchecked Array Index",
+      "message": "Array index is a variable and may go out of bounds without proper validation.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Array Indexing",
+      "remediation": "Validate that 0 <= index && index < size before accessing the array."
+    },
+
+    "CPP_NEGATIVE_INDEX_ACCESS": {
+      "severity": "High",
+      "display_name": "Negative Array Index",
+      "message": "Array index {index} is negative, which accesses memory before the array begins.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Array Indexing",
+      "remediation": "Ensure the index is greater than or equal to 0 before use."
+    },
+
+    "CPP_INVALID_ARRAY_SIZE": {
+      "severity": "High",
+      "display_name": "Invalid Array Size",
+      "message": "Array size must be a positive integer. You provided: {size}.",
+      "pedagogical_label": "Array Declaration",
+      "knowledge_concept": "Arrays",
+      "remediation": "Use a positive constant integer when declaring fixed-size arrays.",
+      "remediation_code": "int arr[10];"
+    },
+
+    "CPP_DIVISION_BY_ZERO": {
+      "severity": "High",
+      "display_name": "Division by Zero",
+      "message": "Divisor may be zero, which causes undefined behavior.",
+      "pedagogical_label": "Arithmetic Safety",
+      "knowledge_concept": "Arithmetic Operations",
+      "remediation": "Add a condition to ensure divisor != 0 before division."
+    },
+
+    "CPP_NULL_POINTER_DEREF": {
+      "severity": "High",
+      "display_name": "Possible Null Pointer Dereference",
+      "message": "Pointer may be nullptr and is dereferenced without a null check.",
+      "pedagogical_label": "Pointer Safety",
+      "knowledge_concept": "Pointers",
+      "remediation": "Check if (ptr != nullptr) before dereferencing the pointer."
+    },
+
+    "CPP_UNINIT_VAR_USAGE": {
+      "severity": "Medium",
+      "display_name": "Use of Uninitialized Variable",
+      "message": "Variable is used before being assigned a definite value.",
+      "pedagogical_label": "Variable Initialization",
+      "knowledge_concept": "Variable Basics",
+      "remediation": "Initialize variables at declaration, e.g. int x = 0;"
+    },
+
+    "CPP_UNINIT_MEMBER": {
+      "severity": "Medium",
+      "display_name": "Uninitialized Member Variable",
+      "message": "Class member may not be initialized in the constructor.",
+      "pedagogical_label": "Object Construction",
+      "knowledge_concept": "Constructors",
+      "remediation": "Initialize all member variables in the constructor initializer list."
+    },
+
+    "CPP_IMPLICIT_NARROWING": {
+      "severity": "Medium",
+      "display_name": "Implicit Narrowing Conversion",
+      "message": "Implicit conversion may lose precision or range.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type Conversion",
+      "remediation": "Use static_cast to make the conversion explicit or use a wider type."
+    },
+
+    "CPP_UNSAFE_CAST": {
+      "severity": "High",
+      "display_name": "Unsafe Type Cast",
+      "message": "C-style cast or reinterpret_cast may cause undefined behavior.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type Conversion",
+      "remediation": "Prefer static_cast or dynamic_cast where appropriate."
+    },
+
+    "CPP_VOID_POINTER_USE": {
+      "severity": "High",
+      "display_name": "Void Pointer Dereference",
+      "message": "void* is used without casting to a concrete type.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Pointer Types",
+      "remediation": "Cast void* to the correct pointer type before dereferencing."
+    },
+
+    "CPP_SWITCH_NO_DEFAULT": {
+      "severity": "Medium",
+      "display_name": "Switch Missing Default Case",
+      "message": "Switch statement has no default branch.",
+      "pedagogical_label": "Control Flow Completeness",
+      "knowledge_concept": "Switch Statements",
+      "remediation": "Add a default case to handle unexpected values."
+    },
+
+    "CPP_MISSING_BREAK": {
+      "severity": "Medium",
+      "display_name": "Missing Break in Switch",
+      "message": "Switch case may fall through without a break statement.",
+      "pedagogical_label": "Control Flow",
+      "knowledge_concept": "Switch Statements",
+      "remediation": "Add break, return, or [[fallthrough]] to clarify intent."
+    },
+
+    "CPP_NON_VOID_NO_RETURN": {
+      "severity": "High",
+      "display_name": "Non-Void Function Missing Return",
+      "message": "Function has a return type but not all control paths return a value.",
+      "pedagogical_label": "Function Contracts",
+      "knowledge_concept": "Function Return Values",
+      "remediation": "Ensure every control path returns a value consistent with the function type."
+    },
+
+    "CPP_RESERVED_IDENTIFIER": {
+      "severity": "Low",
+      "display_name": "Reserved Identifier Usage",
+      "message": "Identifier uses reserved naming pattern (leading underscore or double underscore).",
+      "pedagogical_label": "Naming Rules",
+      "knowledge_concept": "Identifiers",
+      "remediation": "Avoid identifiers starting with '_' or containing '__'."
+    }
+  }
+}

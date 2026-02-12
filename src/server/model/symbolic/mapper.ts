@@ -1,131 +1,166 @@
 /**
- * 符号模型侧 - 规则库映射器 (Rule Mapper)
- *
- * 核心职责：
- * 1. 加载并校验 `data/symbolic/definitions/cpp-defs.json` 规则定义文件。
- * 2. 将 Analyzer 输出的原始 AST 问题 (SymbolicIssueRaw) 映射为包含完整教学解释的 SymbolicIssue。
- * 3. 充当 "事实" (Analyzer) 与 "知识" (Definitions) 之间的桥梁。
+ * @file mapper.ts
+ * @description 符号分析转换层 (Transformation Layer)。
+ * 负责将分析引擎产出的原始数据 (RawIssue) 与规则注册表 (JSON) 关联，
+ * 转换为带有教学建议、知识点和修复代码的富文本 Issue 对象。
+ * @module Symbolic/Transformation
  */
 
-import path from "path";
 import fs from "fs";
-import { z } from "zod";
-import type {
-  SymbolicIssueRaw,
-  SymbolicIssue,
-  SymbolicDefinition,
-} from "@/lib/types/symbolic-types";
+import path from "path";
 
 // =============================================================================
-// 1. 规则定义校验 (Schema Validation)
-// =============================================================================
-
-// 本地定义 Zod Schema，确保运行时加载的 JSON 文件严格符合 TypeScript 接口定义
-// 这防止了因配置文件拼写错误导致的潜在运行时崩溃
-const LocalSymbolicDefinitionSchema = z.object({
-  // 核心展示字段
-  display_name: z.string(),
-  severity: z.enum(["Critical", "High", "Medium", "Low"]),
-  message: z.string(),
-  pedagogical_label: z.string(), // 教学标签，如 "Logic Error"
-  
-  // 知识关联字段 (用于连接知识图谱或 LLM 上下文)
-  knowledge_concept: z.string(), 
-
-  // 辅助说明字段 (可选)
-  description: z.string().optional(),
-  remediation: z.string().optional(),
-});
-
-const LocalDefinitionsFileSchema = z.object({
-  definitions: z.record(LocalSymbolicDefinitionSchema),
-});
-
-// =============================================================================
-// 2. 数据加载与预处理 (Data Loading)
+// Type Definitions | 类型定义
 // =============================================================================
 
 /**
- * 同步加载规则定义文件
- * 使用 fs 模块直接读取，确保在 Next.js 服务端环境中能稳定获取数据，
- * 避免因构建打包导致的模块导入路径问题。
+ * 原始分析结果接口
+ * 包含规则 ID、位置信息以及可选的动态元数据
  */
-function loadDefinitions() {
+export interface RawIssue {
+  ruleId: string;           // 规则唯一标识符
+  location: {
+    line: number;           // 行号 (从 0 或 1 开始，取决于解析器配置)
+    column: number;         // 列号
+  };
+  message?: string;         // 可选：允许在分析阶段覆盖默认的教学消息
+  meta?: Record<string, string | number>; 
+  // 模板变量元数据，例如 { index: 10, name: "arr", maxIndex: 5 }
+}
+
+/**
+ * 最终输出的教学 Issue 接口
+ * 包含完整的教学上下文，用于前端渲染和知识图谱关联
+ */
+export interface Issue {
+  ruleId: string;           // 规则 ID
+  severity?: string;        // 严重程度 (Critical/High/Medium/Low)
+  display_name?: string;    // 显示名称 (例如：数组越界)
+  message?: string;         // 填充变量后的最终消息内容
+  pedagogical_label?: string; // 教学标签 (例如：内存安全)
+  knowledge_concept?: string; // 关联的知识概念
+  description?: string;     // 详细的错误描述
+  remediation?: string;     // 教学修复建议
+  remediation_code?: string; // 修复代码示例
+  location: {
+    line: number;
+    column: number;
+  };
+}
+
+/** 内部使用的 JSON 定义文件结构 */
+interface DefinitionFile {
+  definitions: Record<string, any>;
+}
+
+// =============================================================================
+// Internal Utilities | 内部工具函数
+// =============================================================================
+
+/**
+ * 从本地磁盘加载指定的 JSON 定义文件
+ * @param filename - 配置文件名 (例如 'cpp-errors.json')
+ * @returns 返回定义的规则字典，若文件不存在则返回空对象
+ */
+function loadDefinitionFile(filename: string): Record<string, any> {
+  const filePath = path.resolve(
+    process.cwd(),
+    "data/symbolic/definitions",
+    filename
+  );
+
+  if (!fs.existsSync(filePath)) {
+    return {};
+  }
+
   try {
-    const jsonPath = path.join(
-      process.cwd(),
-      "data",
-      "symbolic",
-      "definitions",
-      "cpp-defs.json"
-    );
-
-    if (!fs.existsSync(jsonPath)) {
-      throw new Error(`Symbolic definitions file not found at: ${jsonPath}`);
-    }
-
-    const fileContent = fs.readFileSync(jsonPath, "utf-8");
-    return JSON.parse(fileContent);
-
-  } catch (error) {
-    console.error("[Mapper] Failed to load cpp-defs.json:", error);
-    throw error;
+    const raw = fs.readFileSync(filePath, "utf-8");
+    const parsed: DefinitionFile = JSON.parse(raw);
+    return parsed.definitions ?? {};
+  } catch (e) {
+    console.error(`[Mapper] Failed to parse definition file: ${filename}`, e);
+    return {};
   }
 }
 
-// 初始化加载 (Module Level Scope)
-// 在服务启动时执行一次，后续调用直接使用缓存的 parsed 结果
-const rawData = loadDefinitions();
+/**
+ * 字符串模板插值工具
+ * 将模板中的占位符 (例如 {name}) 替换为 meta 对象中对应的实际值
+ * @param template - 消息模板字符串
+ * @param meta - 包含实际参数值的键值对
+ * @returns 替换完成后的字符串
+ */
+function interpolate(
+  template?: string,
+  meta?: Record<string, string | number>
+): string | undefined {
+  if (!template) return undefined;
+  if (!meta) return template;
 
-// =============================================================================
-// 3. 数据校验与类型转换 (Validation & Casting)
-// =============================================================================
-
-const parsed = LocalDefinitionsFileSchema.safeParse(rawData);
-
-if (!parsed.success) {
-  console.error("❌ Symbolic Definitions Validation Failed!");
-  console.error("Details:", JSON.stringify(parsed.error.flatten(), null, 2));
-  throw new Error(`cpp-defs.json 格式校验失败，请检查字段完整性。`);
+  return template.replace(/\{(\w+)\}/g, (_, key) =>
+    meta[key] !== undefined ? String(meta[key]) : `{${key}}`
+  );
 }
 
-// 强制类型断言：经过 Zod 严格校验后，数据结构已确认为安全
-const cppDefinitions = parsed.data.definitions as unknown as Record<string, SymbolicDefinition>;
-
 // =============================================================================
-// 4. 核心映射逻辑 (Mapping Logic)
+// Public API | 公共接口
 // =============================================================================
 
 /**
- * 将原始 AST 问题列表转换为富含教学信息的 Issue 对象
- * * @param issues Analyzer 产生的原始问题列表
- * @returns 注入了定义信息 (Definition) 的完整 Issue 列表
+ * 将原始的错误与警告数据映射为富文本教学 Issue
+ * 该方法会读取本地定义的规则库，执行模板变量替换，并合并位置信息
+ * @param rawErrors - 原始错误列表
+ * @param rawWarnings - 原始警告列表
+ * @returns 包含 errors 和 warnings 分类的 Issue 集合
  */
-export function mapCppIssues(issues: SymbolicIssueRaw[]): SymbolicIssue[] {
-  const result: SymbolicIssue[] = [];
-  
-  for (const issue of issues) {
-    // 根据 Rule ID 查找对应的教学定义
-    const definition = cppDefinitions[issue.id];
+export function mapIssues(
+  rawIssues: RawIssue[],
+  rawWarnings: RawIssue[]
+): { errors: Issue[]; warnings: Issue[] } {
+  // 加载静态规则库
+  const errorDefs = loadDefinitionFile("cpp-errors.json");
+  const warningDefs = loadDefinitionFile("cpp-warnings.json");
+
+  /**
+   * 内部转换逻辑：将单条 RawIssue 转换为富文本 Issue
+   */
+  function mapOne(
+    raw: RawIssue,
+    definitions: Record<string, any>
+  ): Issue | null {
+    const def = definitions[raw.ruleId];
     
-    // 如果规则库中未定义该 ID (可能是新规则尚未配置 JSON)，则跳过，防止前端报错
-    if (!definition) {
-      // 仅在开发环境可开启此日志进行提示
-      // console.warn(`[Mapper] Warning: No definition found for rule ID: ${issue.id}`);
-      continue;
+    // 若规则 ID 未在定义文件中注册，则忽略该条目 (过滤未知规则)
+    if (!def) {
+      return null;
     }
 
-    // 构建最终对象：合并 原始定位信息 + 动态元数据 + 静态教学定义
-    const mapped: SymbolicIssue = {
-      id: issue.id,
-      range: issue.range,
-      snippet: issue.snippet,
-      // 仅当 metadata 存在时才透传，保持对象整洁
-      ...(issue.metadata != null ? { metadata: issue.metadata } : {}),
-      definition,
+    // 确定最终消息：优先使用动态覆盖的消息，否则使用插值后的模板消息
+    const finalMessage =
+      raw.message ??
+      interpolate(def.message, raw.meta);
+
+    return {
+      ruleId: raw.ruleId,
+      severity: def.severity,
+      display_name: def.display_name,
+      message: finalMessage,
+      pedagogical_label: def.pedagogical_label,
+      knowledge_concept: def.knowledge_concept,
+      description: def.description,
+      remediation: def.remediation,
+      remediation_code: def.remediation_code,
+      location: raw.location,
     };
-    result.push(mapped);
   }
-  
-  return result;
+
+  return {
+    errors: rawIssues
+      .map((r) => mapOne(r, errorDefs))
+      .filter((i): i is Issue => i !== null),
+
+    warnings: rawWarnings
+      .map((r) => mapOne(r, warningDefs))
+      .filter((i): i is Issue => i !== null),
+  };
 }

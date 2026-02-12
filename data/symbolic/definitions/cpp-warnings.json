@@ -1,0 +1,32 @@
+{
+  "definitions": {
+    "CPP_NO_GOTO": {
+      "severity": "Low",
+      "display_name": "Avoid Goto",
+      "message": "Usage of 'goto' breaks structured programming principles and makes control flow harder to maintain.",
+      "pedagogical_label": "Best Practice",
+      "knowledge_concept": "Control Flow",
+      "remediation": "Replace 'goto' with structured control constructs such as loops or functions."
+    },
+
+    "CPP_VAR_NAMING": {
+      "severity": "Low",
+      "display_name": "Non-Standard Variable Naming",
+      "message": "Variable name '{name}' does not follow recommended naming conventions.",
+      "pedagogical_label": "Code Style",
+      "knowledge_concept": "Naming Conventions",
+      "remediation": "Use lowerCamelCase for variable names and avoid unnecessary uppercase letters.",
+      "remediation_code": "int totalScore = 0;"
+    },
+
+    "CPP_MAGIC_NUMBER": {
+      "severity": "Low",
+      "display_name": "Magic Number Detected",
+      "message": "Magic number '{value}' detected. Consider defining it as a named constant.",
+      "pedagogical_label": "Code Maintainability",
+      "knowledge_concept": "Constants and Literals",
+      "remediation": "Define a named constant instead of using raw numeric literals.",
+      "remediation_code": "const int MAX_SIZE = {value};"
+    }
+  }
+}

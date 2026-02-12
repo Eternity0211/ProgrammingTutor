@@ -1,0 +1,184 @@
+/**
+ * @file static/errors.ts
+ * @description 静态分析 - 错误检查域 (Error Domain Static Analysis)。
+ * 职责：
+ * 1. 扫描 AST 中的原生语法错误 (Native Syntax Errors, 编译器级)。
+ * 2. 执行基于 SCM 模式匹配的逻辑错误检查 (Logic Errors, 逻辑级)。
+ * @module Symbolic/Static/Errors
+ */
+
+import { 
+  Tree, 
+  Query, 
+  SyntaxNode, 
+  getLanguage,
+  createQuery // 使用 parser 提供的工厂函数以兼容不同版本的 tree-sitter
+} from "../parser"; 
+
+import { RawIssue } from "../mapper";
+import fs from "fs";
+import path from "path";
+
+// =============================================================================
+// Configuration & Registry | 配置与注册表
+// =============================================================================
+
+/** 逻辑错误规则 (SCM) 的存放目录 */
+const PATTERN_DIR = path.resolve(process.cwd(), "data/symbolic/ast-patterns/cpp/errors");
+
+/** * 查询缓存池 (Query Cache)
+ * key: ruleId (文件名), value: 预编译好的 Tree-sitter Query 对象
+ * 作用：利用单例模式避免在每次请求时重复编译 SCM 文件，提升性能。
+ */
+let queryRegistry: Map<string, Query> | null = null;
+
+/**
+ * 确保所有 SCM 规则已加载并编译。
+ * 该函数是幂等的 (Idempotent)，只会初始化一次。
+ */
+async function ensureRegistry(): Promise<Map<string, Query>> {
+  if (queryRegistry) return queryRegistry;
+
+  queryRegistry = new Map();
+  const language = await getLanguage(); 
+
+  // 若规则目录不存在（例如首次部署），静默返回空注册表
+  if (!fs.existsSync(PATTERN_DIR)) {
+    return queryRegistry;
+  }
+
+  // 自动扫描目录下的所有 .scm 文件
+  const files = fs.readdirSync(PATTERN_DIR).filter((f) => f.endsWith(".scm"));
+
+  for (const file of files) {
+    const ruleId = path.parse(file).name; // 文件名即规则 ID (e.g. CPP_NEGATIVE_ARRAY_SIZE)
+    const scmPath = path.join(PATTERN_DIR, file);
+
+    try {
+      const source = fs.readFileSync(scmPath, "utf-8");
+      // 使用 parser.ts 提供的 createQuery 屏蔽底层 API 差异
+      const query = createQuery(language, source); 
+      queryRegistry.set(ruleId, query);
+    } catch (e) {
+      console.error(`[Static/Errors] Failed to compile SCM rule: ${ruleId}`, e);
+    }
+  }
+
+  return queryRegistry;
+}
+
+// =============================================================================
+// Core Analysis Pipeline | 核心分析流水线
+// =============================================================================
+
+/**
+ * 执行全量错误分析。
+ * 包含两个阶段：
+ * 1. 原生语法检查 (Tree-sitter 内置能力)
+ * 2. 逻辑规则匹配 (自定义 SCM 规则)
+ * * @param tree - 由 parser.ts 生成的抽象语法树
+ * @returns 原始错误列表 (RawIssue[])
+ */
+export async function analyzeErrors(tree: Tree): Promise<RawIssue[]> {
+  const issues: RawIssue[] = [];
+
+  // Phase 1: Native Syntax Check (Tree-sitter Built-in)
+  // 利用 Tree-sitter 原生的错误恢复机制检测语法错误
+  collectNativeErrors(tree.rootNode, issues);
+
+  // Phase 2: Logic Rule Check (SCM Pattern Matching)
+  // 加载自定义规则进行逻辑扫描
+  const queries = await ensureRegistry();
+  
+  // 遍历所有已注册的逻辑规则
+  for (const [ruleId, query] of queries) {
+    runQuery(tree.rootNode, ruleId, query, issues);
+  }
+
+  return issues;
+}
+
+// =============================================================================
+// Phase 1: Native Syntax Errors | 原生语法检测
+// =============================================================================
+
+/**
+ * 递归扫描 AST 中的错误节点。
+ * 利用 `node.hasError` 标志位进行剪枝优化：如果子树无错，直接跳过。
+ */
+function collectNativeErrors(node: SyntaxNode, issues: RawIssue[]) {
+  // 性能优化：如果当前节点及其子孙完全正确，无需深入遍历
+  // 注意：在 web-tree-sitter 中 hasError 是属性访问，无需调用方法
+  if (!node.hasError) return;
+
+  // 发现具体的错误节点 (ERROR) 或缺失节点 (MISSING)
+  // 这通常意味着代码无法通过编译
+  if (node.isError || node.isMissing) {
+    issues.push({
+      ruleId: "CPP_SYNTAX_ERROR",
+      location: {
+        line: node.startPosition.row,
+        column: node.startPosition.column,
+      },
+      // 提取错误片段作为 meta 信息，供 mapper 填充消息
+      meta: {
+        token: node.text.slice(0, 20) // 截取前20字符避免过长
+      }
+    });
+    // 找到根源错误后，通常不再深入其内部，避免报错轰炸 (Error Cascading)
+    return;
+  }
+
+  // 递归深入有问题的分支
+  for (let i = 0; i < node.childCount; i++) {
+    collectNativeErrors(node.child(i)!, issues);
+  }
+}
+
+// =============================================================================
+// Phase 2: Logic Errors (SCM) | 逻辑错误检测
+// =============================================================================
+
+/**
+ * 运行单个 SCM 查询并提取捕获结果。
+ * 负责将 Tree-sitter 的 Capture 转换为统一的 RawIssue 格式。
+ */
+function runQuery(
+  root: SyntaxNode,
+  ruleId: string,
+  query: Query,
+  issues: RawIssue[]
+) {
+  // query.matches() 返回匹配组，适合复杂的多节点关系
+  const matches = query.matches(root);
+
+  for (const match of matches) {
+    let targetNode: SyntaxNode | null = null;
+    const meta: Record<string, string | number> = {};
+
+    // 遍历本次匹配中的所有捕获 (Captures)
+    for (const capture of match.captures) {
+      const name = capture.name;
+
+      // 约定：名为 @target 的节点是报错主体，用于定位
+      if (name === "target") {
+        targetNode = capture.node;
+      } 
+      // 约定：其他名称 (如 @name, @val) 提取为 meta 数据供 Mapper 使用
+      else {
+        meta[name] = capture.node.text;
+      }
+    }
+
+    if (targetNode) {
+      issues.push({
+        ruleId,
+        location: {
+          line: targetNode.startPosition.row,
+          column: targetNode.startPosition.column,
+        },
+        meta, // 将提取到的变量名、数值等传递给 Mapper 进行模板插值
+      });
+    }
+  }
+}
