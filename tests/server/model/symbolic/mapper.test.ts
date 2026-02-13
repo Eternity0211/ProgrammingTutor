@@ -4,7 +4,8 @@
  * 验证原始分析数据（RawIssue）是否能根据注册表中的真实定义正确转换为带有教学信息的富文本格式。
  */
 
-import { mapIssues, RawIssue } from "../../../../src/server/model/symbolic/mapper";
+import { mapIssues } from "../../../../src/server/model/symbolic/mapper";
+import { RawIssue } from "../../../../src/lib/types/symbolic-types";
 
 // =============================================================================
 // Test Suite: Symbolic Mapper

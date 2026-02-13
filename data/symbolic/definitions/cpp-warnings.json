@@ -26,6 +26,15 @@
       "pedagogical_label": "Code Maintainability",
       "knowledge_concept": "Constants and Literals",
       "remediation": "Define a named constant instead of using raw numeric literals."
+    },
+
+    "CPP_SWITCH_NO_DEFAULT": {
+      "severity": "Medium",
+      "display_name": "Switch Missing Default Case",
+      "message": "Switch statement has no default branch.",
+      "pedagogical_label": "Control Flow Completeness",
+      "knowledge_concept": "Switch Statements",
+      "remediation": "Add a default case to handle unexpected values."
     }
   }
 }
