@@ -61,6 +61,68 @@ describe("Static Warnings Analyzer", () => {
 
   // ---------------------------------------------------------------------------
   /**
+   * @test Case: Variable Naming | 变量命名规范
+   * @description Verifies detection of non-standard short variable names using CPP_VAR_NAMING.scm.
+   * 验证：基于 CPP_VAR_NAMING 规则，能识别过短且非常见约定的变量名（如 a），
+   * 同时不过度干预常见循环变量 i/j/k/x/y/z。
+   */
+  it("should detect non-standard short variable names (CPP_VAR_NAMING)", async () => {
+    const rulePath = path.join(PATTERN_DIR, "CPP_VAR_NAMING.scm");
+    if (!fs.existsSync(rulePath)) {
+      console.warn("⚠️ Skipping CPP_VAR_NAMING test: Rule file not found.");
+      return;
+    }
+
+    const code = `
+      void foo() {
+        int a = 0;   // 应被标记
+        int i = 0;   // 常见循环变量，不应被标记
+      }
+    `;
+
+    const tree = await parseCode(code);
+    const results = await analyzeWarnings(tree);
+
+    const namingIssues = results.filter(r => r.ruleId === "CPP_VAR_NAMING");
+
+    // 只针对变量 a 产出一条告警
+    expect(namingIssues.length).toBe(1);
+    expect(namingIssues[0]?.meta?.name).toBe("a");
+  });
+
+  // ---------------------------------------------------------------------------
+  /**
+   * @test Case: Switch Without Default | 缺少 default 的 switch
+   * @description Verifies detection of switch statements without a default branch using CPP_SWITCH_NO_DEFAULT.scm.
+   * 验证：基于 CPP_SWITCH_NO_DEFAULT 规则，检测缺省 default 分支的 switch。
+   */
+  it("should detect switch statement without default (CPP_SWITCH_NO_DEFAULT)", async () => {
+    const rulePath = path.join(PATTERN_DIR, "CPP_SWITCH_NO_DEFAULT.scm");
+    if (!fs.existsSync(rulePath)) {
+      console.warn("⚠️ Skipping CPP_SWITCH_NO_DEFAULT test: Rule file not found.");
+      return;
+    }
+
+    const code = `
+      int foo(int x) {
+        switch (x) {
+          case 1:
+            return 1;
+          case 2:
+            return 2;
+        } // 缺少 default
+      }
+    `;
+
+    const tree = await parseCode(code);
+    const results = await analyzeWarnings(tree);
+
+    const switchWarning = results.find(r => r.ruleId === "CPP_SWITCH_NO_DEFAULT");
+    expect(switchWarning).toBeDefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  /**
    * @test Case: Naming Convention | 命名规范检测
    * @description Verifies that generic style rules are processed correctly if they exist.
    * 验证：验证分析器处理命名规范类规则的通用能力。这是一个宽容度较高的测试，仅在规则存在时验证格式。

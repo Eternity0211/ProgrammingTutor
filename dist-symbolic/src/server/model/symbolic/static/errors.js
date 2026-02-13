@@ -80,6 +80,9 @@ const VALIDATORS = {
             return null;
         }
         return null; // 验证通过，没有越界
+    },
+    "KEY": (captures) => {
+        return "some dynamic message";
     }
 };
 // =============================================================================

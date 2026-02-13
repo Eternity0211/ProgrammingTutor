@@ -46,7 +46,8 @@ async function analyzeCode(sourceCode) {
             ...result,
             metadata: {
                 parseTime: endTime - startTime,
-                nodeCount: tree.rootNode.descendantCount
+                nodeCount: tree.rootNode.descendantCount,
+                analyzedAt: new Date().toISOString()
             }
         };
     }
@@ -61,6 +62,8 @@ async function analyzeCode(sourceCode) {
                     severity: "Critical",
                     display_name: "Analysis Engine Error",
                     message: "An internal error occurred during code analysis. Please try again.",
+                    pedagogical_label: "System",
+                    knowledge_concept: "none",
                     location: { line: 0, column: 0 },
                     remediation: "Check server logs for details."
                 }],

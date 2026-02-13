@@ -65,7 +65,7 @@ function mapIssues(rawIssues, rawWarnings) {
     const errorDefs = loadDefinitionFile("cpp-errors.json");
     const warningDefs = loadDefinitionFile("cpp-warnings.json");
     /**
-     * 内部转换逻辑：将单条 RawIssue 转换为富文本 Issue
+     * 内部转换逻辑：将单条 RawIssue 转换为富文本 SymbolicIssue
      */
     function mapOne(raw, definitions) {
         const def = definitions[raw.ruleId];
@@ -75,18 +75,20 @@ function mapIssues(rawIssues, rawWarnings) {
         }
         // 确定最终消息：优先使用动态覆盖的消息，否则使用插值后的模板消息
         const finalMessage = raw.message ??
-            interpolate(def.message, raw.meta);
+            interpolate(def.message, raw.meta) ??
+            "";
         return {
             ruleId: raw.ruleId,
-            severity: def.severity,
-            display_name: def.display_name,
+            severity: def.severity || "Medium",
+            display_name: def.display_name || raw.ruleId,
             message: finalMessage,
-            pedagogical_label: def.pedagogical_label,
-            knowledge_concept: def.knowledge_concept,
+            pedagogical_label: def.pedagogical_label || "General",
+            knowledge_concept: def.knowledge_concept || "cpp_basic",
             description: def.description,
             remediation: def.remediation,
             remediation_code: def.remediation_code,
             location: raw.location,
+            meta: raw.meta
         };
     }
     return {

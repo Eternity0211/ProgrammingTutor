@@ -16,7 +16,7 @@ import {
   createQuery // 使用 parser 提供的工厂函数以屏蔽底层 API 版本差异
 } from "../parser"; 
 
-import { RawIssue } from "../mapper";
+import { RawIssue } from "../../../../lib/types/symbolic-types";
 import fs from "fs";
 import path from "path";
 

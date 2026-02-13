@@ -15,7 +15,7 @@ import {
   createQuery // 使用 parser 提供的工厂函数以兼容不同版本的 tree-sitter
 } from "../parser"; 
 
-import { RawIssue } from "../mapper";
+import { RawIssue } from "../../../../lib/types/symbolic-types";
 import fs from "fs";
 import path from "path";
 

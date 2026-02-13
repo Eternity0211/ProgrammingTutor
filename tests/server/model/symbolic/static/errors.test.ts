@@ -83,6 +83,32 @@ describe("Static Errors Analyzer", () => {
 
   // ---------------------------------------------------------------------------
   /**
+   * @test Case: Logic Error - Reserved Identifier | 逻辑规则：保留标识符命名
+   * @description Verifies detection of reserved identifier naming patterns using CPP_RESERVED_IDENTIFIER.scm.
+   * 验证：基于 CPP_RESERVED_IDENTIFIER 规则，检测以单下划线+大写字母或双下划线开头的变量名。
+   */
+  it("should detect reserved identifier naming patterns (CPP_RESERVED_IDENTIFIER)", async () => {
+    const rulePath = path.join(PATTERN_DIR, "CPP_RESERVED_IDENTIFIER.scm");
+    if (!fs.existsSync(rulePath)) {
+      console.warn("⚠️ Skipping CPP_RESERVED_IDENTIFIER test: Rule file not found.");
+      return;
+    }
+
+    const code = `
+      int _X = 0;        // 保留标识符：单下划线+大写
+      int __system = 1;  // 保留标识符：双下划线
+      int normal = 2;    // 合法标识符
+    `;
+
+    const tree = await parseCode(code);
+    const results = await analyzeErrors(tree);
+
+    const reservedIssues = results.filter(r => r.ruleId === "CPP_RESERVED_IDENTIFIER");
+    expect(reservedIssues.length).toBeGreaterThanOrEqual(2);
+  });
+
+  // ---------------------------------------------------------------------------
+  /**
    * @test Case: Logic Error - Assignment in If | 逻辑规则：条件内赋值
    * @description Verifies detection of assignment inside if-conditions using the existing SCM rule.
    * 验证：基于现有的 CPP_ASSIGNMENT_IN_IF.scm 规则，检测 if 条件中的赋值操作。
@@ -95,6 +121,87 @@ describe("Static Errors Analyzer", () => {
     
     const assignmentError = results.find(r => r.ruleId === "CPP_ASSIGNMENT_IN_IF");
     expect(assignmentError).toBeDefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  /**
+   * @test Case: Logic Error - Division by Zero Literal | 逻辑规则：字面量除零
+   * @description Verifies detection of division/modulo by literal zero using CPP_DIVISION_BY_ZERO_LITERAL.scm.
+   * 验证：基于 CPP_DIVISION_BY_ZERO_LITERAL 规则，检测 a / 0 或 a % 0 等明显错误。
+   */
+  it("should detect division by zero with literal divisor (CPP_DIVISION_BY_ZERO_LITERAL)", async () => {
+    const rulePath = path.join(PATTERN_DIR, "CPP_DIVISION_BY_ZERO_LITERAL.scm");
+    if (!fs.existsSync(rulePath)) {
+      console.warn("⚠️ Skipping CPP_DIVISION_BY_ZERO_LITERAL test: Rule file not found.");
+      return;
+    }
+
+    const code = "int foo(int x) { int a = x / 0; int b = x % 0; return a + b; }";
+    const tree = await parseCode(code);
+
+    const results = await analyzeErrors(tree);
+
+    const divZeroIssues = results.filter(r => r.ruleId === "CPP_DIVISION_BY_ZERO_LITERAL");
+    expect(divZeroIssues.length).toBeGreaterThanOrEqual(1);
+  });
+
+  // ---------------------------------------------------------------------------
+  /**
+   * @test Case: Logic Error - Missing Break in Switch | 逻辑规则：case 缺少 break
+   * @description Verifies detection of case statements without a break using CPP_MISSING_BREAK.scm.
+   */
+  it("should detect missing break in switch case (CPP_MISSING_BREAK)", async () => {
+    const rulePath = path.join(PATTERN_DIR, "CPP_MISSING_BREAK.scm");
+    if (!fs.existsSync(rulePath)) {
+      console.warn("⚠️ Skipping CPP_MISSING_BREAK test: Rule file not found.");
+      return;
+    }
+
+    const code = `
+      int foo(int x) {
+        switch (x) {
+          case 1:
+            x++;
+          case 2:
+            break;
+        }
+        return x;
+      }
+    `;
+
+    const tree = await parseCode(code);
+    const results = await analyzeErrors(tree);
+
+    const missingBreakIssues = results.filter(r => r.ruleId === "CPP_MISSING_BREAK");
+    expect(missingBreakIssues.length).toBeGreaterThanOrEqual(1);
+  });
+
+  // ---------------------------------------------------------------------------
+  /**
+   * @test Case: Logic Error - Non-void Function Without Return | 逻辑规则：非 void 函数无返回
+   * @description Verifies detection of non-void functions lacking any return statement using CPP_NON_VOID_NO_RETURN.scm.
+   */
+  it("should detect non-void function without return (CPP_NON_VOID_NO_RETURN)", async () => {
+    const rulePath = path.join(PATTERN_DIR, "CPP_NON_VOID_NO_RETURN.scm");
+    if (!fs.existsSync(rulePath)) {
+      console.warn("⚠️ Skipping CPP_NON_VOID_NO_RETURN test: Rule file not found.");
+      return;
+    }
+
+    const code = `
+      int foo(int x) {
+        if (x > 0) {
+          x++;
+        }
+        // 无 return 语句
+      }
+    `;
+
+    const tree = await parseCode(code);
+    const results = await analyzeErrors(tree);
+
+    const noReturnIssue = results.find(r => r.ruleId === "CPP_NON_VOID_NO_RETURN");
+    expect(noReturnIssue).toBeDefined();
   });
 
   // ---------------------------------------------------------------------------
