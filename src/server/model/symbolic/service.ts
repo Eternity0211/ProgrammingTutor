@@ -11,24 +11,8 @@
 import { parseCode } from "./parser";
 import { analyzeErrors } from "./static/errors";
 import { analyzeWarnings } from "./static/warnings";
-import { mapIssues, Issue } from "./mapper";
-
-// =============================================================================
-// Type Definitions | 类型定义
-// =============================================================================
-
-/**
- * 符号分析的最终产出结果接口。
- * 前端组件应当直接消费此数据结构。
- */
-export interface SymbolicResult {
-  errors: Issue[];      // 阻断性问题 (编译错误、逻辑错误)
-  warnings: Issue[];    // 建议性问题 (代码风格、最佳实践)
-  metadata?: {
-    parseTime?: number; // 解析耗时 (ms) - 用于性能监控
-    nodeCount?: number; // AST 节点数 - 用于复杂度估算
-  };
-}
+import { mapIssues } from "./mapper";
+import { SymbolicResult } from "../../../lib/types/symbolic-types";
 
 // =============================================================================
 // Core Service Logic | 核心业务逻辑
@@ -67,7 +51,8 @@ export async function analyzeCode(sourceCode: string): Promise<SymbolicResult> {
       ...result,
       metadata: {
         parseTime: endTime - startTime,
-        nodeCount: tree.rootNode.descendantCount
+        nodeCount: tree.rootNode.descendantCount,
+        analyzedAt: new Date().toISOString()
       }
     };
 
@@ -83,6 +68,8 @@ export async function analyzeCode(sourceCode: string): Promise<SymbolicResult> {
         severity: "Critical",
         display_name: "Analysis Engine Error",
         message: "An internal error occurred during code analysis. Please try again.",
+        pedagogical_label: "System",
+        knowledge_concept: "none",
         location: { line: 0, column: 0 },
         remediation: "Check server logs for details."
       }],

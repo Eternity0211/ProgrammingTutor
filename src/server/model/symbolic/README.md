@@ -290,6 +290,8 @@ const result = await analyzeCode(code);
 
 ## 6. 测试指令
 
+自定义测试：symbolic.ts - 开头有指令说明
+
 测试全部：
 ```bash
 npm test

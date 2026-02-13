@@ -20,6 +20,8 @@ export const symbolicDefinitionSchema = z.object({
   description: z.string().min(1, "description 必填"),
   message: z.string().optional(),
   remediation: z.string().optional(),
+  // 用于在前端显示具体的代码修复片段 (Code Snippet)
+  remediation_code: z.string().optional(), 
 });
 
 export type SymbolicDefinitionSchema = z.infer<typeof symbolicDefinitionSchema>;

@@ -1,113 +1,173 @@
 /**
- * 符号引擎类型契约
- *
- * 确保符号引擎输出的每一个 ruleId 都能在 data/symbolic/definitions/cpp-defs.json
- * 中找到对应项；与 definitions 结构对齐，供 model/symbolic、validators 和前端共用。
+ * @file symbolic-types.ts
+ * @description 符号分析引擎类型定义中心。
+ * 该文件定义了符号引擎（Symbolic Engine）与 神经引擎（Neural Engine）、前端 UI 及 数据库 之间的交互契约。
  */
 
-/** 源码位置（行、列从 1 开始） */
+// =============================================================================
+// 1. 基础图元 (Primitives)
+// =============================================================================
+
+/**
+ * 源码位置 (Line/Column 1-based)
+ * 与 Monaco Editor 及 Tree-sitter 的位置格式保持兼容
+ */
 export interface SourceLocation {
-  line: number;
-  column: number;
+  line: number;   // 行号，从 1 开始
+  column: number; // 列号，从 1 开始
 }
 
-/** 源码区间 */
+/**
+ * 源码范围 (用于前端高亮)
+ * 目前 mapper.ts 主要输出 start 位置，预留 end 以支持范围高亮
+ */
 export interface SourceRange {
   start: SourceLocation;
-  end: SourceLocation;
+  end?: SourceLocation; // 可选，未来扩展用于精确下划线标记
 }
 
 /**
- * 与 cpp-defs.json 中单条定义结构一致。
- * 新增 C++ 诊断规则时必须包含 display_name、severity、pedagogical_label 等字段；
- * message、remediation 为可选，用于前端提示与修复建议。
+ * 严重程度枚举
+ * 对应 definitions/cpp-defs.json 中的 severity
  */
-export interface SymbolicDefinition {
-  display_name: string;
-  pedagogical_label: string;
-  knowledge_concept: string;
-  severity: SymbolicSeverity;
-  description: string;
-  /** 面向用户的简短提示信息 */
-  message?: string;
-  /** 修复建议或正确写法说明 */
-  remediation?: string;
-}
-
-/** 严重程度：与 definitions 中 severity 取值对齐 */
 export type SymbolicSeverity = "Critical" | "High" | "Medium" | "Low";
 
+// =============================================================================
+// 2. 规则定义 (Rule Registry)
+// =============================================================================
+
 /**
- * C++ 符号规则 ID：与 data/symbolic/definitions/cpp-defs.json 的 key 一一对应。
- * 新增规则时在此补充，保证 ruleId 与 definitions 可匹配。
+ * C++ 符号规则 ID 枚举
+ * 真理来源：必须与 data/symbolic/definitions/cpp-defs.json 中的 Key 完全一致。
+ * 这是连接 SCM 规则文件名、JSON 定义和代码逻辑的唯一纽带。
  */
 export type CppSymbolicRuleId =
-  | "CPP_ASSIGNMENT_IN_IF"
-  | "CPP_ARRAY_OOB_LITERAL"
-  | "CPP_ARRAY_OOB_VARIABLE"
-  | "CPP_NULL_POINTER_DEREF"
-  | "CPP_UNINIT_VAR_USAGE"
-  | "CPP_DANGLING_POINTER"
-  | "CPP_DOUBLE_FREE"
-  | "CPP_USE_AFTER_FREE"
-  | "CPP_BUFFER_OVERFLOW"
-  | "CPP_STR_NOT_NULL_TERMINATED"
-  | "CPP_SWITCH_NO_DEFAULT"
-  | "CPP_MISSING_BREAK"
-  | "CPP_NON_VOID_NO_RETURN"
-  | "CPP_IMPLICIT_NARROWING"
-  | "CPP_UNSAFE_CAST"
-  | "CPP_VOID_POINTER_USE"
-  | "CPP_UNREACHABLE_CODE"
-  | "CPP_INFINITE_LOOP_RISK"
-  | "CPP_SELF_ASSIGNMENT"
-  | "CPP_VIRTUAL_DESTRUCTOR_MISSING"
-  | "CPP_ITERATOR_INVALIDATION"
-  | "CPP_RESERVED_IDENTIFIER"
-  | "CPP_DIVISION_BY_ZERO"
-  | "CPP_UNINIT_MEMBER"
-  | "CPP_RECURSION_NO_BASE"
-  | "CPP_NEGATIVE_INDEX";
+  // --- 内存安全类 (Memory Safety) ---
+  | "CPP_ARRAY_OOB_LITERAL"       // 数组越界（字面量）
+  | "CPP_ARRAY_OOB_VARIABLE"      // 数组越界（变量推导）
+  | "CPP_NULL_POINTER_DEREF"      // 空指针解引用
+  | "CPP_DANGLING_POINTER"        // 悬垂指针
+  | "CPP_USE_AFTER_FREE"          // 释放后使用
+  | "CPP_BUFFER_OVERFLOW"         // 缓冲区溢出
+  | "CPP_UNINIT_VAR_USAGE"        // 未初始化变量使用
+
+  // --- 逻辑错误类 (Logic Errors) ---
+  | "CPP_DIVISION_BY_ZERO"        // 除零错误
+  | "CPP_INFINITE_LOOP_RISK"      // 死循环风险
+  | "CPP_ASSIGNMENT_IN_IF"        // if 条件中误用赋值
+  | "CPP_SWITCH_NO_DEFAULT"       // switch 缺少 default
+  | "CPP_NON_VOID_NO_RETURN"      // 非 void 函数无返回值
+  | "CPP_NEGATIVE_INDEX"          // 负数索引
+
+  // --- 代码规范与最佳实践 (Best Practices) ---
+  | "CPP_NO_GOTO"                 // 禁止 goto
+  | "CPP_GLOBAL_VARIABLE"         // 滥用全局变量
+  | "CPP_MAGIC_NUMBER"            // 魔法数字
+  | "CPP_VAR_NAMING"              // 变量命名不规范
+  | "CPP_DEEP_NESTING"            // 嵌套过深
+  | "CPP_MISSING_SEMICOLON"       // 缺失分号 (Syntax)
+  | "CPP_SYNTAX_ERROR";           // 通用语法错误
+
+// =============================================================================
+// 3. 核心输出结构 (Core Output Structures)
+// =============================================================================
 
 /**
- * 符号引擎输出的「原始发现」。
- * id 必须为 definitions 中存在的规则 ID，否则 mapper 无法解析为完整 SymbolicIssue。
- */
-export interface SymbolicIssueRaw {
-  id: string;
-  range: SourceRange;
-  snippet: string;
-  metadata?: Record<string, unknown>;
-}
-
-/**
- * 映射后的告警结构：原始发现 + 教学定义。
- * 供 UI、反馈系统、神经侧 Prompt 使用。
+ * 完整的符号分析问题对象 (Rich Issue)
+ * 这是 mapper.ts 的输出产物，直接用于前端展示和数据库存储。
+ * 融合了“运行时发现的信息”和“静态定义的教学知识”。
  */
 export interface SymbolicIssue {
-  id: string;
-  range: SourceRange;
-  snippet: string;
-  metadata?: Record<string, unknown>;
-  definition: SymbolicDefinition;
+  /** 规则唯一标识符 */
+  ruleId: CppSymbolicRuleId | string;
+  
+  /** 严重程度 */
+  severity: SymbolicSeverity;
+  
+  /** 显示名称 (UI标题) */
+  display_name: string;
+  
+  /** * 最终消息 
+   * 已完成模板插值 (e.g. "数组大小不能为负数，你输入了: -5") 
+   */
+  message: string;
+  
+  /** * 教学标签 
+   * 用于分类统计学生薄弱项 (e.g. "Memory Safety", "Control Flow") 
+   */
+  pedagogical_label: string;
+  
+  /** * 关联知识点 (Knowledge Graph Key)
+   * 用于 Neo4j 查询前置知识 (e.g. "cpp_arrays", "pointers")
+   */
+  knowledge_concept: string;
+  
+  /** 详细描述 (Markdown 格式) */
+  description?: string;
+  
+  /** 修复建议 (文本) */
+  remediation?: string;
+  
+  /** 修复代码示例 (代码片段) */
+  remediation_code?: string;
+  
+  /** 错误发生位置 */
+  location: SourceLocation;
+  
+  /** * 原始元数据
+   * 存储 AST 捕获的变量名、数值等，供 LLM 进一步分析使用 
+   */
+  meta?: Record<string, string | number>;
 }
 
 /**
- * definitions 文件结构（如 cpp-defs.json）
+ * 符号分析引擎的完整结果包
+ * 对应 service.ts 的返回值
  */
-export interface SymbolicDefinitionsFile {
-  definitions: Record<string, SymbolicDefinition>;
+export interface SymbolicResult {
+  /** 阻断性错误 (Syntax Errors, Logic Bugs) */
+  errors: SymbolicIssue[];
+  
+  /** 建议性警告 (Style, Best Practices) */
+  warnings: SymbolicIssue[];
+  
+  /** 性能元数据 (用于系统监控) */
+  metadata?: {
+    parseTime?: number; // ms
+    nodeCount?: number;
+    analyzedAt?: string; // ISO Date
+  };
+}
+
+// =============================================================================
+// 4. 神经符号融合协议 (Neuro-Symbolic Protocol)
+// =============================================================================
+
+/**
+ * 注入给 LLM 的上下文对象
+ * 为了节省 Token，这是一个精简版的 SymbolicResult。
+ * 它是 "Causal Feedback Prompt" 中的关键输入变量。
+ */
+export interface NeuroSymbolicContext {
+  /** 只有 ID 和 Message，LLM 不需要看太详细的教学定义 */
+  detected_issues: Array<{
+    line: number;
+    rule: string;
+    message: string;
+    evidence: string; // 来自 meta 的关键变量
+  }>;
+  
+  /** 聚合的知识点标签，帮助 LLM 确定教学语气 */
+  focus_concepts: string[];
 }
 
 /**
- * 符号分析统一入口的入参：语言 + 源码
+ * 原始发现 (Raw Finding)
+ * 仅用于 mapper.ts 内部处理，外部不应直接使用
  */
-export interface SymbolicAnalyzeInput {
-  language: "cpp";
-  sourceCode: string;
+export interface RawIssue {
+  ruleId: string;
+  location: SourceLocation;
+  message?: string;
+  meta?: Record<string, string | number>;
 }
-
-/**
- * 符号分析统一出口：原始发现列表（mapper 再转为 SymbolicIssue[]）
- */
-export type SymbolicAnalyzeOutput = SymbolicIssueRaw[];

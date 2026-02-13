@@ -8,45 +8,12 @@
 
 import fs from "fs";
 import path from "path";
-
-// =============================================================================
-// Type Definitions | 类型定义
-// =============================================================================
-
-/**
- * 原始分析结果接口
- * 包含规则 ID、位置信息以及可选的动态元数据
- */
-export interface RawIssue {
-  ruleId: string;           // 规则唯一标识符
-  location: {
-    line: number;           // 行号 (从 0 或 1 开始，取决于解析器配置)
-    column: number;         // 列号
-  };
-  message?: string;         // 可选：允许在分析阶段覆盖默认的教学消息
-  meta?: Record<string, string | number>; 
-  // 模板变量元数据，例如 { index: 10, name: "arr", maxIndex: 5 }
-}
-
-/**
- * 最终输出的教学 Issue 接口
- * 包含完整的教学上下文，用于前端渲染和知识图谱关联
- */
-export interface Issue {
-  ruleId: string;           // 规则 ID
-  severity?: string;        // 严重程度 (Critical/High/Medium/Low)
-  display_name?: string;    // 显示名称 (例如：数组越界)
-  message?: string;         // 填充变量后的最终消息内容
-  pedagogical_label?: string; // 教学标签 (例如：内存安全)
-  knowledge_concept?: string; // 关联的知识概念
-  description?: string;     // 详细的错误描述
-  remediation?: string;     // 教学修复建议
-  remediation_code?: string; // 修复代码示例
-  location: {
-    line: number;
-    column: number;
-  };
-}
+// 引入统一的类型定义
+import { 
+  RawIssue, 
+  SymbolicIssue, 
+  SymbolicSeverity 
+} from "../../../lib/types/symbolic-types";
 
 /** 内部使用的 JSON 定义文件结构 */
 interface DefinitionFile {
@@ -116,18 +83,18 @@ function interpolate(
 export function mapIssues(
   rawIssues: RawIssue[],
   rawWarnings: RawIssue[]
-): { errors: Issue[]; warnings: Issue[] } {
+): { errors: SymbolicIssue[]; warnings: SymbolicIssue[] } {
   // 加载静态规则库
   const errorDefs = loadDefinitionFile("cpp-errors.json");
   const warningDefs = loadDefinitionFile("cpp-warnings.json");
 
   /**
-   * 内部转换逻辑：将单条 RawIssue 转换为富文本 Issue
+   * 内部转换逻辑：将单条 RawIssue 转换为富文本 SymbolicIssue
    */
   function mapOne(
     raw: RawIssue,
     definitions: Record<string, any>
-  ): Issue | null {
+  ): SymbolicIssue | null {
     const def = definitions[raw.ruleId];
     
     // 若规则 ID 未在定义文件中注册，则忽略该条目 (过滤未知规则)
@@ -138,29 +105,31 @@ export function mapIssues(
     // 确定最终消息：优先使用动态覆盖的消息，否则使用插值后的模板消息
     const finalMessage =
       raw.message ??
-      interpolate(def.message, raw.meta);
+      interpolate(def.message, raw.meta) ??
+      "";
 
     return {
       ruleId: raw.ruleId,
-      severity: def.severity,
-      display_name: def.display_name,
+      severity: (def.severity as SymbolicSeverity) || "Medium",
+      display_name: def.display_name|| raw.ruleId,
       message: finalMessage,
-      pedagogical_label: def.pedagogical_label,
-      knowledge_concept: def.knowledge_concept,
+      pedagogical_label: def.pedagogical_label|| "General",
+      knowledge_concept: def.knowledge_concept|| "cpp_basic",
       description: def.description,
       remediation: def.remediation,
       remediation_code: def.remediation_code,
       location: raw.location,
+      meta: raw.meta
     };
   }
 
   return {
     errors: rawIssues
       .map((r) => mapOne(r, errorDefs))
-      .filter((i): i is Issue => i !== null),
+      .filter((i): i is SymbolicIssue => i !== null),
 
     warnings: rawWarnings
       .map((r) => mapOne(r, warningDefs))
-      .filter((i): i is Issue => i !== null),
+      .filter((i): i is SymbolicIssue => i !== null),
   };
 }
