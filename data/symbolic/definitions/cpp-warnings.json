@@ -25,8 +25,7 @@
       "message": "Magic number '{value}' detected. Consider defining it as a named constant.",
       "pedagogical_label": "Code Maintainability",
       "knowledge_concept": "Constants and Literals",
-      "remediation": "Define a named constant instead of using raw numeric literals.",
-      "remediation_code": "const int MAX_SIZE = {value};"
+      "remediation": "Define a named constant instead of using raw numeric literals."
     }
   }
 }

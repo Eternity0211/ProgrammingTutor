@@ -37,12 +37,12 @@ describe("Symbolic Mapper (Transformation Layer)", () => {
     it("should interpolate template variables", () => {
         const raw = [
             {
-                ruleId: "CPP_ARRAY_OOB",
+                ruleId: "CPP_ARRAY_OOB_LITERAL",
                 location: { line: 4, column: 3 },
                 meta: {
-                    index: 10,
-                    name: "arr",
-                    maxIndex: 5
+                    use_index: 10,
+                    def_name: "arr",
+                    def_size: 5
                 }
             }
         ];

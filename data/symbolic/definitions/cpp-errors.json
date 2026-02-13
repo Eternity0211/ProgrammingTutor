@@ -18,14 +18,13 @@
       "remediation": "Replace '=' with '==' if you intended comparison."
     },
 
-    "CPP_ARRAY_OOB": {
+    "CPP_ARRAY_OOB_LITERAL": {
       "severity": "High",
-      "display_name": "Array Index Out of Bounds",
-      "message": "Index {index} is outside the valid range (0 to {maxIndex}) for array '{name}'.",
+      "display_name": "Array Index Out of Bounds Literally",
+      "message": "Index {use_index} is outside the valid range [0 ~ {def_size}) for array '{def_name}'.",
       "pedagogical_label": "Memory Safety",
       "knowledge_concept": "Array Indexing",
-      "remediation": "Ensure the index stays within the declared array size.",
-      "remediation_code": "for(int i = 0; i < N; i++) { ... }"
+      "remediation": "Ensure the index stays within the declared array size."
     },
 
     "CPP_ARRAY_OOB_VARIABLE": {
@@ -52,8 +51,7 @@
       "message": "Array size must be a positive integer. You provided: {size}.",
       "pedagogical_label": "Array Declaration",
       "knowledge_concept": "Arrays",
-      "remediation": "Use a positive constant integer when declaring fixed-size arrays.",
-      "remediation_code": "int arr[10];"
+      "remediation": "Use a positive constant integer when declaring fixed-size arrays."
     },
 
     "CPP_DIVISION_BY_ZERO": {

@@ -55,6 +55,33 @@ async function ensureRegistry() {
     }
     return queryRegistry;
 }
+const VALIDATORS = {
+    // 针对 CPP_ARRAY_OOB_LITERAL 的数值比对逻辑
+    "CPP_ARRAY_OOB_LITERAL": (captures) => {
+        const name = captures["def_name"]?.text || "unknown_array";
+        // 1. 获取定义大小
+        const defSizeNode = captures["def_size"];
+        // 2. 获取使用索引
+        const useIndexNode = captures["use_index"];
+        if (!defSizeNode || !useIndexNode)
+            return null; // 捕获不全，跳过
+        try {
+            // 3. 数值转换与比对
+            const size = parseInt(defSizeNode.text, 10);
+            const index = parseInt(useIndexNode.text, 10);
+            if (isNaN(size) || isNaN(index))
+                return null;
+            // 4. 核心逻辑：如果索引 >= 大小，则报错
+            if (index >= size) {
+                return "__no_message__"; // 仅表示验证失败，但使用默认消息模板，无需覆盖
+            }
+        }
+        catch (e) {
+            return null;
+        }
+        return null; // 验证通过，没有越界
+    }
+};
 // =============================================================================
 // Core Analysis Pipeline | 核心分析流水线
 // =============================================================================
@@ -126,10 +153,13 @@ function runQuery(root, ruleId, query, issues) {
     const matches = query.matches(root);
     for (const match of matches) {
         let targetNode = null;
+        const captureMap = {}; // 用于存储本次匹配的所有节点
         const meta = {};
         // 遍历本次匹配中的所有捕获 (Captures)
         for (const capture of match.captures) {
             const name = capture.name;
+            // 把捕获的节点存入map
+            captureMap[name] = capture.node;
             // 约定：名为 @target 的节点是报错主体，用于定位
             if (name === "target") {
                 targetNode = capture.node;
@@ -140,12 +170,28 @@ function runQuery(root, ruleId, query, issues) {
             }
         }
         if (targetNode) {
+            //执行自定义验证逻辑
+            const validator = VALIDATORS[ruleId];
+            let customMessage = null;
+            if (validator) {
+                // 如果有验证器，必须验证失败才算由 Error
+                const validationError = validator(captureMap);
+                if (!validationError) {
+                    continue; // 验证通过，说明没有错误，跳过本次匹配
+                }
+                // 如果验证失败但没有返回特定消息，使用默认模板；如果返回了特定消息，则覆盖默认模板
+                if (validationError !== "__no_message__") {
+                    customMessage = validationError;
+                }
+            }
             issues.push({
                 ruleId,
                 location: {
                     line: targetNode.startPosition.row,
                     column: targetNode.startPosition.column,
                 },
+                // 如果 validator 返回了动态消息，可以覆盖 meta 或 message
+                message: customMessage || undefined,
                 meta, // 将提取到的变量名、数值等传递给 Mapper 进行模板插值
             });
         }

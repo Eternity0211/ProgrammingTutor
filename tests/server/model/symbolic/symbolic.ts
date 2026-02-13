@@ -15,11 +15,13 @@ async function main() {
   // ============================================================
 
   const sourceCode = `
-    void main() {
-      int arr[-5];          // 逻辑错误：数组大小为负
-      int a = ;             // 语法错误：缺少表达式
-      goto label;           // 警告：使用 goto
-      int x = 100;          // 可能触发 magic number
+    #include <stdio.h>
+
+    int main() {  
+      int a[10] = {0};
+      a[-1] = 5; // 负数索引越界
+
+      return 0;
     }
   `;
 
