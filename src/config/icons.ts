@@ -28,6 +28,13 @@ import {
   Task01Icon,
   Layers01Icon,
   LicenseIcon,
+
+  AiBrain01Icon,
+  AiProgrammingIcon,
+  AiChat01Icon,
+  Bug01Icon,
+  CheckListIcon,
+  BookOpen01Icon,
 } from "hugeicons-react";
 
 const iconComponentMap: Record<string, HugeiconsIcon> = {
@@ -62,6 +69,12 @@ const iconComponentMap: Record<string, HugeiconsIcon> = {
   StandardIcon: LicenseIcon as HugeiconsIcon,
   StlLibrary: LibrariesIcon as HugeiconsIcon,
 
+  AiBrainIcon: AiBrain01Icon as HugeiconsIcon,
+  AiProgrammingIcon: AiProgrammingIcon as HugeiconsIcon,
+  AiChatIcon: AiChat01Icon as HugeiconsIcon,
+  BugIcon: Bug01Icon as HugeiconsIcon,
+  CheckListIcon: CheckListIcon as HugeiconsIcon,
+  BookOpenIcon: BookOpen01Icon as HugeiconsIcon,
 };
 
 export const getIconComponent = (iconName: string): HugeiconsIcon => {
