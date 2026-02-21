@@ -1,7 +1,7 @@
 "use client";
 import FeatureCard from "../feature-card";
 import AnimatedSection from "../../animations/AnimatedSection";
-import { educatorFeatures } from "@/config/landingPageData";
+import { capabilityFeatures, educatorFeatures } from "@/config/landingPageData";
 import StaggeredItem from "../../animations/StaggeredItem";
 
 export default function FeaturesSection() {
@@ -24,7 +24,7 @@ export default function FeaturesSection() {
         </AnimatedSection>
 
         <div className="mt-16 grid gap-8 md:grid-cols-2 lg:grid-cols-3 mx-auto max-w-7xl">
-          {educatorFeatures.map((feature: any, index: number) => (
+          {capabilityFeatures.map((feature: any, index: number) => (
             <StaggeredItem key={index} index={index}>
               <FeatureCard
                 icon={feature.icon}

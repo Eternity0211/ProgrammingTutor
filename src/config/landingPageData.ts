@@ -1,4 +1,5 @@
 "use client";
+import { Bug01Icon } from "hugeicons-react";
 import {
   Code,
   CheckCircle,
@@ -11,7 +12,9 @@ import {
   Brain,
   Lock,
   Zap,
+  BusIcon,
 } from "lucide-react";
+import { title } from "process";
 
 export const featureCards = [
   {
@@ -51,6 +54,28 @@ export const featureCards = [
       "追踪提交历史、分数分布及知识点掌握情况，支持一键导出结构化分析数据，辅助精准教学决策。",
   },
 ];
+
+// 新增：Capabilities feature data
+export const capabilityFeatures = [
+  {
+    icon: BookOpen,
+    title: "智能代码诊断与优化",
+    description:
+      "融合神经符号技术，实现代码语法、逻辑与复杂度的全方位检测，提供因果式错误解释与精准的性能优化方案。",
+  },
+  {
+    icon: Users,
+    title: "自适应学习路径规划",
+    description:
+      "基于动态构建的学习者画像，智能识别知识薄弱点，动态推送适配习题与学习资源，实现千人千面的个性化教学。"
+  },
+  {
+    icon: CheckSquare,
+    title: "多端协同教学赋能",
+    description:
+      "打通学生端智能辅导与教师端学情分析，通过多智能体协同，提供沉浸式学习体验与数据驱动的教学决策支持。"
+  },
+]
 
 // Educator feature data
 export const educatorFeatures = [
