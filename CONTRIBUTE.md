@@ -3,6 +3,7 @@
 Welcome to the GradeIT project! We're excited that you're interested in contributing to our automated coding evaluation platform. This guide will help you get started with development and outline our contribution process.
 
 ## Table of Contents
+
 - [Code of Conduct](#code-of-conduct)
 - [Development Environment Setup](#development-environment-setup)
 - [Project Structure](#project-structure)
@@ -17,6 +18,7 @@ Welcome to the GradeIT project! We're excited that you're interested in contribu
 ## Code of Conduct
 
 We are committed to providing a welcoming and inclusive environment. All contributors are expected to:
+
 - Be respectful and considerate in all interactions
 - Welcome newcomers and help them get started
 - Focus on constructive criticism and avoid personal attacks
@@ -40,16 +42,18 @@ We are committed to providing a welcoming and inclusive environment. All contrib
 ### Initial Setup
 
 1. **Fork and Clone the Repository**
+
    ```bash
    # Fork on GitHub first, then:
    git clone https://github.com/<your-username>/GradeIt.git
    cd GradeIt
-   
+
    # Add upstream remote
    git remote add upstream https://github.com/Habeel-Shamsudeen/GradeIt.git
    ```
 
 2. **Install Dependencies**
+
    ```bash
    npm install
    # or
@@ -57,40 +61,43 @@ We are committed to providing a welcoming and inclusive environment. All contrib
    ```
 
 3. **Environment Configuration**
+
    ```bash
    # Copy the example environment file
    cp .env.example .env
    ```
-   
+
    Configure the following environment variables:
+
    ```env
    # Database
    DATABASE_URL="postgresql://user:password@localhost:5432/gradeit?schema=public"
-   
+
    # NextAuth
    AUTH_SECRET="generate-with-openssl-rand-base64-32"
    AUTH_GOOGLE_ID="your-google-oauth-id"
    AUTH_GOOGLE_SECRET="your-google-oauth-secret"
-   
+
    # Judge0 API (from RapidAPI)
    JUDGE0_API_KEY="your-rapidapi-key"
    JUDGE0_API_HOST="judge0-ce.p.rapidapi.com"
-   
+
    # Groq AI (optional, for AI features)
    GROQ_API_KEY="your-groq-api-key"
-   
+
    # Application
    APP_URL="http://localhost:3000"
    ```
 
 4. **Database Setup**
+
    ```bash
    # Run migrations to create database schema
    npx prisma migrate dev
-   
+
    # Generate Prisma client
    npx prisma generate
-   
+
    # (Optional) Seed database with sample data
    npx prisma db seed
    ```
@@ -223,7 +230,12 @@ interface AssignmentProps {
   onSubmit: (code: string) => Promise<void>;
 }
 
-export function AssignmentCard({ id, title, dueDate, onSubmit }: AssignmentProps) {
+export function AssignmentCard({
+  id,
+  title,
+  dueDate,
+  onSubmit,
+}: AssignmentProps) {
   // Component logic
 }
 
@@ -237,13 +249,13 @@ export function Card({ data, fn }: any) {
 
 ```typescript
 // 1. Imports (grouped and ordered)
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-import { Button } from '@/components/ui/button';
-import { createAssignment } from '@/server/actions/assignment-actions';
+import { Button } from "@/components/ui/button";
+import { createAssignment } from "@/server/actions/assignment-actions";
 
-import type { Assignment } from '@/lib/types';
+import type { Assignment } from "@/lib/types";
 
 // 2. Types/Interfaces
 interface ComponentProps {
@@ -268,13 +280,15 @@ function SubComponent() {
 
 ```tsx
 // Use Tailwind CSS utilities with cn() helper
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 
-<div className={cn(
-  "flex items-center gap-2",
-  isActive && "bg-primary",
-  isDisabled && "opacity-50 cursor-not-allowed"
-)} />
+<div
+  className={cn(
+    "flex items-center gap-2",
+    isActive && "bg-primary",
+    isDisabled && "opacity-50 cursor-not-allowed",
+  )}
+/>;
 
 // Never use hardcoded colors
 // ❌ Bad: style={{ color: '#3B82F6' }}
@@ -285,8 +299,8 @@ import { cn } from '@/lib/utils';
 
 ```typescript
 // app/api/[resource]/route.ts
-import { auth } from '@/lib/auth';
-import { z } from 'zod';
+import { auth } from "@/lib/auth";
+import { z } from "zod";
 
 const requestSchema = z.object({
   // Define request validation
@@ -297,7 +311,7 @@ export async function POST(req: Request) {
     // 1. Authentication
     const session = await auth();
     if (!session) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 2. Validation
@@ -314,7 +328,7 @@ export async function POST(req: Request) {
     if (error instanceof z.ZodError) {
       return Response.json({ error: error.errors }, { status: 400 });
     }
-    return Response.json({ error: 'Internal error' }, { status: 500 });
+    return Response.json({ error: "Internal error" }, { status: 500 });
   }
 }
 ```
@@ -333,16 +347,16 @@ export async function POST(req: Request) {
 
 ```typescript
 // __tests__/lib/utils.test.ts
-import { describe, it, expect } from 'vitest';
-import { calculateScore } from '@/lib/utils';
+import { describe, it, expect } from "vitest";
+import { calculateScore } from "@/lib/utils";
 
-describe('calculateScore', () => {
-  it('should calculate weighted score correctly', () => {
+describe("calculateScore", () => {
+  it("should calculate weighted score correctly", () => {
     const result = calculateScore(80, 90, 0.6, 0.4);
     expect(result).toBe(84); // (80 * 0.6) + (90 * 0.4)
   });
 
-  it('should handle edge cases', () => {
+  it("should handle edge cases", () => {
     expect(calculateScore(0, 0, 0.5, 0.5)).toBe(0);
     expect(calculateScore(100, 100, 0.5, 0.5)).toBe(100);
   });
@@ -353,22 +367,22 @@ describe('calculateScore', () => {
 
 ```typescript
 // __tests__/api/compile.test.ts
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-describe('POST /api/compile', () => {
-  it('should compile valid Python code', async () => {
-    const response = await fetch('/api/compile', {
-      method: 'POST',
+describe("POST /api/compile", () => {
+  it("should compile valid Python code", async () => {
+    const response = await fetch("/api/compile", {
+      method: "POST",
       body: JSON.stringify({
         code: 'print("Hello")',
-        language: 'Python',
-        input: ''
-      })
+        language: "Python",
+        input: "",
+      }),
     });
-    
+
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data.output.output).toBe('Hello\n');
+    expect(data.output.output).toBe("Hello\n");
   });
 });
 ```
@@ -384,6 +398,7 @@ describe('POST /api/compile', () => {
 We follow [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
 ### Format
+
 ```
 <type>(<scope>): <subject>
 
@@ -393,6 +408,7 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 ```
 
 ### Types
+
 - **feat**: New feature
 - **fix**: Bug fix
 - **docs**: Documentation changes
@@ -450,27 +466,33 @@ chore(ci): add GitHub Actions workflow
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix (non-breaking change)
 - [ ] New feature (non-breaking change)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] Tested locally
 - [ ] Added unit tests
 - [ ] Added integration tests
 - [ ] All tests passing
 
 ## Screenshots (if applicable)
+
 [Add screenshots for UI changes]
 
 ## Related Issues
+
 Closes #(issue number)
 
 ## Checklist
+
 - [ ] My code follows the style guidelines
 - [ ] I have performed a self-review
 - [ ] I have commented my code where necessary
@@ -504,6 +526,7 @@ git push origin --delete feature/your-branch
 ### Bug Reports
 
 Include:
+
 1. **Environment**: OS, browser, Node.js version
 2. **Steps to reproduce**: Clear, numbered steps
 3. **Expected behavior**: What should happen
@@ -514,6 +537,7 @@ Include:
 ### Feature Requests
 
 Include:
+
 1. **Use case**: Why this feature is needed
 2. **Proposed solution**: How it should work
 3. **Alternatives considered**: Other approaches
@@ -524,11 +548,13 @@ Include:
 **DO NOT** create public issues for security vulnerabilities!
 
 Instead:
+
 1. Email security details to maintainers
 2. Use GitHub's security advisory feature
 3. Allow time for patch before disclosure
 
 Include:
+
 - Vulnerability description
 - Steps to reproduce
 - Potential impact
@@ -556,8 +582,8 @@ npx prisma validate
 
 ```typescript
 // Use environment variables properly
-const isProd = process.env.NODE_ENV === 'production';
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const isProd = process.env.NODE_ENV === "production";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 // Never expose sensitive keys to client
 // ❌ Bad: JUDGE0_API_KEY in client component
@@ -576,12 +602,12 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 ```typescript
 // Enable debug logging
-localStorage.setItem('debug', 'gradeit:*');
+localStorage.setItem("debug", "gradeit:*");
 
 // Server-side debugging
-console.log('DEBUG:', { 
+console.log("DEBUG:", {
   timestamp: new Date().toISOString(),
-  data: JSON.stringify(complexObject, null, 2)
+  data: JSON.stringify(complexObject, null, 2),
 });
 
 // Use VS Code debugger
@@ -599,6 +625,7 @@ console.log('DEBUG:', {
 ## Recognition
 
 Contributors are recognized in:
+
 - README.md contributors section
 - GitHub contributors page
 - Release notes

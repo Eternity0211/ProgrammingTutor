@@ -30,7 +30,7 @@ export type QueryCapture = import("web-tree-sitter").QueryCapture;
  * 稳健地获取 SyntaxNode 类型。
  * 某些版本的定义文件中未直接导出 SyntaxNode，但 Tree.rootNode 的类型必然是 SyntaxNode。
  */
-export type SyntaxNode = Tree['rootNode'];
+export type SyntaxNode = Tree["rootNode"];
 
 /**
  * 手动定义的 Parser 接口。
@@ -41,16 +41,16 @@ export type SyntaxNode = Tree['rootNode'];
 export interface Parser {
   /** 解析源代码生成 AST */
   parse(input: string, previousTree?: Tree): Tree;
-  
+
   /** 设置当前使用的语言 (C++) */
   setLanguage(language: Language): void;
-  
+
   /** 获取当前语言实例 */
   getLanguage(): Language;
-  
+
   /** 销毁实例，释放 WASM 堆内存 */
   delete(): void;
-  
+
   reset(): void;
   getTimeoutMicros(): number;
   setTimeoutMicros(timeout: number): void;
@@ -70,7 +70,7 @@ let QueryImp: any = null;
 
 /*
  * 兼容性加载策略：
- * 不同的构建工具 (Webpack, Vite, Jest) 和运行环境 (Node, Browser) 
+ * 不同的构建工具 (Webpack, Vite, Jest) 和运行环境 (Node, Browser)
  * 对 CommonJS/ESM 的互操作处理不同。这里逐一尝试可能的挂载点。
  */
 if (rawModule.Parser) {
@@ -89,7 +89,9 @@ if (rawModule.Parser) {
 
 // 核心依赖检查
 if (!ParserImp) {
-  throw new Error("Critical: Failed to load 'web-tree-sitter'. Check your node_modules compatibility.");
+  throw new Error(
+    "Critical: Failed to load 'web-tree-sitter'. Check your node_modules compatibility.",
+  );
 }
 
 // =============================================================================
@@ -131,34 +133,35 @@ export async function getParser(): Promise<Parser> {
 
   const parser = new ParserImp();
   const absoluteWasmPath = path.join(PUBLIC_DIR, WASM_FILE);
-  
+
   // 2. 加载语言包 WASM
   try {
     if (!fs.existsSync(absoluteWasmPath)) {
-       throw new Error(`WASM file not found at: ${absoluteWasmPath}`);
+      throw new Error(`WASM file not found at: ${absoluteWasmPath}`);
     }
 
     // 使用 fs 读取 buffer 而非 Language.load(path)，
     // 是为了规避 Next.js 服务端与 Jest 测试环境下对相对路径解析的不一致问题。
     const wasmBuffer = fs.readFileSync(absoluteWasmPath);
     cppLanguage = await LanguageImp.load(wasmBuffer);
-    
   } catch (e: any) {
     // 初始化失败时重置状态，防止残留脏数据
     parserInstance = null;
     cppLanguage = null;
-    
+
     console.error(`[Parser] Failed to load WASM at ${absoluteWasmPath}`);
-    console.error(`[Parser] Reason: ${e.message}`); 
-    throw new Error(`Critical: Could not load ${WASM_FILE}. Ensure it exists in /public folder.`);
+    console.error(`[Parser] Reason: ${e.message}`);
+    throw new Error(
+      `Critical: Could not load ${WASM_FILE}. Ensure it exists in /public folder.`,
+    );
   }
 
   // 3. 绑定语言并更新单例
   parser.setLanguage(cppLanguage);
-  
+
   // 类型断言：运行时生成的实例符合我们定义的 Parser 接口契约
   parserInstance = parser as Parser;
-  
+
   return parserInstance;
 }
 
@@ -200,11 +203,13 @@ export function createQuery(language: Language, source: string): Query {
   if (QueryImp) {
     return new QueryImp(language, source);
   }
-  
+
   // 策略 2: 降级尝试旧版 API (挂载在 Language 实例上的工厂方法)
   if ((language as any).query) {
     return (language as any).query(source);
   }
-  
-  throw new Error("[Parser] WebTreeSitter Query constructor not found. Incompatible library version.");
+
+  throw new Error(
+    "[Parser] WebTreeSitter Query constructor not found. Incompatible library version.",
+  );
 }

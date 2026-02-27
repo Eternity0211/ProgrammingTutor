@@ -32,12 +32,12 @@ export async function analyzeCode(sourceCode: string): Promise<SymbolicResult> {
     // 1. [Infrastructure] 生成抽象语法树 (AST)
     // 这是一个高成本操作，必须在分析开始前完成
     const tree = await parseCode(sourceCode);
-    
+
     // 2. [Analysis] 并行执行静态扫描
     // 利用 Promise.all 实现 Errors 和 Warnings 的并发处理，最大化 I/O 效率
     const [rawErrors, rawWarnings] = await Promise.all([
       analyzeErrors(tree),
-      analyzeWarnings(tree)
+      analyzeWarnings(tree),
       // Future: analyzeDataFlow(tree) -> 可以在此处扩展动态分析
     ]);
 
@@ -52,28 +52,30 @@ export async function analyzeCode(sourceCode: string): Promise<SymbolicResult> {
       metadata: {
         parseTime: endTime - startTime,
         nodeCount: tree.rootNode.descendantCount,
-        analyzedAt: new Date().toISOString()
-      }
+        analyzedAt: new Date().toISOString(),
+      },
     };
-
   } catch (error) {
     // 顶层异常捕获：防止引擎内部崩溃导致整个 HTTP 请求失败
     console.error("[Symbolic Service] Analysis failed criticaly:", error);
-    
+
     // 在发生灾难性错误时，返回空的降级结果，并附带系统级错误提示
     // 注意：这里手动构造一个特殊的 System Error
     return {
-      errors: [{
-        ruleId: "SYS_INTERNAL_ERROR",
-        severity: "Critical",
-        display_name: "Analysis Engine Error",
-        message: "An internal error occurred during code analysis. Please try again.",
-        pedagogical_label: "System",
-        knowledge_concept: "none",
-        location: { line: 0, column: 0 },
-        remediation: "Check server logs for details."
-      }],
-      warnings: []
+      errors: [
+        {
+          ruleId: "SYS_INTERNAL_ERROR",
+          severity: "Critical",
+          display_name: "Analysis Engine Error",
+          message:
+            "An internal error occurred during code analysis. Please try again.",
+          pedagogical_label: "System",
+          knowledge_concept: "none",
+          location: { line: 0, column: 0 },
+          remediation: "Check server logs for details.",
+        },
+      ],
+      warnings: [],
     };
   }
 }

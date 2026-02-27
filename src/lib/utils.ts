@@ -85,7 +85,7 @@ export const titleCase = (str: string): string => {
     .join(" ");
 };
 
-// URL 有效性检查 
+// URL 有效性检查
 export const isValidUrl = (string: string) => {
   try {
     new URL(string);

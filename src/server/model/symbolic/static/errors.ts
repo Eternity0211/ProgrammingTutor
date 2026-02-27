@@ -7,13 +7,13 @@
  * @module Symbolic/Static/Errors
  */
 
-import { 
-  Tree, 
-  Query, 
-  SyntaxNode, 
+import {
+  Tree,
+  Query,
+  SyntaxNode,
   getLanguage,
-  createQuery // 使用 parser 提供的工厂函数以兼容不同版本的 tree-sitter
-} from "../parser"; 
+  createQuery, // 使用 parser 提供的工厂函数以兼容不同版本的 tree-sitter
+} from "../parser";
 
 import { RawIssue } from "../../../../lib/types/symbolic-types";
 import fs from "fs";
@@ -24,7 +24,10 @@ import path from "path";
 // =============================================================================
 
 /** 逻辑错误规则 (SCM) 的存放目录 */
-const PATTERN_DIR = path.resolve(process.cwd(), "data/symbolic/ast-patterns/cpp/errors");
+const PATTERN_DIR = path.resolve(
+  process.cwd(),
+  "data/symbolic/ast-patterns/cpp/errors",
+);
 
 /** * 查询缓存池 (Query Cache)
  * key: ruleId (文件名), value: 预编译好的 Tree-sitter Query 对象
@@ -40,7 +43,7 @@ async function ensureRegistry(): Promise<Map<string, Query>> {
   if (queryRegistry) return queryRegistry;
 
   queryRegistry = new Map();
-  const language = await getLanguage(); 
+  const language = await getLanguage();
 
   // 若规则目录不存在（例如首次部署），静默返回空注册表
   if (!fs.existsSync(PATTERN_DIR)) {
@@ -57,7 +60,7 @@ async function ensureRegistry(): Promise<Map<string, Query>> {
     try {
       const source = fs.readFileSync(scmPath, "utf-8");
       // 使用 parser.ts 提供的 createQuery 屏蔽底层 API 差异
-      const query = createQuery(language, source); 
+      const query = createQuery(language, source);
       queryRegistry.set(ruleId, query);
     } catch (e) {
       console.error(`[Static/Errors] Failed to compile SCM rule: ${ruleId}`, e);
@@ -79,7 +82,7 @@ type Validator = (captures: Record<string, SyntaxNode>) => string | null;
 
 const VALIDATORS: Record<string, Validator> = {
   // 针对 CPP_ARRAY_OOB_LITERAL 的数值比对逻辑
-  "CPP_ARRAY_OOB_LITERAL": (captures) => {
+  CPP_ARRAY_OOB_LITERAL: (captures) => {
     const name = captures["def_name"]?.text || "unknown_array";
     // 1. 获取定义大小
     const defSizeNode = captures["def_size"];
@@ -102,13 +105,13 @@ const VALIDATORS: Record<string, Validator> = {
     } catch (e) {
       return null;
     }
-    
+
     return null; // 验证通过，没有越界
   },
 
-  "KEY": (captures) => {
+  KEY: (captures) => {
     return "some dynamic message";
-  }
+  },
 };
 
 // =============================================================================
@@ -133,7 +136,7 @@ export async function analyzeErrors(tree: Tree): Promise<RawIssue[]> {
   // Phase 2: Logic Rule Check (SCM Pattern Matching)
   // 加载自定义规则进行逻辑扫描
   const queries = await ensureRegistry();
-  
+
   // 遍历所有已注册的逻辑规则
   for (const [ruleId, query] of queries) {
     runQuery(tree.rootNode, ruleId, query, issues);
@@ -166,8 +169,8 @@ function collectNativeErrors(node: SyntaxNode, issues: RawIssue[]) {
       },
       // 提取错误片段作为 meta 信息，供 mapper 填充消息
       meta: {
-        token: node.text.slice(0, 20) // 截取前20字符避免过长
-      }
+        token: node.text.slice(0, 20), // 截取前20字符避免过长
+      },
     });
     // 找到根源错误后，通常不再深入其内部，避免报错轰炸 (Error Cascading)
     return;
@@ -191,7 +194,7 @@ function runQuery(
   root: SyntaxNode,
   ruleId: string,
   query: Query,
-  issues: RawIssue[]
+  issues: RawIssue[],
 ) {
   // query.matches() 返回匹配组，适合复杂的多节点关系
   const matches = query.matches(root);
@@ -211,7 +214,7 @@ function runQuery(
       // 约定：名为 @target 的节点是报错主体，用于定位
       if (name === "target") {
         targetNode = capture.node;
-      } 
+      }
       // 约定：其他名称 (如 @name, @val) 提取为 meta 数据供 Mapper 使用
       else {
         meta[name] = capture.node.text;

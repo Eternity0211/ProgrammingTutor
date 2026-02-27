@@ -108,3 +108,8 @@ export const landingImages = [
     height: 600,
   },
 ];
+
+export const SYMBOLIC_ENGINE_PARAMS = {
+  MAX_AST_NODES: 5000, // 防止解析极度冗长/恶意的代码导致符号引擎死锁
+  DEFAULT_CPP_COMPILER_FLAGS: "-std=c++17 -Wall -Wextra -Werror", // 强约束 C++ 编译标准，确保评测环境一致性
+};

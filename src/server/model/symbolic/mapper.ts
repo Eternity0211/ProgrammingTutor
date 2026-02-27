@@ -9,10 +9,10 @@
 import fs from "fs";
 import path from "path";
 // 引入统一的类型定义
-import { 
-  RawIssue, 
-  SymbolicIssue, 
-  SymbolicSeverity 
+import {
+  RawIssue,
+  SymbolicIssue,
+  SymbolicSeverity,
 } from "../../../lib/types/symbolic-types";
 
 /** 内部使用的 JSON 定义文件结构 */
@@ -33,7 +33,7 @@ function loadDefinitionFile(filename: string): Record<string, any> {
   const filePath = path.resolve(
     process.cwd(),
     "data/symbolic/definitions",
-    filename
+    filename,
   );
 
   if (!fs.existsSync(filePath)) {
@@ -59,13 +59,13 @@ function loadDefinitionFile(filename: string): Record<string, any> {
  */
 function interpolate(
   template?: string,
-  meta?: Record<string, string | number>
+  meta?: Record<string, string | number>,
 ): string | undefined {
   if (!template) return undefined;
   if (!meta) return template;
 
   return template.replace(/\{(\w+)\}/g, (_, key) =>
-    meta[key] !== undefined ? String(meta[key]) : `{${key}}`
+    meta[key] !== undefined ? String(meta[key]) : `{${key}}`,
   );
 }
 
@@ -82,7 +82,7 @@ function interpolate(
  */
 export function mapIssues(
   rawIssues: RawIssue[],
-  rawWarnings: RawIssue[]
+  rawWarnings: RawIssue[],
 ): { errors: SymbolicIssue[]; warnings: SymbolicIssue[] } {
   // 加载静态规则库
   const errorDefs = loadDefinitionFile("cpp-errors.json");
@@ -93,10 +93,10 @@ export function mapIssues(
    */
   function mapOne(
     raw: RawIssue,
-    definitions: Record<string, any>
+    definitions: Record<string, any>,
   ): SymbolicIssue | null {
     const def = definitions[raw.ruleId];
-    
+
     // 若规则 ID 未在定义文件中注册，则忽略该条目 (过滤未知规则)
     if (!def) {
       return null;
@@ -104,22 +104,20 @@ export function mapIssues(
 
     // 确定最终消息：优先使用动态覆盖的消息，否则使用插值后的模板消息
     const finalMessage =
-      raw.message ??
-      interpolate(def.message, raw.meta) ??
-      "";
+      raw.message ?? interpolate(def.message, raw.meta) ?? "";
 
     return {
       ruleId: raw.ruleId,
       severity: (def.severity as SymbolicSeverity) || "Medium",
-      display_name: def.display_name|| raw.ruleId,
+      display_name: def.display_name || raw.ruleId,
       message: finalMessage,
-      pedagogical_label: def.pedagogical_label|| "General",
-      knowledge_concept: def.knowledge_concept|| "cpp_basic",
+      pedagogical_label: def.pedagogical_label || "General",
+      knowledge_concept: def.knowledge_concept || "cpp_basic",
       description: def.description,
       remediation: def.remediation,
       remediation_code: def.remediation_code,
       location: raw.location,
-      meta: raw.meta
+      meta: raw.meta,
     };
   }
 

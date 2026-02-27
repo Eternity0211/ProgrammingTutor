@@ -13,12 +13,17 @@ import path from "path";
 // Test Setup
 // =============================================================================
 
-const PATTERN_DIR = path.resolve(process.cwd(), "data/symbolic/ast-patterns/cpp/errors");
+const PATTERN_DIR = path.resolve(
+  process.cwd(),
+  "data/symbolic/ast-patterns/cpp/errors",
+);
 
 // 仅做检查，不再写入文件，保护开发环境
 beforeAll(() => {
   if (!fs.existsSync(PATTERN_DIR)) {
-    console.warn("⚠️ [Test Setup] Pattern directory not found. Tests relying on SCM files may fail.");
+    console.warn(
+      "⚠️ [Test Setup] Pattern directory not found. Tests relying on SCM files may fail.",
+    );
   }
 });
 
@@ -27,7 +32,6 @@ beforeAll(() => {
 // =============================================================================
 
 describe("Static Errors Analyzer", () => {
-
   // ---------------------------------------------------------------------------
   /**
    * @test Case: Native Syntax Error | 原生语法错误
@@ -37,12 +41,12 @@ describe("Static Errors Analyzer", () => {
   it("should detect native syntax errors (missing semicolon)", async () => {
     const code = "int main() { int a = 10 return 0; }";
     const tree = await parseCode(code);
-    
+
     const results = await analyzeErrors(tree);
-    
-    const syntaxError = results.find(r => r.ruleId === "CPP_SYNTAX_ERROR");
+
+    const syntaxError = results.find((r) => r.ruleId === "CPP_SYNTAX_ERROR");
     expect(syntaxError).toBeDefined();
-    expect(syntaxError?.location.line).toBe(0); 
+    expect(syntaxError?.location.line).toBe(0);
   });
 
   // ---------------------------------------------------------------------------
@@ -54,9 +58,9 @@ describe("Static Errors Analyzer", () => {
   it("should handle severe syntax errors gracefully", async () => {
     const code = "int main() { <<< invalid code >>> }";
     const tree = await parseCode(code);
-    
+
     const results = await analyzeErrors(tree);
-    
+
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].ruleId).toBe("CPP_SYNTAX_ERROR");
   });
@@ -70,15 +74,17 @@ describe("Static Errors Analyzer", () => {
   it("should detect invalid array size (CPP_INVALID_ARRAY_SIZE)", async () => {
     const code = "void func() { int buffer[-5]; }";
     const tree = await parseCode(code);
-    
+
     const results = await analyzeErrors(tree);
-    
+
     // 查找是否命中了现有的规则
-    const logicError = results.find(r => r.ruleId === "CPP_INVALID_ARRAY_SIZE");
+    const logicError = results.find(
+      (r) => r.ruleId === "CPP_INVALID_ARRAY_SIZE",
+    );
     expect(logicError).toBeDefined();
-    
+
     // 验证位置准确性（Tree-sitter 行号从 0 开始）
-    expect(logicError?.location.line).toBe(0); 
+    expect(logicError?.location.line).toBe(0);
   });
 
   // ---------------------------------------------------------------------------
@@ -90,7 +96,9 @@ describe("Static Errors Analyzer", () => {
   it("should detect reserved identifier naming patterns (CPP_RESERVED_IDENTIFIER)", async () => {
     const rulePath = path.join(PATTERN_DIR, "CPP_RESERVED_IDENTIFIER.scm");
     if (!fs.existsSync(rulePath)) {
-      console.warn("⚠️ Skipping CPP_RESERVED_IDENTIFIER test: Rule file not found.");
+      console.warn(
+        "⚠️ Skipping CPP_RESERVED_IDENTIFIER test: Rule file not found.",
+      );
       return;
     }
 
@@ -103,7 +111,9 @@ describe("Static Errors Analyzer", () => {
     const tree = await parseCode(code);
     const results = await analyzeErrors(tree);
 
-    const reservedIssues = results.filter(r => r.ruleId === "CPP_RESERVED_IDENTIFIER");
+    const reservedIssues = results.filter(
+      (r) => r.ruleId === "CPP_RESERVED_IDENTIFIER",
+    );
     expect(reservedIssues.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -116,10 +126,12 @@ describe("Static Errors Analyzer", () => {
   it("should detect assignment inside if condition (CPP_ASSIGNMENT_IN_IF)", async () => {
     const code = "void func() { int a; if (a = 1) {} }";
     const tree = await parseCode(code);
-    
+
     const results = await analyzeErrors(tree);
-    
-    const assignmentError = results.find(r => r.ruleId === "CPP_ASSIGNMENT_IN_IF");
+
+    const assignmentError = results.find(
+      (r) => r.ruleId === "CPP_ASSIGNMENT_IN_IF",
+    );
     expect(assignmentError).toBeDefined();
   });
 
@@ -132,16 +144,21 @@ describe("Static Errors Analyzer", () => {
   it("should detect division by zero with literal divisor (CPP_DIVISION_BY_ZERO_LITERAL)", async () => {
     const rulePath = path.join(PATTERN_DIR, "CPP_DIVISION_BY_ZERO_LITERAL.scm");
     if (!fs.existsSync(rulePath)) {
-      console.warn("⚠️ Skipping CPP_DIVISION_BY_ZERO_LITERAL test: Rule file not found.");
+      console.warn(
+        "⚠️ Skipping CPP_DIVISION_BY_ZERO_LITERAL test: Rule file not found.",
+      );
       return;
     }
 
-    const code = "int foo(int x) { int a = x / 0; int b = x % 0; return a + b; }";
+    const code =
+      "int foo(int x) { int a = x / 0; int b = x % 0; return a + b; }";
     const tree = await parseCode(code);
 
     const results = await analyzeErrors(tree);
 
-    const divZeroIssues = results.filter(r => r.ruleId === "CPP_DIVISION_BY_ZERO_LITERAL");
+    const divZeroIssues = results.filter(
+      (r) => r.ruleId === "CPP_DIVISION_BY_ZERO_LITERAL",
+    );
     expect(divZeroIssues.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -172,7 +189,9 @@ describe("Static Errors Analyzer", () => {
     const tree = await parseCode(code);
     const results = await analyzeErrors(tree);
 
-    const missingBreakIssues = results.filter(r => r.ruleId === "CPP_MISSING_BREAK");
+    const missingBreakIssues = results.filter(
+      (r) => r.ruleId === "CPP_MISSING_BREAK",
+    );
     expect(missingBreakIssues.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -184,7 +203,9 @@ describe("Static Errors Analyzer", () => {
   it("should detect non-void function without return (CPP_NON_VOID_NO_RETURN)", async () => {
     const rulePath = path.join(PATTERN_DIR, "CPP_NON_VOID_NO_RETURN.scm");
     if (!fs.existsSync(rulePath)) {
-      console.warn("⚠️ Skipping CPP_NON_VOID_NO_RETURN test: Rule file not found.");
+      console.warn(
+        "⚠️ Skipping CPP_NON_VOID_NO_RETURN test: Rule file not found.",
+      );
       return;
     }
 
@@ -200,7 +221,9 @@ describe("Static Errors Analyzer", () => {
     const tree = await parseCode(code);
     const results = await analyzeErrors(tree);
 
-    const noReturnIssue = results.find(r => r.ruleId === "CPP_NON_VOID_NO_RETURN");
+    const noReturnIssue = results.find(
+      (r) => r.ruleId === "CPP_NON_VOID_NO_RETURN",
+    );
     expect(noReturnIssue).toBeDefined();
   });
 
@@ -224,10 +247,9 @@ describe("Static Errors Analyzer", () => {
     `;
     const tree = await parseCode(code);
     const results = await analyzeErrors(tree);
-    
+
     // 如果这里失败，请检查 data/symbolic/ast-patterns/cpp/errors 下
     // 是否还有其他宽泛匹配的测试文件残留（如 CPP_TEST_LITERAL.scm）
     expect(results).toHaveLength(0);
   });
-
 });
