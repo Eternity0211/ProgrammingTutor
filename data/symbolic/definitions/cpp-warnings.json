@@ -35,6 +35,141 @@
       "pedagogical_label": "Control Flow Completeness",
       "knowledge_concept": "Switch Statements",
       "remediation": "Add a default case to handle unexpected values."
+    },
+
+    "CPP_NAMESPACE_USING_IN_HEADER": {
+      "severity": "Medium",
+      "display_name": "Using Namespace in Header",
+      "message": "Using 'using namespace' at global scope can pollute the global namespace and cause name conflicts.",
+      "pedagogical_label": "Namespace Usage",
+      "knowledge_concept": "Namespace_Fundamentals",
+      "remediation": "Avoid using 'using namespace' in headers; instead qualify names explicitly or limit 'using' directives to implementation files or local scopes."
+    },
+
+    "CPP_LOGIC_RETURN_VALUE_IGNORED": {
+      "severity": "Medium",
+      "display_name": "Return Value Ignored",
+      "message": "Function return value is not used; it may indicate an error or important state.",
+      "pedagogical_label": "Function Usage",
+      "knowledge_concept": "Function_Return_Value_Basics",
+      "remediation": "Check the return value or explicitly cast to void if ignoring is intentional."
+    },
+
+    "CPP_LOGIC_GLOBAL_VARIABLE_ABUSE": {
+      "severity": "Medium",
+      "display_name": "Global Variable Usage",
+      "message": "Global variable increases coupling and makes code harder to test.",
+      "pedagogical_label": "Variable Scope",
+      "knowledge_concept": "Global_Variable_Basics",
+      "remediation": "Prefer local variables or pass data via parameters."
+    },
+
+    "CPP_CLASS_MEMBER_INITIALIZATION_ORDER": {
+      "severity": "Medium",
+      "display_name": "Member Initialization Order Mismatch",
+      "message": "Initializer list order should match member declaration order.",
+      "pedagogical_label": "Constructor",
+      "knowledge_concept": "Member_Initialization_Order",
+      "remediation": "Reorder the initializer list to match the order of member declarations."
+    },
+
+    "CPP_CLASS_MEMBER_FUNCTION_HIDING": {
+      "severity": "Medium",
+      "display_name": "Member Function Hides Base Class",
+      "message": "Derived class function hides base class function; add override if intended to override.",
+      "pedagogical_label": "Inheritance",
+      "knowledge_concept": "Member_Function_Hiding",
+      "remediation": "Use override keyword or different name to avoid accidental hiding."
+    },
+
+    "CPP_FUNCTION_UNUSED_PARAMETER": {
+      "severity": "Low",
+      "display_name": "Unused Function Parameter",
+      "message": "Parameter is declared but never used.",
+      "pedagogical_label": "Function Design",
+      "knowledge_concept": "Function_Parameter_Basics",
+      "remediation": "Remove the parameter or mark it with (void)param or [[maybe_unused]]."
+    },
+
+    "CPP_LOGIC_COMPARISON_OF_UNRELATED_TYPES": {
+      "severity": "Medium",
+      "display_name": "Comparison of Unrelated Types",
+      "message": "Comparing pointer with integer or unrelated types may be unintentional.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type_Comparison_Basics",
+      "remediation": "Ensure both operands have compatible types for meaningful comparison."
+    },
+
+    "CPP_LOGIC_ARRAY_INITIALIZATION_INCOMPLETE": {
+      "severity": "Medium",
+      "display_name": "Incomplete Array Initialization",
+      "message": "Array has more elements than initializers; remaining elements are zero-initialized or indeterminate.",
+      "pedagogical_label": "Array Initialization",
+      "knowledge_concept": "Array_Initialization_Basics",
+      "remediation": "Provide initializers for all elements or use fewer elements in the declaration."
+    },
+
+    "CPP_LOGIC_INFINITE_LOOP_RISK": {
+      "severity": "Medium",
+      "display_name": "Potential Infinite Loop",
+      "message": "Loop condition may never become false; consider adding a break or modifying the condition.",
+      "pedagogical_label": "Control Flow",
+      "knowledge_concept": "Loop_Statement_Basics",
+      "remediation": "Ensure the loop has a reachable exit condition."
+    },
+
+    "CPP_INCLUDE_GUARD_MISSING": {
+      "severity": "Medium",
+      "display_name": "Missing Include Guard",
+      "message": "Header file may lack include guards, leading to redefinition errors.",
+      "pedagogical_label": "Header Management",
+      "knowledge_concept": "Include_Guard_Fundamentals",
+      "remediation": "Add #ifndef/#define/#endif or #pragma once at the top of the header."
+    },
+
+    "CPP_MACRO_PARAMETER_NO_PARENS": {
+      "severity": "Medium",
+      "display_name": "Macro Parameter Without Parentheses",
+      "message": "Macro parameter used without parentheses can cause operator precedence bugs.",
+      "pedagogical_label": "Macro Safety",
+      "knowledge_concept": "Macro_Fundamentals",
+      "remediation": "Wrap each macro parameter in parentheses: #define FOO(x) ((x) + 1)."
+    },
+
+    "CPP_MACRO_WITH_SIDE_EFFECTS": {
+      "severity": "Medium",
+      "display_name": "Macro With Side Effects",
+      "message": "Macro expands argument multiple times; side effects (e.g. i++) may run more than once.",
+      "pedagogical_label": "Macro Safety",
+      "knowledge_concept": "Macro_Fundamentals",
+      "remediation": "Use inline function or ensure macro arguments have no side effects."
+    },
+
+    "CPP_MACRO_REDEFINITION": {
+      "severity": "Low",
+      "display_name": "Macro Redefinition",
+      "message": "Macro is defined more than once; later definition may override earlier one.",
+      "pedagogical_label": "Macro Management",
+      "knowledge_concept": "Macro_Fundamentals",
+      "remediation": "Use #ifndef to guard macro definitions or #undef before redefining."
+    },
+
+    "CPP_TYPE_NARROWING_CONVERSION": {
+      "severity": "Medium",
+      "display_name": "Narrowing Conversion",
+      "message": "Conversion may lose precision or range (e.g. double to int).",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Narrowing_Conversion",
+      "remediation": "Use explicit cast or ensure source value is within target range."
+    },
+
+    "CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_REDEFINED": {
+      "severity": "Medium",
+      "display_name": "Default Parameter Redefined",
+      "message": "Default parameter specified in both declaration and definition.",
+      "pedagogical_label": "Function Parameters",
+      "knowledge_concept": "Default_Parameter_Basics",
+      "remediation": "Specify default values only in the declaration."
     }
   }
 }

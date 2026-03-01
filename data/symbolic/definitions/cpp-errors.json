@@ -133,6 +133,159 @@
       "pedagogical_label": "Naming Rules",
       "knowledge_concept": "Identifiers",
       "remediation": "Avoid identifiers starting with '_' or containing '__'."
+    },
+
+    "CPP_FUNCTION_RETURN_LOCAL_REF": {
+      "severity": "High",
+      "display_name": "Return Reference to Local Variable",
+      "message": "Function returns a reference to a local variable, which will be destroyed after the function returns.",
+      "pedagogical_label": "Function Return Rules",
+      "knowledge_concept": "Reference_Return_Fundamentals",
+      "remediation": "Return by value or return a reference to an object with a longer lifetime, such as a parameter or class member."
+    },
+
+    "CPP_FUNCTION_RETURN_LOCAL_PTR": {
+      "severity": "High",
+      "display_name": "Return Pointer to Local Variable",
+      "message": "Function returns a pointer to a local variable, which will dangle after the function returns.",
+      "pedagogical_label": "Function Return Rules",
+      "knowledge_concept": "Pointer_Return_Fundamentals",
+      "remediation": "Avoid returning the address of local variables; instead return by value or point to dynamically allocated or longer-lived objects."
+    },
+
+    "CPP_ARRAY_SIZE_NON_CONSTANT": {
+      "severity": "Medium",
+      "display_name": "Non-Constant Array Size",
+      "message": "Array size should be a compile-time constant, but here it depends on a non-constant expression.",
+      "pedagogical_label": "Array Definition Rules",
+      "knowledge_concept": "Array_Size_Basics",
+      "remediation": "Use a constant expression for the array size or replace the built-in array with std::vector or std::array."
+    },
+
+    "CPP_ALLOC_ZERO_SIZE_ARRAY": {
+      "severity": "High",
+      "display_name": "Allocate Zero-Size Array",
+      "message": "Allocating array with new[] and size 0 leads to undefined behavior.",
+      "pedagogical_label": "Dynamic Memory Allocation",
+      "knowledge_concept": "Dynamic_Array_Basics",
+      "remediation": "Ensure array size is positive before calling new[]."
+    },
+
+    "CPP_VIRTUAL_CALL_FROM_CONSTRUCTOR": {
+      "severity": "High",
+      "display_name": "Virtual Function Call in Constructor",
+      "message": "Calling virtual function from constructor; derived class is not fully constructed yet.",
+      "pedagogical_label": "Object Construction",
+      "knowledge_concept": "Virtual_Function_Basics",
+      "remediation": "Avoid virtual calls in constructors; use non-virtual or pass state via parameters."
+    },
+
+    "CPP_DESTRUCTOR_EXCEPTION_UNHANDLED": {
+      "severity": "High",
+      "display_name": "Exception Thrown in Destructor",
+      "message": "Destructor may throw an exception, which can cause program termination.",
+      "pedagogical_label": "Destructor Rules",
+      "knowledge_concept": "Destructor_Basics",
+      "remediation": "Destructors should not throw; catch and handle exceptions inside the destructor."
+    },
+
+    "CPP_REINTERPRET_CAST_UNSAFE": {
+      "severity": "High",
+      "display_name": "Unsafe reinterpret_cast",
+      "message": "reinterpret_cast between incompatible types may cause undefined behavior.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Reinterpret_Cast_Fundamentals",
+      "remediation": "Prefer static_cast or dynamic_cast; use reinterpret_cast only when necessary and document the rationale."
+    },
+
+    "CPP_CONST_CAST_ABUSE": {
+      "severity": "High",
+      "display_name": "Abuse of const_cast",
+      "message": "Using const_cast to modify a const object leads to undefined behavior.",
+      "pedagogical_label": "Const Correctness",
+      "knowledge_concept": "Const_Cast_Fundamentals",
+      "remediation": "Avoid const_cast; redesign interfaces to avoid stripping const."
+    },
+
+    "CPP_DYNAMIC_CAST_NULL": {
+      "severity": "High",
+      "display_name": "dynamic_cast Result Not Checked for nullptr",
+      "message": "dynamic_cast may return nullptr; dereferencing without a null check causes undefined behavior.",
+      "pedagogical_label": "RTTI Safety",
+      "knowledge_concept": "Dynamic_Cast_Fundamentals",
+      "remediation": "Always check the result of dynamic_cast before dereferencing."
+    },
+
+    "CPP_CLASS_CONSTRUCTOR_EXPLICIT_MISSING": {
+      "severity": "Medium",
+      "display_name": "Single-Parameter Constructor Missing explicit",
+      "message": "Single-parameter constructor allows implicit conversion; consider adding explicit.",
+      "pedagogical_label": "Constructor Rules",
+      "knowledge_concept": "Explicit_Constructor_Basics",
+      "remediation": "Add explicit to prevent unintended implicit conversions."
+    },
+
+    "CPP_VIRTUAL_DESTRUCTOR_MISSING": {
+      "severity": "High",
+      "display_name": "Base Class Destructor Not Virtual",
+      "message": "Base class with virtual functions should have a virtual destructor.",
+      "pedagogical_label": "Inheritance",
+      "knowledge_concept": "Destructor_Basics",
+      "remediation": "Declare the base class destructor as virtual."
+    },
+
+    "CPP_FLOAT_COMPARISON_DIRECT": {
+      "severity": "Medium",
+      "display_name": "Direct Float Equality Comparison",
+      "message": "Comparing floats with == or != is unreliable due to precision; use epsilon comparison.",
+      "pedagogical_label": "Floating-Point",
+      "knowledge_concept": "Floating_Point_Comparison",
+      "remediation": "Use std::abs(a - b) < epsilon instead of a == b."
+    },
+
+    "CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_NOT_LAST": {
+      "severity": "High",
+      "display_name": "Default Parameter Not Last",
+      "message": "Default parameters must appear after all non-default parameters.",
+      "pedagogical_label": "Function Parameters",
+      "knowledge_concept": "Default_Parameter_Basics",
+      "remediation": "Reorder parameters so all parameters with defaults come last."
+    },
+
+    "CPP_LOGIC_WRONG_CONDITION_OPERATOR": {
+      "severity": "Medium",
+      "display_name": "Wrong Operator in Condition (Bitwise vs Logical)",
+      "message": "Using & or | instead of && or || in a condition may cause unexpected short-circuit behavior.",
+      "pedagogical_label": "Conditional Logic",
+      "knowledge_concept": "Conditional_Expression_Basics",
+      "remediation": "Use && for logical AND and || for logical OR in conditions."
+    },
+
+    "CPP_ASSIGNMENT_OPERATOR_SELF_ASSIGN": {
+      "severity": "High",
+      "display_name": "Assignment Operator Missing Self-Assignment Check",
+      "message": "Assignment operator should check for self-assignment to avoid resource corruption.",
+      "pedagogical_label": "Assignment Operator",
+      "knowledge_concept": "Assignment_Operator_Basics",
+      "remediation": "Add if (this == &other) return *this; at the start of operator=."
+    },
+
+    "CPP_VOID_POINTER_ARITHMETIC": {
+      "severity": "High",
+      "display_name": "Pointer Arithmetic on void*",
+      "message": "Pointer arithmetic on void* is invalid; void has no size.",
+      "pedagogical_label": "Pointer Safety",
+      "knowledge_concept": "Pointer_Arithmetic",
+      "remediation": "Cast void* to a concrete pointer type before arithmetic."
+    },
+
+    "CPP_C_STYLE_CAST": {
+      "severity": "Medium",
+      "display_name": "C-Style Cast Detected",
+      "message": "C-style cast (type)expr can hide errors; prefer C++ casts.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type_Casting_Safety",
+      "remediation": "Use static_cast, dynamic_cast, const_cast, or reinterpret_cast as appropriate."
     }
   }
 }
