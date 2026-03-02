@@ -286,6 +286,24 @@
       "pedagogical_label": "Type Safety",
       "knowledge_concept": "Type_Casting_Safety",
       "remediation": "Use static_cast, dynamic_cast, const_cast, or reinterpret_cast as appropriate."
+    },
+
+    "CPP_DYNAMIC_ARRAY_OOB_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Array Index Out of Bounds",
+      "message": "Access to array '{arrayName}' is definitely out of bounds. The maximum valid index is {maxValidIndex}, but the dynamically inferred index strictly falls within {indexInterval}.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Array Indexing",
+      "remediation": "Check the array size declaration and the index calculation logic. Ensure the index is never negative and never exceeds the array length minus one."
+    },
+
+    "CPP_DYNAMIC_ARRAY_OOB_SUSPECTED": {
+      "severity": "Medium",
+      "display_name": "Potential Array Out of Bounds Risk",
+      "message": "Potential out-of-bounds risk for array '{arrayName}'. The maximum valid index is {maxValidIndex}, but under certain control flow paths or loop extremes, the index may reach the interval {indexInterval}.",
+      "pedagogical_label": "Boundary Condition",
+      "knowledge_concept": "Array Indexing",
+      "remediation": "Consider adding a bounds check (e.g., `if (i >= 0 && i <= {maxValidIndex})`) before accessing the array, or review loop termination conditions to prevent off-by-one errors."
     }
   }
 }
