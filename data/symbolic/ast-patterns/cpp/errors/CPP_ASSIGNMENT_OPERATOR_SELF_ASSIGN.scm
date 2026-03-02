@@ -13,4 +13,4 @@
   body: (compound_statement) @body
 ) @target
 (#match? @op "operator\\s*=")
-(#not-match? @body "this\\s*==\\s*&|&\\s*other\\s*\)|this\\s*==\\s*&\\s*\\w+\\s*\)")
+(#not-match? @body "if\\s*\\(\\s*(?:this\\s*==\\s*&\\w+|&\\w+\\s*==\\s*this)\\s*\\)")
