@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-const CppStandardEnum = z.enum(["c++11", "c++14", "c++17", "c++20"], {
-  errorMap: () => ({ message: "请选择有效的 C++ 标准" }),
+const CppStandardEnum = z.enum(["c++11", "c++17"], {
+  errorMap: () => ({ message: "请选择有效的 C++ 标准（仅支持c++11/c++17）" }),
 });
 
 export const assignmentSchema = z.object({
