@@ -2,10 +2,11 @@
  * @file array_bounds.ts
  * @description 动态分析规则 - 数组边界检查器 (Array Bounds Checker)。
  * 核心诊断原理：
- * 拦截 AST 中的数组下标访问 (subscript_expression)，将推导出的下标区间与数组声明的合法边界对比。
+ * 拦截 AST 中的数组下标访问 (subscript_expression)，支持多维数组解包提取。
+ * 将推导出的下标区间与数组声明 (含 Heap 动态分配) 的合法边界对比。
  * * 判定模型：
- * 1. 必然越界 (Definite OOB): 访问区间的最小值大于最大索引，或最大值小于 0。
- * 2. 疑似越界 (Suspected OOB): 访问区间与合法范围有交集，但也覆盖了非法区域 (多见于循环发散)。
+ * 1. 必然越界 (Definite OOB / Must-Issue): 访问区间的最小值大于最大索引，或最大值小于 0。
+ * 2. 疑似越界 (Suspected OOB / May-Issue): 访问区间与合法范围有交集，但也覆盖了非法区域。
  * @module Symbolic/Dynamic/Checkers/ArrayBounds
  */
 
@@ -14,60 +15,76 @@ import { Environment, Interval } from "../state";
 import { RawIssue } from "../../../../../lib/types/symbolic-types";
 import { Checker } from "./index";
 
+/**
+ * 数组边界检查器实例
+ * 挂载于动态分析引擎中，在语句级别进行运行时越界探测。
+ */
 export const ArrayBoundsChecker: Checker = {
   
   /**
-   * 执行数组边界检查
+   * 执行边界诊断逻辑
+   * @param node - 当前遍历的 AST 节点
+   * @param env - 当前执行流到达该节点时的符号状态环境
+   * @returns 若发现越界风险返回 RawIssue，否则返回 null
    */
   check(node: SyntaxNode, env: Environment): RawIssue | null {
-    // 1. 类型过滤：仅处理下标访问节点
+    // 1. 类型过滤：仅拦截数组的下标访问节点
     if (node.type !== "subscript_expression") {
       return null;
     }
 
-    // 2. 提取数组对象与索引表达式
-    const arrayNode = node.childForFieldName("argument") || node.namedChildren[0];
-    let indexNode = node.childForFieldName("index") || node.namedChildren[1];
+    // 2. 多维数组 (Multi-dimensional Array) 的降维解包
+    let currentArrayNode: SyntaxNode | null = node;
+    const indices: SyntaxNode[] = [];
 
-    if (!arrayNode || !indexNode) {
+    // 递归向内层剥离 subscript_expression，以寻找到根标识符，同时收集所有维度的索引表达式
+    while (currentArrayNode && currentArrayNode.type === "subscript_expression") {
+      let idx = currentArrayNode.childForFieldName("index") || currentArrayNode.namedChildren[1];
+      
+      // 兼容 Tree-sitter 不同版本的语法包装差异 (如 subscript_argument_list)
+      if (idx && idx.type === "subscript_argument_list" && idx.namedChildren.length > 0) {
+        idx = idx.namedChildren[0];
+      }
+      
+      if (idx) {
+        // 头插法，确保收集的索引顺序为 [最高维度, ..., 最低维度]
+        indices.unshift(idx); 
+      }
+      currentArrayNode = currentArrayNode.childForFieldName("argument") || currentArrayNode.namedChildren[0];
+    }
+
+    if (!currentArrayNode || indices.length === 0) {
       return null;
     }
 
-    const arrayName = arrayNode.text.trim();
+    // 提取纯粹的数组变量名
+    const arrayName = currentArrayNode.text.trim();
 
-    // 处理某些 Tree-sitter 版本中下标带有的包装层级 (如 subscript_argument_list)
-    if (indexNode.type === "subscript_argument_list" && indexNode.namedChildren.length > 0) {
-      indexNode = indexNode.namedChildren[0];
-    }
-
-    // 3. 状态查询：获取数组元数据 (Size)
+    // 3. 状态查询：向环境账本索要该数组的元数据 (支持静态声明与 new 关键字分配的堆内存)
     const arrayState = env.get(arrayName);
     if (!arrayState || !arrayState.collection) {
       return null;
     }
 
-    // 4. 边界演算：合法索引范围为 [0, Size - 1]
+    // 4. 边界演算：目前优先对第一维度 (最高维) 实施安全校验
     const sizeInterval = arrayState.collection.size;
     const maxValidIndex = sizeInterval.max - 1; 
 
-    // 5. 符号推导：计算下标的可能取值区间
-    let idxInterval = evaluateIndexExpression(indexNode, env);
-
-    // [精度补强]：通过溯源祖先节点的条件约束 (if/while/for) 来二次裁剪区间。
-    // 这能有效解决由于加宽算子 (Widening) 导致的 i=[0, ∞] 误报问题。
-    idxInterval = refineIntervalWithAncestorConditions(idxInterval, indexNode, env);
+    // 5. 符号推导：利用引擎内置计算能力，求解当前访问下标的极值边界区间
+    const targetIndexNode = indices[0];
+    const idxInterval = evaluateIndexExpression(targetIndexNode, env);
 
     // =========================================================================
     // 缺陷判定逻辑 (Must-Issue vs May-Issue)
     // =========================================================================
 
-    // 判定 1: 必然越界 (Must) - 区间完全落在合法范围外
+    // 判定 1: 必然越界 (Must-Issue) - 访问区间完全脱离合法范围
     const isDefiniteOOB = idxInterval.min > maxValidIndex || idxInterval.max < 0;
-
-    // 判定 2: 疑似越界 (May) - 区间部分落在合法范围外
+    
+    // 判定 2: 疑似越界 (May-Issue) - 访问区间包含了合法部分，但也触及了非法区域 (多见于发散的循环)
     const isSuspectedOOB = (idxInterval.max > maxValidIndex || idxInterval.min < 0) && !isDefiniteOOB;
 
-    // 组装用于模板插值的元数据
+    // 组装用于富文本映射的插值元数据
     const meta = {
       arrayName: arrayName,
       maxValidIndex: maxValidIndex,
@@ -79,7 +96,7 @@ export const ArrayBoundsChecker: Checker = {
       column: node.startPosition.column,
     };
 
-    // 6. 返回匹配的原始缺陷报告
+    // 6. 抛出相应的缺陷报告
     if (isDefiniteOOB) {
       return { ruleId: "CPP_DYNAMIC_ARRAY_OOB_DEFINITE", location, meta };
     } else if (isSuspectedOOB) {
@@ -95,27 +112,30 @@ export const ArrayBoundsChecker: Checker = {
 // =============================================================================
 
 /**
- * 局部表达式求值器：将 AST 节点递归还原为数学区间。
- * 能够处理常数、变量以及二元算术运算 (如 arr[i + 1])。
+ * 局部表达式求值器 (防弹级解析)
+ * 能够无视复杂的 AST 节点包装，通过模式匹配和递归下降，还原数学区间。
+ * @param node - 需要评估的表达式节点
+ * @param env - 当前的符号环境账本
+ * @returns 求解出的数值区间 (Interval)
  */
 function evaluateIndexExpression(node: SyntaxNode, env: Environment): Interval {
   if (!node) return new Interval(-Infinity, Infinity);
   
   const text = node.text.trim();
 
-  // 1. 字面量处理 (支持负数正则)
+  // 1. 字面量处理 (精准匹配正数与负数)
   if (/^-?\d+$/.test(text)) {
     const v = parseInt(text, 10);
     return new Interval(v, v);
   }
 
-  // 2. 剥离冗余括号
+  // 2. 剥离冗余括号层级
   if (node.type === "parenthesized_expression") {
      const inner = node.childForFieldName("value") || node.namedChildren[0];
      if (inner) return evaluateIndexExpression(inner, env);
   }
 
-  // 3. 算术运算递归推导
+  // 3. 算术运算递归推演 (支持加、减、乘)
   if (node.type === "binary_expression" || node.children.some(c => ["+", "-", "*", "/"].includes(c.type))) {
     const leftNode = node.childForFieldName("left") || node.namedChildren[0];
     const rightNode = node.childForFieldName("right") || node.namedChildren[1];
@@ -130,91 +150,11 @@ function evaluateIndexExpression(node: SyntaxNode, env: Environment): Interval {
     }
   }
 
-  // 4. 标识符查询 (直接向环境账本索要区间)
+  // 4. 标识符映射 (向环境账本请求已知变量的区间状态)
   if (/^[a-zA-Z_]\w*$/.test(text)) {
      return env.getInterval(text);
   }
 
-  // 兜底：无法识别的复杂节点返回全集 [负无穷, 正无穷]
+  // 若遇到函数调用等未知复杂节点，采取最保守策略，返回无约束区间
   return new Interval(-Infinity, Infinity);
-}
-
-/**
- * 约束收敛器：根据当前节点的上下文（祖先控制流节点）收敛变量区间。
- * 在动态分析中，Widening 会让循环变量变成 [0, ∞]，
- * 通过检查 while(i < 5) 这样的祖先节点，我们可以将区间强制修正为合法的约束范围。
- */
-function refineIntervalWithAncestorConditions(
-  interval: Interval,
-  node: SyntaxNode,
-  env: Environment
-): Interval {
-  let refined = interval;
-  let cur: SyntaxNode | null = node;
-  const varName = node.text.trim();
-
-  // 向上溯源祖先节点
-  while (cur) {
-    if (
-      (cur.type === "while_statement" || cur.type === "if_statement" || cur.type === "for_statement")
-    ) {
-      // 提取控制流的条件表达式
-      const cond = cur.childForFieldName("condition") || cur.namedChildren.find(c => c.type === "binary_expression");
-      if (cond) {
-        const bin = cond.type === "binary_expression" ? cond : findBinaryIn(cond);
-        if (bin) {
-          const left = bin.childForFieldName("left") || bin.namedChildren[0];
-          const right = bin.childForFieldName("right") || bin.namedChildren[1];
-          const op =
-            bin.childForFieldName("operator")?.text ||
-            bin.children.find(c => ["<", ">", "<=", ">=", "==", "!="].includes(c.type))?.text;
-
-          if (op && left && right) {
-            let constraint: Interval | null = null;
-            let literalNode: SyntaxNode | null = null;
-            let varOnLeft = false;
-
-            // 识别形如 i < 10 或 10 > i 的模式
-            if (left.text.trim() === varName && /^-?\d+$/.test(right.text.trim())) {
-              varOnLeft = true;
-              literalNode = right;
-            } else if (right.text.trim() === varName && /^-?\d+$/.test(left.text.trim())) {
-              varOnLeft = false;
-              literalNode = left;
-            }
-
-            if (literalNode) {
-              const val = parseInt(literalNode.text, 10);
-              // 执行数学约束裁剪
-              if (op === "<")
-                constraint = varOnLeft ? new Interval(-Infinity, val - 1) : new Interval(val + 1, Infinity);
-              else if (op === "<=")
-                constraint = varOnLeft ? new Interval(-Infinity, val) : new Interval(val, Infinity);
-              else if (op === ">")
-                constraint = varOnLeft ? new Interval(val + 1, Infinity) : new Interval(-Infinity, val);
-              else if (op === ">=")
-                constraint = varOnLeft ? new Interval(val, Infinity) : new Interval(-Infinity, val - 1);
-              else if (op === "==") constraint = new Interval(val, val);
-            }
-
-            if (constraint) {
-              refined = refined.intersect(constraint);
-            }
-          }
-        }
-      }
-    }
-    cur = cur.parent;
-  }
-  return refined;
-}
-
-/** 递归搜寻节点内的首个二元表达式 */
-function findBinaryIn(node: SyntaxNode): SyntaxNode | null {
-  if (node.type === "binary_expression") return node;
-  for (const c of node.namedChildren) {
-    const f = findBinaryIn(c);
-    if (f) return f;
-  }
-  return null;
 }
