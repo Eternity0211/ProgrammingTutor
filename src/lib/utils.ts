@@ -14,6 +14,8 @@ import { type ClassValue, clsx } from "clsx";
 import { randomUUID } from "crypto";
 import { twMerge } from "tailwind-merge";
 
+import { SourceLocation } from "./types/symbolic-types";
+
 // Tailwind 样式合并核心工具
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -287,4 +289,21 @@ export function transformStudentDataForGrading(
     students: transformedStudents,
     metrics: assignmentData.metrics,
   };
+}
+
+
+// 将符号引擎的 Location 转换为 Monaco 的 Range 格式
+export function locationToMonacoRange(loc: SourceLocation) {
+  return {
+    startLineNumber: loc.line,
+    startColumn: loc.column,
+    endLineNumber: loc.line,
+    endColumn: loc.column + 1, // 默认为当前字符高亮
+  };
+}
+
+// 格式化 AI 反馈，屏蔽 Markdown 代码块防止作弊
+export function formatCausalFeedback(text: string): string {
+  // 移除所有 ```cpp ... ``` 或 ``` ... ``` 代码块
+  return text.replace(/```[\s\S]*?```/g, "_[代码修复建议已根据教学原则隐藏，请参考下方逻辑思路]_");
 }
