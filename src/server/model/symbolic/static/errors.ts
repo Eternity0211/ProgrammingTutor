@@ -106,6 +106,26 @@ const VALIDATORS: Record<string, Validator> = {
     return null; // 验证通过，没有越界
   },
 
+  "CPP_NON_VOID_NO_RETURN": (captures) => {
+    // 验证函数体中是否存在任何 return_statement 节点
+    const funcNode = captures["target"];
+    if (!funcNode) return null;
+    const returns = funcNode.descendantsOfType("return_statement");
+    const hasReturn = returns.length > 0;
+    return hasReturn ? null : "__no_message__";
+  },
+
+  "CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_NOT_LAST": (captures) => {
+    const node = captures["target"];
+    if (!node) return null;
+    const text = node.text;
+    const pattern = /=([^,]+),\s*[^=,\)]/;
+    if (pattern.test(text)) {
+      return "__no_message__";
+    }
+    return null;
+  },
+
   "KEY": (captures) => {
     return "some dynamic message";
   }

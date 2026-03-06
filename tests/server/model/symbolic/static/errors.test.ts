@@ -5,7 +5,7 @@
  */
 
 import { analyzeErrors } from "../../../../../src/server/model/symbolic/static/errors";
-import { parseCode } from "../../../../../src/server/model/symbolic/parser";
+import { parseCode, getLanguage, createQuery } from "../../../../../src/server/model/symbolic/parser";
 import fs from "fs";
 import path from "path";
 
@@ -206,6 +206,32 @@ describe("Static Errors Analyzer", () => {
 
   // ---------------------------------------------------------------------------
   /**
+   * @test Case: Logic Error - Default Parameter Not Last | 逻辑规则：默认参数未放在末尾
+   * @description Verifies detection of parameter lists where a default-valued parameter
+   *              is followed by one without a default using CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_NOT_LAST.scm.
+   */
+  it("should detect default parameter not last (CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_NOT_LAST)", async () => {
+    const rulePath = path.join(PATTERN_DIR, "CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_NOT_LAST.scm");
+    if (!fs.existsSync(rulePath)) {
+      console.warn("⚠️ Skipping CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_NOT_LAST test: Rule file not found.");
+      return;
+    }
+
+    const code = `
+      void foo(int a = 5, float b) {
+        // default followed by non-default
+      }
+    `;
+
+    const tree = await parseCode(code);
+    const results = await analyzeErrors(tree);
+
+    const issue = results.find(r => r.ruleId === "CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_NOT_LAST");
+    expect(issue).toBeDefined();
+  });
+
+  // ---------------------------------------------------------------------------
+  /**
    * @test Case: Clean Code | 合规代码
    * @description Verifies that valid C++ code produces zero issues.
    * 验证：输入完全正确的代码，不应触发上述任何逻辑规则或语法错误。
@@ -224,7 +250,7 @@ describe("Static Errors Analyzer", () => {
     `;
     const tree = await parseCode(code);
     const results = await analyzeErrors(tree);
-    
+
     // 如果这里失败，请检查 data/symbolic/ast-patterns/cpp/errors 下
     // 是否还有其他宽泛匹配的测试文件残留（如 CPP_TEST_LITERAL.scm）
     expect(results).toHaveLength(0);
