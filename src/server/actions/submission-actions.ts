@@ -254,6 +254,13 @@ export async function getSubmissionsById(codeSubmissionId: string) {
   const cookieStore = await cookies();
   const studentId = cookieStore.get("student")?.value || session.user.id;
   try {
+    const whereCondition = {
+      id: codeSubmissionId,
+      ...(session.user.role === "STUDENT" && {
+        submission: { studentId: studentId }, // 学生仅能查自己的提交
+      }),
+    };
+
     const codeSubmission = await prisma.codeSubmission.findUnique({
       where: {
         id: codeSubmissionId,
@@ -294,10 +301,14 @@ export async function getSubmissionsById(codeSubmissionId: string) {
         session.user.role === "FACULTY"
           ? codeSubmission.codeEvaluationStatus
           : undefined,
+      aiFeedback: codeSubmission.submission.aiFeedback,
+      emotion: codeSubmission.submission.emotion,
+      recommendedQuestions: codeSubmission.submission.recommendedQuestions,
     };
 
     return { status: "success", submission: formattedSubmission };
   } catch (error) {
+    console.error("Failed to get submission by ID:", error);
     throw new Error("Failed to get submissions " + error);
   }
 }

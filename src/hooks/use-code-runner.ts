@@ -1,6 +1,9 @@
-import { CodeRunner } from "@/lib/types/code-types";
+import { CodeRunner, SymbolicResult, AIFeedback } from "@/lib/types/code-types";
 import { useState } from "react";
 import { toast } from "sonner";
+
+import { LearningNavigationResult } from "@/server/model/neural/navigationAgent";
+import { EmotionAnalysisResult } from "@/server/model/neural/emotionAgent";
 
 interface useCodeRunnerParams {
   code: string;
@@ -17,6 +20,12 @@ export function useCodeRunner({
   const [isRunning, setIsRunning] = useState(false);
   const [codeStatus, setCodeStatus] = useState<string>("");
   const [testResults, setTestResults] = useState<CodeRunner[]>([]);
+
+  const [aiAnalysis, setAiAnalysis] = useState<AIFeedback | null>(null);
+  const [navigation, setNavigation] = useState<LearningNavigationResult | null>(
+    null,
+  );
+  const [emotion, setEmotion] = useState<EmotionAnalysisResult | null>(null);
 
   const runCode = async () => {
     if (isRunning) {
@@ -147,6 +156,10 @@ export function useCodeRunner({
           completed = true;
 
           if (submissionData.status === "EVALUATION_COMPLETE") {
+            setAiAnalysis(submissionData.aiFeedback);
+            setNavigation(submissionData.navigation);
+            setEmotion(submissionData.emotion);
+
             setCodeStatus("All tests passed successfully!");
             toast.success("Your solution passed all test cases");
           } else {
@@ -172,5 +185,14 @@ export function useCodeRunner({
     return completed;
   };
 
-  return { isRunning, codeStatus, testResults, runCode, submitCode };
+  return {
+    isRunning,
+    codeStatus,
+    testResults,
+    aiAnalysis,
+    navigation,
+    emotion,
+    runCode,
+    submitCode,
+  };
 }

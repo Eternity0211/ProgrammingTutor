@@ -13,6 +13,8 @@ import { CombinedTesting } from "./combined-testing-component";
 import { useFullScreen } from "@/hooks/use-fullscreen";
 import { useCodeRunner } from "@/hooks/use-code-runner";
 
+import { AIFeedbackPanel } from "./ai-feedback-panel";
+
 interface AssignmentLayoutProps {
   assignment: AssignmentById;
   classCode: string;
@@ -28,13 +30,21 @@ export function AssignmentLayout({
   const [customInput, setCustomInput] = useState("");
   const { isFullscreen } = useFullScreen();
   const currentQuestion = assignment.questions[currentQuestionIndex];
-  const { isRunning, codeStatus, testResults, runCode, submitCode } =
-    useCodeRunner({
-      code,
-      language: currentQuestion.language,
-      questionId: currentQuestion.id,
-      input: customInput,
-    });
+  const {
+    isRunning,
+    codeStatus,
+    testResults,
+    aiAnalysis,
+    navigation,
+    emotion,
+    runCode,
+    submitCode,
+  } = useCodeRunner({
+    code,
+    language: currentQuestion.language,
+    questionId: currentQuestion.id,
+    input: customInput,
+  });
 
   const showFullscreenAlert = assignment.fullScreenEnforcement && !isFullscreen;
 
@@ -129,15 +139,26 @@ export function AssignmentLayout({
                 disableCopyPaste={assignment.copyPastePrevention}
               />
 
-              <div className="border-t border-border">
-                <CombinedTesting
-                  results={testResults}
-                  customInput={customInput}
-                  onCustomInputChange={setCustomInput}
-                  onRunCode={runCode}
-                  isRunning={isRunning}
-                  codeStatus={codeStatus}
-                />
+              <div className="border-t border-border grid grid-cols-2 h-80 overflow-hidden bg-background">
+                <div className="border-r border-border overflow-y-auto">
+                  <CombinedTesting
+                    results={testResults}
+                    customInput={customInput}
+                    onCustomInputChange={setCustomInput}
+                    onRunCode={runCode}
+                    isRunning={isRunning}
+                    codeStatus={codeStatus}
+                  />
+                </div>
+
+                <div className="overflow-y-auto bg-zinc-50/30 dark:bg-zinc-950/10">
+                  <AIFeedbackPanel
+                    aiAnalysis={aiAnalysis}
+                    navigation={navigation}
+                    emotion={emotion}
+                    isRunning={isRunning}
+                  />
+                </div>
               </div>
             </motion.div>
           )}
