@@ -12,6 +12,8 @@ import {
 } from "./grading-actions";
 import { cookies } from "next/headers";
 import { judgeResult } from "@/lib/types/code-types";
+import { EmotionAnalysisResult } from "../model/neural/emotionAgent";
+import { LearningNavigationResult } from "../model/neural/navigationAgent";
 
 export async function processJudgeResultWebhook(
   testCaseId: string,
@@ -411,4 +413,70 @@ export async function getStudentAssignmentProgress(
   });
 
   return studentsProgress;
+}
+
+export async function getStudentFeedbackHistory() {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const submissions = await prisma.codeSubmission.findMany({
+    where: {
+      submission: {
+        studentId: session.user.id
+      }
+    },
+    include: {
+      question: true,
+      submission: {
+        include: {
+          assignment: {
+            include: {
+              classroom: true
+            }
+          }
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 5 // 取最近 5 条
+  });
+
+  return submissions.map(sub => {
+    // 1. 给解析后的变量一个明确的联合类型，或者初始化为 null
+    let parsedFeedback: any = null;
+    
+    try {
+      if (sub.feedback) {
+        // 尝试解析 JSON
+        parsedFeedback = JSON.parse(sub.feedback);
+      }
+    } catch (e) {
+      // 【关键修改】：如果解析失败，说明 sub.feedback 是纯文本
+      // 我们手动模拟一个 JSON 结构，确保下方可选链能够访问到数据
+      console.warn("发现非 JSON 格式反馈，已转为兼容模式:", sub.id);
+      parsedFeedback = {
+        emotion_analysis: {
+          supportive_guidance: sub.feedback // 将纯文本直接作为指导语显示
+        },
+        learning_navigation: {
+          learning_path: [{ topic: "基础逻辑修正" }] // 给一个默认建议
+        }
+      };
+    }
+
+    return {
+      id: sub.id,
+      assignmentId: sub.submission.assignmentId,
+      classCode: sub.submission.assignment.classroom.code,
+      date: sub.createdAt.toLocaleDateString(),
+      assignment: sub.submission.assignment.title,
+      score: sub.score || 0,
+      
+      // 2. 使用可选链（Optional Chaining）安全访问
+      // 这里的报错就会消失，因为 parsedFeedback 现在知道自己拥有这些属性了
+      emotionFeedback: parsedFeedback?.emotion_analysis?.supportive_guidance || "暂无情绪反馈",
+      navigatorTips: parsedFeedback?.learning_navigation?.learning_path?.[0]?.topic || "暂无学习建议",
+      recommendations: parsedFeedback?.learning_navigation?.recommended_exercises || []
+    };
+  });
 }

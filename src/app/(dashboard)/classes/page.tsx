@@ -5,6 +5,11 @@ import { getUserClasses } from "@/server/actions/class-actions";
 import { auth } from "@/lib/auth";
 import Loading from "./loading";
 
+import { Button } from "@/app/_components/ui/button";
+import Link from "next/link";
+import { ROUTES } from "@/config/route";
+import { UserCircle } from "lucide-react";
+
 export const metadata: Metadata = {
   title: "Classes | gradeIT",
   description: "Manage and access your coding classes",
@@ -18,10 +23,18 @@ export default async function ClassesPage() {
   const { classes, role } = await getUserClasses();
   return (
     <div className="flex flex-col gap-8 p-6 py-0">
-      <PageHeader
-        heading="Classes"
-        text="Access and manage your coding classes."
-      />
+      <div className="flex justify-between items-center">
+        <PageHeader
+          heading="Classes"
+          text="Access and manage your coding classes."
+        />
+        <Link href={ROUTES.PROFILE}>
+            <Button variant="outline" className="flex gap-2">
+              <UserCircle className="w-4 h-4" />
+              个人中心
+            </Button>
+          </Link>
+        </div>
       <ClassGrid classes={classes || []} role={role || "STUDENT"} />
     </div>
   );
