@@ -67,35 +67,43 @@ export const getUserClasses = async () => {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
-        classrooms: role === "FACULTY" && {
-          select: {
-            id: true,
-            name: true,
-            section: true,
-            code: true,
-            inviteLink: true,
-            facultyName: true,
-          },
-        },
-        enrolledClasses: role === "STUDENT" && {
-          select: {
-            id: true,
-            name: true,
-            section: true,
-            code: true,
-            inviteLink: true,
-            facultyName: true,
-          },
-        },
+        classrooms:
+          role === "FACULTY"
+            ? {
+                select: {
+                  id: true,
+                  name: true,
+                  section: true,
+                  code: true,
+                  inviteLink: true,
+                  facultyName: true,
+                  createdAt: true,
+                },
+              }
+            : false,
+        enrolledClasses:
+          role === "STUDENT"
+            ? {
+                select: {
+                  id: true,
+                  name: true,
+                  section: true,
+                  code: true,
+                  inviteLink: true,
+                  facultyName: true,
+                  createdAt: true,
+                },
+              }
+            : false,
       },
     });
     if (!user) {
       throw new Error("User not found");
     }
 
-    const classes: UserClassroom[] = (
-      role === "FACULTY" ? user.classrooms : user.enrolledClasses || []
-    ).map((classroom) => ({
+    const targetClasses =
+      role === "FACULTY" ? user.classrooms : user.enrolledClasses;
+    const classes: UserClassroom[] = (targetClasses || []).map((classroom) => ({
       ...classroom,
     }));
 
