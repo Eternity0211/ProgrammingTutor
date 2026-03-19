@@ -9,15 +9,15 @@ import { RawIssue } from "../../../../../lib/types/symbolic-types";
 import { Checker } from "./index";
 
 const TYPE_BOUNDS: Record<string, Interval> = {
-  "char": new Interval(-128, 127),
+  char: new Interval(-128, 127),
   "signed char": new Interval(-128, 127),
   "unsigned char": new Interval(0, 255),
-  "short": new Interval(-32768, 32767),
+  short: new Interval(-32768, 32767),
   "short int": new Interval(-32768, 32767),
   "unsigned short": new Interval(0, 65535),
   "unsigned short int": new Interval(0, 65535),
-  "int": new Interval(-2147483648, 2147483647),
-  "unsigned": new Interval(0, 4294967295),
+  int: new Interval(-2147483648, 2147483647),
+  unsigned: new Interval(0, 4294967295),
   "unsigned int": new Interval(0, 4294967295),
 };
 
@@ -25,8 +25,12 @@ export const CastOverflowChecker: Checker = {
   check(node: SyntaxNode, env: Environment): RawIssue | null {
     if (node.type !== "cast_expression") return null;
 
-    const typeNode = node.childForFieldName("type") || node.namedChildren.find((c) => c.type === "type_descriptor");
-    const valueNode = node.childForFieldName("value") || node.namedChildren.find((c) => c.type !== "type_descriptor");
+    const typeNode =
+      node.childForFieldName("type") ||
+      node.namedChildren.find((c) => c.type === "type_descriptor");
+    const valueNode =
+      node.childForFieldName("value") ||
+      node.namedChildren.find((c) => c.type !== "type_descriptor");
     if (!typeNode || !valueNode) return null;
 
     const targetType = normalizeType(typeNode.text);
@@ -35,7 +39,8 @@ export const CastOverflowChecker: Checker = {
 
     const source = evaluateExpression(valueNode, env);
     const isDefinite = source.min > bounds.max || source.max < bounds.min;
-    const isSuspected = (source.min < bounds.min || source.max > bounds.max) && !isDefinite;
+    const isSuspected =
+      (source.min < bounds.min || source.max > bounds.max) && !isDefinite;
 
     if (!isDefinite && !isSuspected) return null;
 
@@ -57,11 +62,7 @@ export const CastOverflowChecker: Checker = {
 };
 
 function normalizeType(raw: string): string {
-  return raw
-    .replace(/[()]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
+  return raw.replace(/[()]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
 }
 
 function evaluateExpression(node: SyntaxNode, env: Environment): Interval {

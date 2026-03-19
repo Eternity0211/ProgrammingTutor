@@ -48,7 +48,7 @@ export const NullDerefChecker: Checker = {
     }
 
     return null;
-  }
+  },
 };
 
 function trackPointerShadow(node: SyntaxNode, env: Environment): void {
@@ -63,7 +63,8 @@ function trackPointerShadow(node: SyntaxNode, env: Environment): void {
 
   // 2) 指针声明且初始化：优先使用右值区间更新影子状态
   if (node.type === "init_declarator") {
-    const declaratorNode = node.childForFieldName("declarator") || node.namedChildren[0];
+    const declaratorNode =
+      node.childForFieldName("declarator") || node.namedChildren[0];
     const valueNode = node.childForFieldName("value") || node.namedChildren[1];
     const name = extractIdentifierName(declaratorNode);
     if (!name) return;
@@ -83,12 +84,19 @@ function trackPointerShadow(node: SyntaxNode, env: Environment): void {
     if (!leftNode || !rightNode) return;
 
     if (leftNode.type === "identifier") {
-      setShadowInterval(leftNode.text.trim(), evaluateExpression(rightNode, env), env);
+      setShadowInterval(
+        leftNode.text.trim(),
+        evaluateExpression(rightNode, env),
+        env,
+      );
     }
   }
 }
 
-function getPointerInterval(pointerExpr: SyntaxNode, env: Environment): Interval {
+function getPointerInterval(
+  pointerExpr: SyntaxNode,
+  env: Environment,
+): Interval {
   if (pointerExpr.type === "identifier") {
     const shadowName = shadowVarName(pointerExpr.text.trim());
     const shadow = env.get(shadowName);
@@ -97,7 +105,11 @@ function getPointerInterval(pointerExpr: SyntaxNode, env: Environment): Interval
   return evaluateExpression(pointerExpr, env);
 }
 
-function setShadowInterval(name: string, interval: Interval, env: Environment): void {
+function setShadowInterval(
+  name: string,
+  interval: Interval,
+  env: Environment,
+): void {
   const shadowName = shadowVarName(name);
   if (!env.get(shadowName)) {
     env.declareVar(shadowName, "shadow_ptr");
@@ -115,7 +127,11 @@ function extractIdentifierName(node: SyntaxNode | null): string | null {
     return node.text.trim();
   }
 
-  if (node.type === "pointer_declarator" || node.type === "reference_declarator" || node.type === "array_declarator") {
+  if (
+    node.type === "pointer_declarator" ||
+    node.type === "reference_declarator" ||
+    node.type === "array_declarator"
+  ) {
     const inner = node.childForFieldName("declarator") || node.namedChildren[0];
     return extractIdentifierName(inner);
   }
@@ -130,7 +146,10 @@ function classify(iv: Interval, node: SyntaxNode): RawIssue | null {
   if (!isDefinite && !isSuspected) return null;
 
   const meta = { pointerInterval: iv.toString() };
-  const location = { line: node.startPosition.row + 1, column: node.startPosition.column };
+  const location = {
+    line: node.startPosition.row + 1,
+    column: node.startPosition.column,
+  };
   if (isDefinite) {
     return { ruleId: "CPP_DYNAMIC_NULL_DEREF_DEFINITE", location, meta };
   } else {
@@ -158,15 +177,24 @@ function evaluateExpression(node: SyntaxNode, env: Environment): Interval {
       const li = evaluateExpression(left, env);
       const ri = evaluateExpression(right, env);
       switch (op) {
-        case "+": return li.add(ri);
-        case "-": return li.sub(ri);
-        case "*": return li.mul(ri);
+        case "+":
+          return li.add(ri);
+        case "-":
+          return li.sub(ri);
+        case "*":
+          return li.mul(ri);
         case "/":
           return new Interval(
-            ri.min < 0 && ri.max > 0 ? -Infinity :
-            ri.min === 0 ? Infinity : Math.floor(li.min / ri.min),
-            ri.min < 0 && ri.max > 0 ? Infinity :
-            ri.max === 0 ? Infinity : Math.ceil(li.max / ri.max)
+            ri.min < 0 && ri.max > 0
+              ? -Infinity
+              : ri.min === 0
+                ? Infinity
+                : Math.floor(li.min / ri.min),
+            ri.min < 0 && ri.max > 0
+              ? Infinity
+              : ri.max === 0
+                ? Infinity
+                : Math.ceil(li.max / ri.max),
           );
       }
     }

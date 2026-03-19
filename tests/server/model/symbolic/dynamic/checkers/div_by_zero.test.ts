@@ -21,7 +21,7 @@ describe("Dynamic Analysis Checker - Division By Zero", () => {
       int y = x / 1;    // 5
     `;
     const issues = await runEngine(code);
-    const divIssues = issues.filter(i => i.ruleId.includes("DIV_ZERO"));
+    const divIssues = issues.filter((i) => i.ruleId.includes("DIV_ZERO"));
     expect(divIssues.length).toBe(0);
   });
 
@@ -32,7 +32,9 @@ describe("Dynamic Analysis Checker - Division By Zero", () => {
       int c = a / b;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter(i => i.ruleId === "CPP_DYNAMIC_DIV_ZERO_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_DIV_ZERO_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
     expect(definite[0].meta.divisorInterval).toBe("[0, 0]");
   });
@@ -44,7 +46,9 @@ describe("Dynamic Analysis Checker - Division By Zero", () => {
       int c = a / i;
     `;
     const issues = await runEngine(code);
-    const suspect = issues.filter(i => i.ruleId === "CPP_DYNAMIC_DIV_ZERO_SUSPECTED");
+    const suspect = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_DIV_ZERO_SUSPECTED",
+    );
     expect(suspect.length).toBeGreaterThan(0);
     // 未初始化变量的区间通常为 [-Infinity, Infinity]
     expect(suspect[0].meta.divisorInterval).toContain("Infinity");

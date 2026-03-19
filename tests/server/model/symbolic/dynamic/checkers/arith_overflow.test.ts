@@ -31,7 +31,9 @@ describe("Dynamic Analysis Checker - Arithmetic Overflow", () => {
       int c = a + b;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_ARITH_OVERFLOW_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_ARITH_OVERFLOW_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
   });
 
@@ -42,7 +44,9 @@ describe("Dynamic Analysis Checker - Arithmetic Overflow", () => {
       int c = a - b;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_ARITH_OVERFLOW_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_ARITH_OVERFLOW_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
   });
 
@@ -52,7 +56,9 @@ describe("Dynamic Analysis Checker - Arithmetic Overflow", () => {
       int y = x + 2147483647;
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_ARITH_OVERFLOW_SUSPECTED");
+    const suspected = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_ARITH_OVERFLOW_SUSPECTED",
+    );
     expect(suspected.length).toBeGreaterThan(0);
   });
 });

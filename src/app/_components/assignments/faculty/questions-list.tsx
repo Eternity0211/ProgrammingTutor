@@ -108,31 +108,30 @@ export function QuestionsList({
             >
               <AccordionItem
                 value={question.id}
-                className="rounded-2xl border border-border bg-background"
+                className="relative rounded-2xl border border-border bg-background"
               >
-                <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                  <div className="flex flex-1 items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Code className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium text-foreground">
-                        {question.title || `Question ${index + 1}`}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeQuestion(index);
-                      }}
-                      className="mr-2 h-8 w-8 rounded-full p-0 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Remove question</span>
-                    </Button>
+                <AccordionTrigger className="px-6 py-4 pr-16 hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <Code className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-foreground">
+                      {question.title || `Question ${index + 1}`}
+                    </span>
                   </div>
                 </AccordionTrigger>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeQuestion(index);
+                  }}
+                  disabled={questions.length <= 1}
+                  className="absolute right-10 top-3 z-10 h-8 w-8 rounded-full p-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label="Remove question"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
                 <AccordionContent className="px-6 pb-6">
                   <QuestionForm
                     question={question}

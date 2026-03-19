@@ -1,9 +1,22 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { PageHeader } from "@/app/_components/page-header";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/app/_components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/app/_components/ui/card";
 import { Button } from "@/app/_components/ui/button";
-import { Brain, Target, History, MessageSquare, Lightbulb, ArrowRight } from "lucide-react";
+import {
+  Brain,
+  Target,
+  History,
+  MessageSquare,
+  Lightbulb,
+  ArrowRight,
+} from "lucide-react";
 import { Badge } from "@/app/_components/ui/badge";
 import { getStudentFeedbackHistory } from "@/server/actions/submission-actions";
 import { auth } from "@/lib/auth";
@@ -62,9 +75,8 @@ const RECOMMENDATIONS = [
 export default async function ProfilePage() {
   const feedbackHistory = await getStudentFeedbackHistory();
 
-  const latestRecommendations = feedbackHistory.length > 0 
-    ? feedbackHistory[0].recommendations 
-    : [];
+  const latestRecommendations =
+    feedbackHistory.length > 0 ? feedbackHistory[0].recommendations : [];
 
   return (
     <div className="flex flex-col gap-8 p-6 py-0 pb-10">
@@ -81,9 +93,7 @@ export default async function ProfilePage() {
               <Brain className="w-5 h-5 text-blue-500" />
               C++ 能力画像 (基于符号错误分析)
             </CardTitle>
-            <CardDescription>
-              数据实时更新自你的代码提交记录
-            </CardDescription>
+            <CardDescription>数据实时更新自你的代码提交记录</CardDescription>
           </CardHeader>
           <CardContent>
             {/* 使用动态加载的组件 */}
@@ -103,7 +113,10 @@ export default async function ProfilePage() {
           <CardContent className="flex flex-col gap-4">
             {latestRecommendations.length > 0 ? (
               latestRecommendations.map((item: any) => (
-                <div key={item.id} className="p-4 border rounded-lg hover:bg-accent cursor-pointer group">
+                <div
+                  key={item.id}
+                  className="p-4 border rounded-lg hover:bg-accent cursor-pointer group"
+                >
                   <div className="flex justify-between items-start mb-2">
                     <h4 className="font-medium">{item.title}</h4>
                     <Badge variant="secondary">{item.difficulty}</Badge>
@@ -111,7 +124,11 @@ export default async function ProfilePage() {
                   <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
                     目的：{item.purpose}
                   </p>
-                  <Button variant="ghost" size="sm" className="w-full justify-between group-hover:text-blue-500">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between group-hover:text-blue-500"
+                  >
                     前往挑战 <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
@@ -131,50 +148,63 @@ export default async function ProfilePage() {
           <History className="w-5 h-5" />
           多智能体反馈历史
         </h3>
-        
+
         <div className="grid grid-cols-1 gap-4">
           {feedbackHistory.length > 0 ? (
             feedbackHistory.map((log) => (
-              <Link 
-                key={log.id} 
+              <Link
+                key={log.id}
                 href={`/classes/${log.classCode}/${log.assignmentId}/submissions/${log.id}`}
                 className="block transition-transform hover:scale-[1.01] active:scale-95"
               >
-              <Card key={log.id} className="overflow-hidden border-l-4 border-l-blue-500">
-                <div className="grid grid-cols-1 md:grid-cols-4">
-                  <div className="p-4 border-r bg-muted/30">
-                    <div className="text-sm text-muted-foreground">{log.date}</div>
-                    <div className="font-bold my-1 line-clamp-1">{log.assignment}</div>
-                    <Badge variant={log.score >= 80 ? "default" : "secondary"}>
-                      得分: {log.score}
-                    </Badge>
-                  </div>
-                  
-                  <div className="md:col-span-3 p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Emotion Agent 输出 */}
-                    <div className="flex gap-3">
-                      <MessageSquare className="w-5 h-5 text-purple-500 shrink-0 mt-1" />
-                      <div>
-                        <div className="text-xs font-bold text-purple-600 uppercase">Emotion Agent</div>
-                        <p className="text-sm text-foreground mt-1 italic leading-relaxed">
-                          "{log.emotionFeedback}"
-                        </p>
+                <Card
+                  key={log.id}
+                  className="overflow-hidden border-l-4 border-l-blue-500"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-4">
+                    <div className="p-4 border-r bg-muted/30">
+                      <div className="text-sm text-muted-foreground">
+                        {log.date}
                       </div>
+                      <div className="font-bold my-1 line-clamp-1">
+                        {log.assignment}
+                      </div>
+                      <Badge
+                        variant={log.score >= 80 ? "default" : "secondary"}
+                      >
+                        得分: {log.score}
+                      </Badge>
                     </div>
 
-                    {/* Navigation Agent 输出 */}
-                    <div className="flex gap-3">
-                      <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-1" />
-                      <div>
-                        <div className="text-xs font-bold text-amber-600 uppercase">Navigation Agent</div>
-                        <p className="text-sm text-foreground mt-1 leading-relaxed">
-                          {log.navigatorTips}
-                        </p>
+                    <div className="md:col-span-3 p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Emotion Agent 输出 */}
+                      <div className="flex gap-3">
+                        <MessageSquare className="w-5 h-5 text-purple-500 shrink-0 mt-1" />
+                        <div>
+                          <div className="text-xs font-bold text-purple-600 uppercase">
+                            Emotion Agent
+                          </div>
+                          <p className="text-sm text-foreground mt-1 italic leading-relaxed">
+                            "{log.emotionFeedback}"
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Navigation Agent 输出 */}
+                      <div className="flex gap-3">
+                        <Lightbulb className="w-5 h-5 text-amber-500 shrink-0 mt-1" />
+                        <div>
+                          <div className="text-xs font-bold text-amber-600 uppercase">
+                            Navigation Agent
+                          </div>
+                          <p className="text-sm text-foreground mt-1 leading-relaxed">
+                            {log.navigatorTips}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
               </Link>
             ))
           ) : (

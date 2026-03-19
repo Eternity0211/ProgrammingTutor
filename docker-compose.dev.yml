@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
   db:
     # ！！！重要：必须与 docker-compose.yaml 中的配置完全一致 ！！！
@@ -24,6 +24,8 @@ services:
       # 确保使用开发环境变量，如指向本地db
       DATABASE_URL: postgresql://gradeitDB:mypassword@db:5432/gradeit?sslmode=disable
       NODE_ENV: development # 设为开发模式
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      AI_GROQ_API_KEY: ${AI_GROQ_API_KEY:-}
     volumes:
       # 核心挂载：将当前目录映射到容器的 /app，排除 node_modules
       - .:/app

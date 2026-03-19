@@ -67,15 +67,15 @@ export const capabilityFeatures = [
     icon: Users,
     title: "自适应学习路径规划",
     description:
-      "基于动态构建的学习者画像，智能识别知识薄弱点，动态推送适配习题与学习资源，实现千人千面的个性化教学。"
+      "基于动态构建的学习者画像，智能识别知识薄弱点，动态推送适配习题与学习资源，实现千人千面的个性化教学。",
   },
   {
     icon: CheckSquare,
     title: "多端协同教学赋能",
     description:
-      "打通学生端智能辅导与教师端学情分析，通过多智能体协同，提供沉浸式学习体验与数据驱动的教学决策支持。"
+      "打通学生端智能辅导与教师端学情分析，通过多智能体协同，提供沉浸式学习体验与数据驱动的教学决策支持。",
   },
-]
+];
 
 // Educator feature data
 export const educatorFeatures = [
@@ -182,17 +182,20 @@ export const technicalHighlights = [
   {
     icon: Lock,
     title: "Secure Execution",
-    description: "Sandboxed Judge0 containers with resource limits (2s CPU, 128MB memory)",
+    description:
+      "Sandboxed Judge0 containers with resource limits (2s CPU, 128MB memory)",
   },
   {
     icon: Brain,
     title: "Groq AI Integration",
-    description: "Llama 3.3 70B model for intelligent test generation and code evaluation",
+    description:
+      "Llama 3.3 70B model for intelligent test generation and code evaluation",
   },
   {
     icon: Zap,
     title: "Webhook Architecture",
-    description: "Asynchronous processing for scalable code execution and grading",
+    description:
+      "Asynchronous processing for scalable code execution and grading",
   },
   {
     icon: Shield,
@@ -205,7 +208,7 @@ export const technicalHighlights = [
 export const supportedLanguages = [
   "Python",
   "JavaScript",
-  "TypeScript", 
+  "TypeScript",
   "Java",
   "C",
   "C++",

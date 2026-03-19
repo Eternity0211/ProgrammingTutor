@@ -8,13 +8,13 @@
  * @module Symbolic/Static/Warnings
  */
 
-import { 
-  Tree, 
-  Query, 
-  SyntaxNode, 
+import {
+  Tree,
+  Query,
+  SyntaxNode,
   getLanguage,
-  createQuery // 使用 parser 提供的工厂函数以屏蔽底层 API 版本差异
-} from "../parser"; 
+  createQuery, // 使用 parser 提供的工厂函数以屏蔽底层 API 版本差异
+} from "../parser";
 
 import { RawIssue } from "../../../../lib/types/symbolic-types";
 import fs from "fs";
@@ -25,7 +25,10 @@ import path from "path";
 // =============================================================================
 
 /** 警告规则 (SCM) 的存放目录 */
-const PATTERN_DIR = path.resolve(process.cwd(), "data/symbolic/ast-patterns/cpp/warnings");
+const PATTERN_DIR = path.resolve(
+  process.cwd(),
+  "data/symbolic/ast-patterns/cpp/warnings",
+);
 
 /** * 查询缓存池 (Query Cache)
  * key: ruleId (文件名), value: 预编译好的 Tree-sitter Query 对象
@@ -41,7 +44,7 @@ async function ensureRegistry(): Promise<Map<string, Query>> {
   if (queryRegistry) return queryRegistry;
 
   queryRegistry = new Map();
-  const language = await getLanguage(); 
+  const language = await getLanguage();
 
   // 若规则目录不存在（例如初次初始化），静默返回空注册表
   if (!fs.existsSync(PATTERN_DIR)) {
@@ -58,10 +61,13 @@ async function ensureRegistry(): Promise<Map<string, Query>> {
     try {
       const source = fs.readFileSync(scmPath, "utf-8");
       // 使用 parser.ts 提供的 createQuery 确保跨版本兼容性
-      const query = createQuery(language, source); 
+      const query = createQuery(language, source);
       queryRegistry.set(ruleId, query);
     } catch (e) {
-      console.error(`[Static/Warnings] Failed to compile SCM rule: ${ruleId}`, e);
+      console.error(
+        `[Static/Warnings] Failed to compile SCM rule: ${ruleId}`,
+        e,
+      );
     }
   }
 
@@ -87,7 +93,7 @@ export async function analyzeWarnings(tree: Tree): Promise<RawIssue[]> {
 
   // 加载并缓存所有已注册的警告规则
   const queries = await ensureRegistry();
-  
+
   // 遍历规则并执行查询
   for (const [ruleId, query] of queries) {
     runQuery(tree.rootNode, ruleId, query, issues);
@@ -108,7 +114,7 @@ function runQuery(
   root: SyntaxNode,
   ruleId: string,
   query: Query,
-  issues: RawIssue[]
+  issues: RawIssue[],
 ) {
   // 执行查询，获取所有匹配项 (Matches)
   const matches = query.matches(root);
@@ -124,7 +130,7 @@ function runQuery(
       // 约定：名为 @target 的节点是警告主体，用于定位高亮
       if (name === "target") {
         targetNode = capture.node;
-      } 
+      }
       // 约定：其他名称 (如 @name, @val) 提取为 meta 数据，供 Mapper 插值
       else {
         meta[name] = capture.node.text;

@@ -1,8 +1,13 @@
 "use client"; // 必须在顶部
 
 import React from "react";
-import { 
-  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer 
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
 } from "recharts";
 
 // 定义数据结构接口
@@ -16,12 +21,12 @@ interface SkillData {
 export function SkillRadar({ data }: { data?: SkillData[] }) {
   // 如果没有数据，使用之前的 Mock 数据作为兜底
   const displayData = data || [
-    { subject: '指针/引用', A: 80, fullMark: 100 },
-    { subject: '内存管理', A: 65, fullMark: 100 },
-    { subject: 'STL容器', A: 90, fullMark: 100 },
-    { subject: '面向对象', A: 70, fullMark: 100 },
-    { subject: '递归算法', A: 55, fullMark: 100 },
-    { subject: '异常处理', A: 40, fullMark: 100 },
+    { subject: "指针/引用", A: 80, fullMark: 100 },
+    { subject: "内存管理", A: 65, fullMark: 100 },
+    { subject: "STL容器", A: 90, fullMark: 100 },
+    { subject: "面向对象", A: 70, fullMark: 100 },
+    { subject: "递归算法", A: 55, fullMark: 100 },
+    { subject: "异常处理", A: 40, fullMark: 100 },
   ];
 
   return (
@@ -29,7 +34,10 @@ export function SkillRadar({ data }: { data?: SkillData[] }) {
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart cx="50%" cy="50%" outerRadius="80%" data={displayData}>
           <PolarGrid stroke="#e2e8f0" />
-          <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12 }} />
+          <PolarAngleAxis
+            dataKey="subject"
+            tick={{ fill: "#64748b", fontSize: 12 }}
+          />
           <PolarRadiusAxis angle={30} domain={[0, 100]} />
           <Radar
             name="掌握度"

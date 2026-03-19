@@ -13,12 +13,17 @@ import path from "path";
 // Test Setup
 // =============================================================================
 
-const PATTERN_DIR = path.resolve(process.cwd(), "data/symbolic/ast-patterns/cpp/warnings");
+const PATTERN_DIR = path.resolve(
+  process.cwd(),
+  "data/symbolic/ast-patterns/cpp/warnings",
+);
 
 // 检查环境，若目录为空则给出警告
 beforeAll(() => {
   if (!fs.existsSync(PATTERN_DIR)) {
-    console.warn("⚠️ [Test Setup] Pattern directory not found. Warning tests require .scm files.");
+    console.warn(
+      "⚠️ [Test Setup] Pattern directory not found. Warning tests require .scm files.",
+    );
   }
 });
 
@@ -27,7 +32,6 @@ beforeAll(() => {
 // =============================================================================
 
 describe("Static Warnings Analyzer", () => {
-
   // ---------------------------------------------------------------------------
   /**
    * @test Case: Structured Programming (Goto) | 结构化编程规范
@@ -38,7 +42,9 @@ describe("Static Warnings Analyzer", () => {
     // 前置检查：确保规则文件存在，否则跳过此具体断言（避免 CI 报错）
     const rulePath = path.join(PATTERN_DIR, "CPP_NO_GOTO.scm");
     if (!fs.existsSync(rulePath)) {
-      console.warn("⚠️ Skipping CPP_NO_GOTO test: Rule file not found. Please create it per README.");
+      console.warn(
+        "⚠️ Skipping CPP_NO_GOTO test: Rule file not found. Please create it per README.",
+      );
       return;
     }
 
@@ -51,8 +57,8 @@ describe("Static Warnings Analyzer", () => {
     `;
     const tree = await parseCode(code);
     const results = await analyzeWarnings(tree);
-    
-    const gotoWarning = results.find(r => r.ruleId === "CPP_NO_GOTO");
+
+    const gotoWarning = results.find((r) => r.ruleId === "CPP_NO_GOTO");
     expect(gotoWarning).toBeDefined();
     // 验证位置：goto start; 在第 4 行 (索引 3)
     // 注意：具体行号取决于 SCM 捕获的是 'goto' 关键字还是整个语句
@@ -83,7 +89,7 @@ describe("Static Warnings Analyzer", () => {
     const tree = await parseCode(code);
     const results = await analyzeWarnings(tree);
 
-    const namingIssues = results.filter(r => r.ruleId === "CPP_VAR_NAMING");
+    const namingIssues = results.filter((r) => r.ruleId === "CPP_VAR_NAMING");
 
     // 只针对变量 a 产出一条告警
     expect(namingIssues.length).toBe(1);
@@ -99,7 +105,9 @@ describe("Static Warnings Analyzer", () => {
   it("should detect switch statement without default (CPP_SWITCH_NO_DEFAULT)", async () => {
     const rulePath = path.join(PATTERN_DIR, "CPP_SWITCH_NO_DEFAULT.scm");
     if (!fs.existsSync(rulePath)) {
-      console.warn("⚠️ Skipping CPP_SWITCH_NO_DEFAULT test: Rule file not found.");
+      console.warn(
+        "⚠️ Skipping CPP_SWITCH_NO_DEFAULT test: Rule file not found.",
+      );
       return;
     }
 
@@ -117,7 +125,9 @@ describe("Static Warnings Analyzer", () => {
     const tree = await parseCode(code);
     const results = await analyzeWarnings(tree);
 
-    const switchWarning = results.find(r => r.ruleId === "CPP_SWITCH_NO_DEFAULT");
+    const switchWarning = results.find(
+      (r) => r.ruleId === "CPP_SWITCH_NO_DEFAULT",
+    );
     expect(switchWarning).toBeDefined();
   });
 
@@ -129,12 +139,12 @@ describe("Static Warnings Analyzer", () => {
    */
   it("should detect potential naming issues if rule exists", async () => {
     // 这是一个通用性测试，扫描所有返回的结果
-    const code = "int x = 10;"; 
+    const code = "int x = 10;";
     const tree = await parseCode(code);
-    
+
     // 我们不强制要求必须报错，但验证如果报了错，Issue 对象的结构必须完整
     const results = await analyzeWarnings(tree);
-    
+
     if (results.length > 0) {
       const issue = results[0];
       expect(issue.ruleId).toBeDefined();
@@ -163,8 +173,7 @@ describe("Static Warnings Analyzer", () => {
     `;
     const tree = await parseCode(code);
     const results = await analyzeWarnings(tree);
-    
+
     expect(results).toHaveLength(0);
   });
-
 });

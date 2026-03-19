@@ -18,7 +18,9 @@ describe("Dynamic Analysis Checker - Uninitialized Variable", () => {
       printf("%d", y);
     `;
     const issues = await runEngine(code);
-    const uninitIssues = issues.filter(i => i.ruleId.includes("UNINITIALIZED_VAR"));
+    const uninitIssues = issues.filter((i) =>
+      i.ruleId.includes("UNINITIALIZED_VAR"),
+    );
     expect(uninitIssues.length).toBe(0);
   });
 
@@ -28,7 +30,9 @@ describe("Dynamic Analysis Checker - Uninitialized Variable", () => {
       int result = z * 2;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter(i => i.ruleId === "CPP_DYNAMIC_UNINITIALIZED_VAR_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_UNINITIALIZED_VAR_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
     expect(definite[0].meta.varName).toBe("z");
   });
@@ -41,7 +45,9 @@ describe("Dynamic Analysis Checker - Uninitialized Variable", () => {
       }
     `;
     const issues = await runEngine(code);
-    const uninitIssues = issues.filter(i => i.ruleId.includes("UNINITIALIZED_VAR"));
+    const uninitIssues = issues.filter((i) =>
+      i.ruleId.includes("UNINITIALIZED_VAR"),
+    );
     expect(uninitIssues.length).toBe(0);
   });
 
@@ -52,7 +58,9 @@ describe("Dynamic Analysis Checker - Uninitialized Variable", () => {
       int sum = a + b;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter(i => i.ruleId === "CPP_DYNAMIC_UNINITIALIZED_VAR_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_UNINITIALIZED_VAR_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
   });
 });

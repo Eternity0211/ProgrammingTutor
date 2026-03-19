@@ -422,8 +422,8 @@ export async function getStudentFeedbackHistory() {
   const submissions = await prisma.codeSubmission.findMany({
     where: {
       submission: {
-        studentId: session.user.id
-      }
+        studentId: session.user.id,
+      },
     },
     include: {
       question: true,
@@ -431,20 +431,20 @@ export async function getStudentFeedbackHistory() {
         include: {
           assignment: {
             include: {
-              classroom: true
-            }
-          }
-        }
-      }
+              classroom: true,
+            },
+          },
+        },
+      },
     },
-    orderBy: { createdAt: 'desc' },
-    take: 5 // 取最近 5 条
+    orderBy: { createdAt: "desc" },
+    take: 5, // 取最近 5 条
   });
 
-  return submissions.map(sub => {
+  return submissions.map((sub) => {
     // 1. 给解析后的变量一个明确的联合类型，或者初始化为 null
     let parsedFeedback: any = null;
-    
+
     try {
       if (sub.feedback) {
         // 尝试解析 JSON
@@ -456,11 +456,11 @@ export async function getStudentFeedbackHistory() {
       console.warn("发现非 JSON 格式反馈，已转为兼容模式:", sub.id);
       parsedFeedback = {
         emotion_analysis: {
-          supportive_guidance: sub.feedback // 将纯文本直接作为指导语显示
+          supportive_guidance: sub.feedback, // 将纯文本直接作为指导语显示
         },
         learning_navigation: {
-          learning_path: [{ topic: "基础逻辑修正" }] // 给一个默认建议
-        }
+          learning_path: [{ topic: "基础逻辑修正" }], // 给一个默认建议
+        },
       };
     }
 
@@ -471,12 +471,16 @@ export async function getStudentFeedbackHistory() {
       date: sub.createdAt.toLocaleDateString(),
       assignment: sub.submission.assignment.title,
       score: sub.score || 0,
-      
+
       // 2. 使用可选链（Optional Chaining）安全访问
       // 这里的报错就会消失，因为 parsedFeedback 现在知道自己拥有这些属性了
-      emotionFeedback: parsedFeedback?.emotion_analysis?.supportive_guidance || "暂无情绪反馈",
-      navigatorTips: parsedFeedback?.learning_navigation?.learning_path?.[0]?.topic || "暂无学习建议",
-      recommendations: parsedFeedback?.learning_navigation?.recommended_exercises || []
+      emotionFeedback:
+        parsedFeedback?.emotion_analysis?.supportive_guidance || "暂无情绪反馈",
+      navigatorTips:
+        parsedFeedback?.learning_navigation?.learning_path?.[0]?.topic ||
+        "暂无学习建议",
+      recommendations:
+        parsedFeedback?.learning_navigation?.recommended_exercises || [],
     };
   });
 }

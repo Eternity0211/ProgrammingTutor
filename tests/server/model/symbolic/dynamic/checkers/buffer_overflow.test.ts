@@ -29,7 +29,9 @@ describe("Dynamic Analysis Checker - Buffer Overflow", () => {
       memcpy(dst, src, 16);
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_BUFFER_OVERFLOW_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_BUFFER_OVERFLOW_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
     expect(definite[0].meta?.bufferName).toBe("dst");
   });
@@ -42,7 +44,9 @@ describe("Dynamic Analysis Checker - Buffer Overflow", () => {
       memcpy(dst, src, n);
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_BUFFER_OVERFLOW_SUSPECTED");
+    const suspected = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_BUFFER_OVERFLOW_SUSPECTED",
+    );
     expect(suspected.length).toBeGreaterThan(0);
   });
 
@@ -53,7 +57,9 @@ describe("Dynamic Analysis Checker - Buffer Overflow", () => {
       strcpy(dst, src);
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_BUFFER_OVERFLOW_SUSPECTED");
+    const suspected = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_BUFFER_OVERFLOW_SUSPECTED",
+    );
     expect(suspected.length).toBeGreaterThan(0);
   });
 
@@ -63,7 +69,9 @@ describe("Dynamic Analysis Checker - Buffer Overflow", () => {
       strcpy(dst, "abcdef");
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_BUFFER_OVERFLOW_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_BUFFER_OVERFLOW_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
   });
 });

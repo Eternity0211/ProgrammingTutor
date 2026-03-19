@@ -3,17 +3,21 @@ import { useState, useEffect, use } from "react";
 import DiagnosticEditor from "@/app/_components/code-editor/diagnostic-editor";
 import DiagnosticPanel from "@/app/_components/submission/diagnostic-panel";
 // 导入项目官方类型（关键！）
-import type { 
-  SymbolicIssue, 
+import type {
+  SymbolicIssue,
   SymbolicSeverity,
   SymbolicResult,
-  SourceLocation
+  SourceLocation,
 } from "@/lib/types/symbolic-types";
 
 // 动态路由参数类型
 type PageParams = { id: string };
 
-export default function SubmissionResultPage({ params }: { params: Promise<PageParams> }) {
+export default function SubmissionResultPage({
+  params,
+}: {
+  params: Promise<PageParams>;
+}) {
   // 解包 Next.js 15+ 异步 params
   const { id } = use<PageParams>(params);
 
@@ -23,7 +27,7 @@ export default function SubmissionResultPage({ params }: { params: Promise<PageP
     symbolicResult: SymbolicResult; // 使用项目定义的 SymbolicResult
     causalFeedback: string;
   } | null>(null);
-  
+
   const [selectedIssueId, setSelectedIssueId] = useState<string>();
   const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
   const [currentConcept, setCurrentConcept] = useState<string>("");
@@ -56,12 +60,15 @@ switch (input) {
       ruleId: "CPP_GLOBAL_VARIABLE", // 使用项目定义的规则ID
       severity: "Critical" as SymbolicSeverity, // 匹配 SymbolicSeverity 类型
       display_name: "变量作用域未定义",
-      message: "变量count在main函数局部作用域定义，却在全局代码块中调用，违反C++作用域规则",
+      message:
+        "变量count在main函数局部作用域定义，却在全局代码块中调用，违反C++作用域规则",
       pedagogical_label: "Memory Safety", // 教学标签（按项目规范）
       knowledge_concept: "cpp_variable_scope", // 知识图谱Key
       location: { line: 10, column: 10 } as SourceLocation, // 位置信息
-      description: "C++中局部变量仅能在其定义的作用域内被访问，全局代码块无法访问函数内的局部变量",
-      remediation: "将变量count定义移至main函数外部，或把循环逻辑移入main函数内部",
+      description:
+        "C++中局部变量仅能在其定义的作用域内被访问，全局代码块无法访问函数内的局部变量",
+      remediation:
+        "将变量count定义移至main函数外部，或把循环逻辑移入main函数内部",
       remediation_code: `#include <iostream>
 using namespace std;
 
@@ -73,7 +80,7 @@ int main() {
     cout << i << endl;
   }
   return 0;
-}`
+}`,
     };
 
     // 错误2：switch 缺少 default（Medium 级别）
@@ -85,13 +92,14 @@ int main() {
       pedagogical_label: "Control Flow", // 教学标签
       knowledge_concept: "cpp_switch_statement", // 知识图谱Key
       location: { line: 15, column: 2 } as SourceLocation, // 位置信息
-      description: "switch语句应包含default分支以处理所有未匹配的输入，避免程序行为不可预期",
+      description:
+        "switch语句应包含default分支以处理所有未匹配的输入，避免程序行为不可预期",
       remediation: "添加default分支，处理无效输入场景",
       remediation_code: `switch (input) {
   case 1: cout << "选择1"; break;
   case 2: cout << "选择2"; break;
   default: cout << "无效输入" << endl; break;
-}`
+}`,
     };
 
     // 完整的 SymbolicResult（匹配项目类型）
@@ -101,8 +109,8 @@ int main() {
       metadata: {
         parseTime: 120,
         nodeCount: 45,
-        analyzedAt: new Date().toISOString()
-      }
+        analyzedAt: new Date().toISOString(),
+      },
     };
 
     console.log("设置的 testSymbolicResult:", testSymbolicResult);
@@ -120,7 +128,7 @@ int main() {
 2. **switch语句不完整**：
    - 根因：缺少default分支，无法处理非1/2的输入值
    - 逻辑推导：符号规则检测到switch节点缺少default子节点
-   - 修复建议：添加default分支处理边界情况`
+   - 修复建议：添加default分支处理边界情况`,
     });
   }, [id]);
 
@@ -132,27 +140,46 @@ int main() {
   };
 
   // 加载中状态
-  if (!data) return (
-    <div className="container mx-auto py-6 flex items-center justify-center h-screen">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p className="text-lg text-gray-600">加载神经符号诊断中...</p>
+  if (!data)
+    return (
+      <div className="container mx-auto py-6 flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">加载神经符号诊断中...</p>
+        </div>
       </div>
-    </div>
-  );
+    );
 
   // 空状态（无错误时）
-  if (data.symbolicResult.errors.length === 0 && data.symbolicResult.warnings.length === 0) return (
-    <div className="container mx-auto py-6 flex flex-col items-center justify-center h-screen">
-      <div className="text-center">
-        <svg className="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-        <h2 className="text-xl font-bold text-gray-800 mb-2">神经符号引擎检测通过</h2>
-        <p className="text-gray-600">未发现C++语法/逻辑错误，代码符合C++17标准</p>
+  if (
+    data.symbolicResult.errors.length === 0 &&
+    data.symbolicResult.warnings.length === 0
+  )
+    return (
+      <div className="container mx-auto py-6 flex flex-col items-center justify-center h-screen">
+        <div className="text-center">
+          <svg
+            className="w-16 h-16 text-green-500 mx-auto mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 13l4 4L19 7"
+            />
+          </svg>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            神经符号引擎检测通过
+          </h2>
+          <p className="text-gray-600">
+            未发现C++语法/逻辑错误，代码符合C++17标准
+          </p>
+        </div>
       </div>
-    </div>
-  );
+    );
 
   // 主页面渲染
   return (
@@ -167,17 +194,23 @@ int main() {
       <div className="grid grid-cols-12 gap-6 flex-grow overflow-hidden">
         {/* 左侧：代码编辑区（带错误高亮） */}
         <div className="col-span-7 rounded-xl border overflow-hidden bg-white shadow-sm">
-          <DiagnosticEditor 
-            code={data.code} 
-            issues={[...data.symbolicResult.errors, ...data.symbolicResult.warnings]} // 合并错误和警告
+          <DiagnosticEditor
+            code={data.code}
+            issues={[
+              ...data.symbolicResult.errors,
+              ...data.symbolicResult.warnings,
+            ]} // 合并错误和警告
             selectedIssueId={selectedIssueId}
           />
         </div>
 
         {/* 右侧：诊断面板 */}
         <div className="col-span-5 flex flex-col overflow-hidden rounded-xl border bg-white shadow-sm">
-          <DiagnosticPanel 
-            issues={[...data.symbolicResult.errors, ...data.symbolicResult.warnings]} // 合并错误和警告
+          <DiagnosticPanel
+            issues={[
+              ...data.symbolicResult.errors,
+              ...data.symbolicResult.warnings,
+            ]} // 合并错误和警告
             aiFeedback={data.causalFeedback}
             onSelectIssue={setSelectedIssueId}
             onTraceKnowledge={handleTraceKnowledge}
@@ -191,15 +224,17 @@ int main() {
           <div className="bg-white rounded-xl w-full max-w-md max-h-[80vh] overflow-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold">知识溯源 - {currentConcept}</h3>
-                <button 
+                <h3 className="text-lg font-bold">
+                  知识溯源 - {currentConcept}
+                </h3>
+                <button
                   onClick={() => setShowKnowledgeModal(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   ✕
                 </button>
               </div>
-              
+
               {/* 知识点内容（按项目规范） */}
               {currentConcept === "cpp_variable_scope" && (
                 <div className="space-y-4">
@@ -222,7 +257,7 @@ int main() {
                   </ul>
                 </div>
               )}
-              
+
               {currentConcept === "cpp_switch_statement" && (
                 <div className="space-y-4">
                   <h4 className="font-semibold">知识点说明</h4>
@@ -244,8 +279,8 @@ int main() {
                   </ul>
                 </div>
               )}
-              
-              <button 
+
+              <button
                 onClick={() => setShowKnowledgeModal(false)}
                 className="mt-6 w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >

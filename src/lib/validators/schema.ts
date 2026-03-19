@@ -28,7 +28,7 @@ export const assignmentSchema = z.object({
       title: z.string().min(1, "Question title is required"),
       description: z.string().min(1, "Question description is required"),
       language: z.string().min(1, "Programming language is required"),
-      cppStandard: CppStandardEnum,
+      cppStandard: CppStandardEnum.optional().default("c++17"),
       testCases: z.array(
         z.object({
           input: z.string().min(1, "Test case input is required"),

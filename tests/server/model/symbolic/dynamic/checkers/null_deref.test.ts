@@ -17,7 +17,7 @@ describe("Dynamic Analysis Checker - Null Dereference", () => {
       *p = 1;
     `;
     const issues = await runEngine(code);
-    const nissues = issues.filter(i => i.ruleId.includes("NULL_DEREF"));
+    const nissues = issues.filter((i) => i.ruleId.includes("NULL_DEREF"));
     expect(nissues.length).toBe(0);
   });
 
@@ -27,7 +27,9 @@ describe("Dynamic Analysis Checker - Null Dereference", () => {
       *p = 2;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter(i => i.ruleId === "CPP_DYNAMIC_NULL_DEREF_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_NULL_DEREF_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
     expect(definite[0].meta.pointerInterval).toBe("[0, 0]");
   });
@@ -38,7 +40,9 @@ describe("Dynamic Analysis Checker - Null Dereference", () => {
       *p = 7;
     `;
     const issues = await runEngine(code);
-    const suspect = issues.filter(i => i.ruleId === "CPP_DYNAMIC_NULL_DEREF_SUSPECTED");
+    const suspect = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_NULL_DEREF_SUSPECTED",
+    );
     expect(suspect.length).toBeGreaterThan(0);
     expect(suspect[0].meta.pointerInterval).toContain("Infinity");
   });
@@ -50,7 +54,9 @@ describe("Dynamic Analysis Checker - Null Dereference", () => {
       q->x = 3;
     `;
     const issues = await runEngine(code);
-    const suspect = issues.filter(i => i.ruleId === "CPP_DYNAMIC_NULL_DEREF_SUSPECTED");
+    const suspect = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_NULL_DEREF_SUSPECTED",
+    );
     expect(suspect.length).toBeGreaterThan(0);
   });
 });

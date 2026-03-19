@@ -23,8 +23,11 @@ export const FormatStringChecker: Checker = {
   check(node: SyntaxNode, env: Environment): RawIssue | null {
     if (node.type !== "call_expression") return null;
 
-    const functionNode = node.childForFieldName("function") || node.namedChildren[0];
-    const argsNode = node.childForFieldName("arguments") || node.namedChildren.find((c) => c.type === "argument_list");
+    const functionNode =
+      node.childForFieldName("function") || node.namedChildren[0];
+    const argsNode =
+      node.childForFieldName("arguments") ||
+      node.namedChildren.find((c) => c.type === "argument_list");
     if (!functionNode || !argsNode) return null;
 
     const fnName = functionNode.text.trim();
@@ -38,7 +41,9 @@ export const FormatStringChecker: Checker = {
     if (fmtNode.type === "string_literal") return null;
 
     const fmtExpr = fmtNode.text.trim();
-    const fmtVarState = extractIdentifierName(fmtNode) ? env.get(extractIdentifierName(fmtNode)!) : undefined;
+    const fmtVarState = extractIdentifierName(fmtNode)
+      ? env.get(extractIdentifierName(fmtNode)!)
+      : undefined;
 
     const location = {
       line: node.startPosition.row + 1,
@@ -67,7 +72,10 @@ export const FormatStringChecker: Checker = {
       location,
       meta: {
         ...meta,
-        reason: fmtVarState?.init === InitState.TAINTED ? "tainted_format_string" : "non_literal_format_string",
+        reason:
+          fmtVarState?.init === InitState.TAINTED
+            ? "tainted_format_string"
+            : "non_literal_format_string",
       },
     };
   },

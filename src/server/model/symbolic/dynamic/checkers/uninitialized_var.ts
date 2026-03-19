@@ -40,8 +40,7 @@ export const UninitializedVarChecker: Checker = {
     // 判定逻辑 - 注意：属性名是 'init' 而不是 'initState'
     const isDefiniteUninit = state.init === InitState.UNINITIALIZED;
     const isSuspectedUninit =
-      state.init === InitState.NULL_PTR ||
-      state.init === InitState.TAINTED;
+      state.init === InitState.NULL_PTR || state.init === InitState.TAINTED;
 
     // DEFINITE：确定未初始化
     if (isDefiniteUninit) {
@@ -62,17 +61,54 @@ export const UninitializedVarChecker: Checker = {
     }
 
     return null;
-  }
+  },
 };
 
 function isKeywordOrBuiltin(name: string): boolean {
   const keywords = new Set([
-    "int", "float", "double", "char", "bool", "void", "long", "short",
-    "unsigned", "signed", "const", "static", "return", "if", "else",
-    "while", "for", "break", "continue", "switch", "case", "default",
-    "nullptr", "true", "false", "new", "delete", "this", "NULL",
-    "printf", "scanf", "cout", "cin", "std", "main", "size", "capacity",
-    "push_back", "pop_back", "empty", "begin", "end", "nullptr"
+    "int",
+    "float",
+    "double",
+    "char",
+    "bool",
+    "void",
+    "long",
+    "short",
+    "unsigned",
+    "signed",
+    "const",
+    "static",
+    "return",
+    "if",
+    "else",
+    "while",
+    "for",
+    "break",
+    "continue",
+    "switch",
+    "case",
+    "default",
+    "nullptr",
+    "true",
+    "false",
+    "new",
+    "delete",
+    "this",
+    "NULL",
+    "printf",
+    "scanf",
+    "cout",
+    "cin",
+    "std",
+    "main",
+    "size",
+    "capacity",
+    "push_back",
+    "pop_back",
+    "empty",
+    "begin",
+    "end",
+    "nullptr",
   ]);
   return keywords.has(name);
 }

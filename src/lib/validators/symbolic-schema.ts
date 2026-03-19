@@ -15,13 +15,15 @@ export const symbolicDefinitionSchema = z.object({
   pedagogical_label: z.string().min(1, "pedagogical_label 必填"),
   knowledge_concept: z.string().min(1, "knowledge_concept 必填"),
   severity: z.enum(SEVERITIES, {
-    errorMap: () => ({ message: "severity 须为 Critical | High | Medium | Low" }),
+    errorMap: () => ({
+      message: "severity 须为 Critical | High | Medium | Low",
+    }),
   }),
   description: z.string().min(1, "description 必填"),
   message: z.string().optional(),
   remediation: z.string().optional(),
   // 用于在前端显示具体的代码修复片段 (Code Snippet)
-  remediation_code: z.string().optional(), 
+  remediation_code: z.string().optional(),
 });
 
 export type SymbolicDefinitionSchema = z.infer<typeof symbolicDefinitionSchema>;

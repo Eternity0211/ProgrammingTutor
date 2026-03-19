@@ -23,7 +23,10 @@ export async function analyzeDataFlow(tree: Tree): Promise<RawIssue[]> {
     return engine.run();
   } catch (error) {
     // Fail-Safe 容错机制：隔离内部崩溃抛出
-    console.error("[Dynamic Engine] Failed to execute data flow analysis:", error);
-    return []; 
+    console.error(
+      "[Dynamic Engine] Failed to execute data flow analysis:",
+      error,
+    );
+    return [];
   }
 }

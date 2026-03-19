@@ -4,7 +4,13 @@
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import { Button } from "@/app/_components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/app/_components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/app/_components/ui/card";
 import { Input } from "@/app/_components/ui/input";
 import { Badge } from "@/app/_components/ui/badge";
 import { Skeleton } from "@/app/_components/ui/skeleton";
@@ -50,14 +56,16 @@ const symbolicAnalysis = (code: string): SymbolicResult => {
   const potentialBugs: string[] = [];
 
   // 语法错误检测（简单示例）
-  if (code.includes("let =") || code.includes("const =")) syntaxErrors.push("变量声明缺少标识符");
+  if (code.includes("let =") || code.includes("const ="))
+    syntaxErrors.push("变量声明缺少标识符");
   if (code.includes("function ()")) syntaxErrors.push("函数声明缺少函数名");
-  if (!code.includes("}") && code.includes("{")) syntaxErrors.push("代码块缺少闭合大括号");
+  if (!code.includes("}") && code.includes("{"))
+    syntaxErrors.push("代码块缺少闭合大括号");
 
   // 未使用变量检测
   const varMatches = code.match(/let (\w+)|const (\w+)|var (\w+)/g);
   if (varMatches) {
-    varMatches.forEach(match => {
+    varMatches.forEach((match) => {
       const varName = match.split(" ")[1];
       if (varName && !code.replace(match, "").includes(varName)) {
         unusedVariables.push(varName);
@@ -66,30 +74,44 @@ const symbolicAnalysis = (code: string): SymbolicResult => {
   }
 
   // 潜在Bug检测
-  if (code.includes("while(true)") || code.includes("for(;;)")) potentialBugs.push("无限循环风险");
+  if (code.includes("while(true)") || code.includes("for(;;)"))
+    potentialBugs.push("无限循环风险");
   if (code.includes("arr[arr.length]")) potentialBugs.push("数组越界访问风险");
   if (code.includes("eval(")) potentialBugs.push("使用eval存在安全风险");
 
   // 代码复杂度计算
-  const lines = code.split("\n").filter(line => line.trim() && !line.trim().startsWith("//")).length;
+  const lines = code
+    .split("\n")
+    .filter((line) => line.trim() && !line.trim().startsWith("//")).length;
   const complexity = Math.min(Math.floor(lines / 10) + 1, 10);
 
   return { syntaxErrors, unusedVariables, potentialBugs, complexity };
 };
 
 // AI代码审查核心逻辑
-const reviewCode = async (code: string, symbolicResult: SymbolicResult): Promise<CodeReviewResult> => {
+const reviewCode = async (
+  code: string,
+  symbolicResult: SymbolicResult,
+): Promise<CodeReviewResult> => {
   // 模拟异步AI审查（实际项目可替换为真实API调用）
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  await new Promise((resolve) => setTimeout(resolve, 1500));
 
   // 逻辑缺陷评分
-  const logicScore = symbolicResult.potentialBugs.length === 0 ? 95 : 
-                     symbolicResult.potentialBugs.length === 1 ? 75 : 50;
-  
+  const logicScore =
+    symbolicResult.potentialBugs.length === 0
+      ? 95
+      : symbolicResult.potentialBugs.length === 1
+        ? 75
+        : 50;
+
   // 语法评分
-  const syntaxScore = symbolicResult.syntaxErrors.length === 0 ? 100 : 
-                      symbolicResult.syntaxErrors.length === 1 ? 80 : 60;
-  
+  const syntaxScore =
+    symbolicResult.syntaxErrors.length === 0
+      ? 100
+      : symbolicResult.syntaxErrors.length === 1
+        ? 80
+        : 60;
+
   // 代码风格评分
   const styleScore = symbolicResult.unusedVariables.length === 0 ? 90 : 70;
 
@@ -99,9 +121,10 @@ const reviewCode = async (code: string, symbolicResult: SymbolicResult): Promise
         metricId: "logic-defects",
         metricName: "逻辑缺陷",
         score: logicScore,
-        feedback: symbolicResult.potentialBugs.length > 0 
-          ? `发现${symbolicResult.potentialBugs.length}个潜在逻辑问题：${symbolicResult.potentialBugs.join(", ")}` 
-          : "未发现逻辑缺陷，代码逻辑清晰",
+        feedback:
+          symbolicResult.potentialBugs.length > 0
+            ? `发现${symbolicResult.potentialBugs.length}个潜在逻辑问题：${symbolicResult.potentialBugs.join(", ")}`
+            : "未发现逻辑缺陷，代码逻辑清晰",
         suggestions: symbolicResult.potentialBugs.includes("无限循环风险")
           ? ["添加循环终止条件", "检查循环变量更新逻辑", "避免使用while(true)"]
           : ["保持现有逻辑，注意边界场景测试"],
@@ -110,26 +133,30 @@ const reviewCode = async (code: string, symbolicResult: SymbolicResult): Promise
         metricId: "syntax",
         metricName: "语法规范",
         score: syntaxScore,
-        feedback: symbolicResult.syntaxErrors.length > 0 
-          ? `发现${symbolicResult.syntaxErrors.length}个语法错误：${symbolicResult.syntaxErrors.join(", ")}` 
-          : "语法完全符合规范，无错误",
-        suggestions: symbolicResult.syntaxErrors.length > 0
-          ? ["修复标识符合法性问题", "检查代码块闭合", "遵循变量声明规范"]
-          : ["保持语法规范性"],
+        feedback:
+          symbolicResult.syntaxErrors.length > 0
+            ? `发现${symbolicResult.syntaxErrors.length}个语法错误：${symbolicResult.syntaxErrors.join(", ")}`
+            : "语法完全符合规范，无错误",
+        suggestions:
+          symbolicResult.syntaxErrors.length > 0
+            ? ["修复标识符合法性问题", "检查代码块闭合", "遵循变量声明规范"]
+            : ["保持语法规范性"],
       },
       {
         metricId: "code-style",
         metricName: "代码风格",
         score: styleScore,
-        feedback: symbolicResult.unusedVariables.length > 0 
-          ? `发现${symbolicResult.unusedVariables.length}个未使用变量：${symbolicResult.unusedVariables.join(", ")}` 
-          : "代码风格良好，无冗余变量",
-        suggestions: symbolicResult.unusedVariables.length > 0
-          ? ["删除未使用变量", "遵循命名规范（小驼峰）", "添加必要注释"]
-          : ["继续保持良好的代码风格"],
+        feedback:
+          symbolicResult.unusedVariables.length > 0
+            ? `发现${symbolicResult.unusedVariables.length}个未使用变量：${symbolicResult.unusedVariables.join(", ")}`
+            : "代码风格良好，无冗余变量",
+        suggestions:
+          symbolicResult.unusedVariables.length > 0
+            ? ["删除未使用变量", "遵循命名规范（小驼峰）", "添加必要注释"]
+            : ["继续保持良好的代码风格"],
       },
     ],
-    overallFeedback: 
+    overallFeedback:
       logicScore >= 90 && syntaxScore >= 90 && styleScore >= 90
         ? "代码质量优秀，逻辑、语法、风格均符合工业级标准，可直接提交"
         : logicScore < 70
@@ -140,9 +167,12 @@ const reviewCode = async (code: string, symbolicResult: SymbolicResult): Promise
 };
 
 // AI追问解答逻辑
-const handleFollowupQuestion = async (question: string, reviewResult: CodeReviewResult): Promise<string> => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
+const handleFollowupQuestion = async (
+  question: string,
+  reviewResult: CodeReviewResult,
+): Promise<string> => {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
   if (question.includes("无限循环") || question.includes("死循环")) {
     return `### 无限循环问题解答
 1. 原因：循环条件永远为true（如while(true)）或循环变量未正确更新
@@ -169,7 +199,7 @@ const handleFollowupQuestion = async (question: string, reviewResult: CodeReview
 ${reviewResult.overallFeedback}
 
 根据你的问题，建议重点关注：
-${reviewResult.metrics.map(metric => `- ${metric.metricName}：${metric.feedback}`).join("\n")}
+${reviewResult.metrics.map((metric) => `- ${metric.metricName}：${metric.feedback}`).join("\n")}
 
 如果有更具体的问题（如某个语法错误、逻辑问题），可以继续追问。`;
   }
@@ -177,8 +207,8 @@ ${reviewResult.metrics.map(metric => `- ${metric.metricName}：${metric.feedback
 
 // 组件Props定义
 interface AiCodeReviewProps {
-  initialCode?: string;       // 作业初始代码
-  assignmentTitle?: string;   // 作业标题
+  initialCode?: string; // 作业初始代码
+  assignmentTitle?: string; // 作业标题
   onCodeChange?: (code: string) => void; // 代码变化回调（同步到作业答题页）
 }
 
@@ -186,13 +216,15 @@ interface AiCodeReviewProps {
 export default function AiCodeReview({
   initialCode = "// 请编写作业要求的代码",
   assignmentTitle = "作业答题",
-  onCodeChange
+  onCodeChange,
 }: AiCodeReviewProps) {
   // 状态管理
   const [isOpen, setIsOpen] = useState(false);
   const [code, setCode] = useState(initialCode);
   const [symbolicResult, setSymbolicResult] = useState(symbolicAnalysis(code));
-  const [reviewResult, setReviewResult] = useState<CodeReviewResult | null>(null);
+  const [reviewResult, setReviewResult] = useState<CodeReviewResult | null>(
+    null,
+  );
   const [isReviewing, setIsReviewing] = useState(false);
   const [followupQuestion, setFollowupQuestion] = useState("");
   const [followupAnswer, setFollowupAnswer] = useState("");
@@ -229,7 +261,10 @@ export default function AiCodeReview({
     setIsAnswering(true);
     setFollowupAnswer("");
     try {
-      const answer = await handleFollowupQuestion(followupQuestion, reviewResult);
+      const answer = await handleFollowupQuestion(
+        followupQuestion,
+        reviewResult,
+      );
       setFollowupAnswer(answer);
       setFollowupQuestion("");
     } catch (err) {
@@ -328,7 +363,9 @@ export default function AiCodeReview({
               <div>
                 <span className="font-medium">语法错误：</span>
                 {symbolicResult.syntaxErrors.length > 0 ? (
-                  <span className="text-red-500 ml-2">{symbolicResult.syntaxErrors.join(", ")}</span>
+                  <span className="text-red-500 ml-2">
+                    {symbolicResult.syntaxErrors.join(", ")}
+                  </span>
                 ) : (
                   <span className="text-green-500 ml-2">无</span>
                 )}
@@ -336,7 +373,9 @@ export default function AiCodeReview({
               <div>
                 <span className="font-medium">未使用变量：</span>
                 {symbolicResult.unusedVariables.length > 0 ? (
-                  <span className="text-amber-500 ml-2">{symbolicResult.unusedVariables.join(", ")}</span>
+                  <span className="text-amber-500 ml-2">
+                    {symbolicResult.unusedVariables.join(", ")}
+                  </span>
                 ) : (
                   <span className="text-green-500 ml-2">无</span>
                 )}
@@ -344,14 +383,21 @@ export default function AiCodeReview({
               <div>
                 <span className="font-medium">潜在Bug：</span>
                 {symbolicResult.potentialBugs.length > 0 ? (
-                  <span className="text-amber-500 ml-2">{symbolicResult.potentialBugs.join(", ")}</span>
+                  <span className="text-amber-500 ml-2">
+                    {symbolicResult.potentialBugs.join(", ")}
+                  </span>
                 ) : (
                   <span className="text-green-500 ml-2">无</span>
                 )}
               </div>
               <div>
                 <span className="font-medium">代码复杂度：</span>
-                <Badge variant={symbolicResult.complexity > 7 ? "destructive" : "secondary"} className="ml-2">
+                <Badge
+                  variant={
+                    symbolicResult.complexity > 7 ? "destructive" : "secondary"
+                  }
+                  className="ml-2"
+                >
                   {symbolicResult.complexity}/10
                 </Badge>
               </div>
@@ -388,20 +434,31 @@ export default function AiCodeReview({
                   {/* 维度评分 */}
                   <div className="space-y-3 mb-4">
                     {reviewResult.metrics.map((metric) => (
-                      <div key={metric.metricId} className="border rounded-md p-3">
+                      <div
+                        key={metric.metricId}
+                        className="border rounded-md p-3"
+                      >
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium">{metric.metricName}</span>
+                          <span className="text-sm font-medium">
+                            {metric.metricName}
+                          </span>
                           <Badge
                             variant={
-                              metric.score >= 90 ? "secondary" :
-                              metric.score >= 80 ? "default" :
-                              metric.score >= 70 ? "outline" : "destructive"
+                              metric.score >= 90
+                                ? "secondary"
+                                : metric.score >= 80
+                                  ? "default"
+                                  : metric.score >= 70
+                                    ? "outline"
+                                    : "destructive"
                             }
                           >
                             {metric.score}/100
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-600 mb-2">{metric.feedback}</p>
+                        <p className="text-xs text-gray-600 mb-2">
+                          {metric.feedback}
+                        </p>
                         <div className="text-xs">
                           <strong className="text-blue-600">改进建议：</strong>
                           <ul className="list-disc list-inside mt-1 space-y-1 pl-2">

@@ -75,9 +75,11 @@ export interface KnowledgeTrace {
  * 核心逻辑：根据符号分析发现的知识点 ID，在 Neo4j 中查找其前置依赖
  * 用于“知识溯源”功能，帮助学生了解报错背后的基础知识缺口
  */
-export async function traceKnowledgeDependencies(conceptId: string): Promise<KnowledgeTrace | null> {
+export async function traceKnowledgeDependencies(
+  conceptId: string,
+): Promise<KnowledgeTrace | null> {
   const session = getNeo4jSession();
-  
+
   // Cypher 查询说明：
   // 1. 匹配目标知识点 (Concept)
   // 2. 匹配其所有前置依赖 (REQUIRES 关系)
@@ -102,7 +104,7 @@ export async function traceKnowledgeDependencies(conceptId: string): Promise<Kno
 
   try {
     const result = await session.run(cypher, { conceptId });
-    
+
     if (result.records.length === 0 || !result.records[0].get("target").id) {
       return null;
     }
@@ -111,7 +113,9 @@ export async function traceKnowledgeDependencies(conceptId: string): Promise<Kno
     return {
       target: record.get("target"),
       // 过滤掉因为 OPTIONAL MATCH 产生的空节点
-      prerequisites: record.get("prerequisites").filter((p: any) => p.id !== null)
+      prerequisites: record
+        .get("prerequisites")
+        .filter((p: any) => p.id !== null),
     };
   } catch (error) {
     console.error("Neo4j Trace Error:", error);
@@ -124,10 +128,12 @@ export async function traceKnowledgeDependencies(conceptId: string): Promise<Kno
 /**
  * 批量溯源：针对一次分析产生的所有问题进行知识图谱聚合
  */
-export async function getAggregatedKnowledgeContext(conceptIds: string[]): Promise<KnowledgeTrace[]> {
+export async function getAggregatedKnowledgeContext(
+  conceptIds: string[],
+): Promise<KnowledgeTrace[]> {
   const uniqueIds = Array.from(new Set(conceptIds));
   const traces = await Promise.all(
-    uniqueIds.map(id => traceKnowledgeDependencies(id))
+    uniqueIds.map((id) => traceKnowledgeDependencies(id)),
   );
   return traces.filter((t): t is KnowledgeTrace => t !== null);
 }

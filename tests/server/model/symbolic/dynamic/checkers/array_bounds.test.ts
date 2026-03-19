@@ -19,7 +19,6 @@ import { AnalysisEngine } from "../../../../../../src/server/model/symbolic/dyna
 import { RawIssue } from "../../../../../../src/lib/types/symbolic-types";
 
 describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
-
   /**
    * [测试基建] 运行全链路数据流分析引擎并提取缺陷报告
    * @param code - 待扫描的 C++ 源代码片段
@@ -48,9 +47,11 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       arr[9] = 3; // 擦边飞行: 极大值安全
     `;
     const issues = await runEngine(code);
-    
+
     // 【断言】：引擎不应在合法边界内产生任何扰民的 OOB 报警
-    const oobIssues = issues.filter(issue => issue.ruleId.includes("ARRAY_OOB"));
+    const oobIssues = issues.filter((issue) =>
+      issue.ruleId.includes("ARRAY_OOB"),
+    );
     expect(oobIssues.length).toBe(0);
   });
 
@@ -63,15 +64,17 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       scores[5] = 100; // 物理越界：合法索引上限为 4
     `;
     const issues = await runEngine(code);
-    
-    const definiteIssues = issues.filter(issue => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE");
+
+    const definiteIssues = issues.filter(
+      (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE",
+    );
     expect(definiteIssues.length).toBeGreaterThan(0);
-    
+
     // 【断言】：验证模板插值的上下文元数据 (Meta) 是否完美生成，以便前端渲染精准的错误提示
     expect(definiteIssues[0].meta).toMatchObject({
       arrayName: "scores",
       maxValidIndex: 4,
-      indexInterval: "[5, 5]"
+      indexInterval: "[5, 5]",
     });
   });
 
@@ -85,8 +88,10 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       buffer[offset] = 0; // 物理越界：访问了数组头部之前的脏内存
     `;
     const issues = await runEngine(code);
-    
-    const definiteIssues = issues.filter(issue => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE");
+
+    const definiteIssues = issues.filter(
+      (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE",
+    );
     expect(definiteIssues.length).toBeGreaterThan(0);
     expect(definiteIssues[0].meta?.indexInterval).toBe("[-2, -2]");
   });
@@ -103,8 +108,10 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       data[base * multiplier + 5] = 99; 
     `;
     const issues = await runEngine(code);
-    
-    const definiteIssues = issues.filter(issue => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE");
+
+    const definiteIssues = issues.filter(
+      (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE",
+    );
     expect(definiteIssues.length).toBe(1);
     expect(definiteIssues[0].meta?.indexInterval).toBe("[-15, -15]");
   });
@@ -123,15 +130,17 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       }
     `;
     const issues = await runEngine(code);
-    
-    const suspectedIssues = issues.filter(issue => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_SUSPECTED");
+
+    const suspectedIssues = issues.filter(
+      (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_SUSPECTED",
+    );
     expect(suspectedIssues.length).toBeGreaterThan(0);
-    
+
     // 【断言】：区间 [0, 5] 中 '5' 已越界但 '0-4' 安全，符合保守警告特征，不应误报为 Must-Issue
     expect(suspectedIssues[0].meta).toMatchObject({
       arrayName: "arr",
       maxValidIndex: 4,
-      indexInterval: "[0, 5]"
+      indexInterval: "[0, 5]",
     });
   });
 
@@ -150,15 +159,17 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       matrix[i][0] = 1;
     `;
     const issues = await runEngine(code);
-    
-    const definiteIssues = issues.filter(issue => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE");
+
+    const definiteIssues = issues.filter(
+      (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE",
+    );
     expect(definiteIssues.length).toBeGreaterThan(0);
-    
+
     // 【断言】：确保引擎能穿透 'matrix[i][0]' 的两层 AST 壳，精准提取根标识符 'matrix'
     expect(definiteIssues[0].meta).toMatchObject({
       arrayName: "matrix",
       maxValidIndex: 9,
-      indexInterval: "[12, 12]"
+      indexInterval: "[12, 12]",
     });
   });
 
@@ -172,15 +183,17 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       ptr[10] = 99;          // 越界：最大合法索引应为 9
     `;
     const issues = await runEngine(code);
-    
-    const definiteIssues = issues.filter(issue => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE");
+
+    const definiteIssues = issues.filter(
+      (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE",
+    );
     expect(definiteIssues.length).toBeGreaterThan(0);
-    
+
     // 【断言】：验证引擎能从 new_expression 树节点中反向抽取 size 并挂载于 ptr 账本
     expect(definiteIssues[0].meta).toMatchObject({
       arrayName: "ptr",
       maxValidIndex: 9,
-      indexInterval: "[10, 10]"
+      indexInterval: "[10, 10]",
     });
   });
 
@@ -198,15 +211,17 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       }
     `;
     const issues = await runEngine(code);
-    
-    const suspectedIssues = issues.filter(issue => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_SUSPECTED");
+
+    const suspectedIssues = issues.filter(
+      (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_SUSPECTED",
+    );
     expect(suspectedIssues.length).toBeGreaterThan(0);
-    
+
     // 【断言】：验证引擎底层 refineBranchState 已完全具备运算符反转计算能力
     expect(suspectedIssues[0].meta).toMatchObject({
       arrayName: "arr",
       maxValidIndex: 4,
-      indexInterval: "[0, 5]"
+      indexInterval: "[0, 5]",
     });
   });
 
@@ -223,9 +238,11 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       ptr[4] = 99;      // 压线安全访问
     `;
     const issues = await runEngine(code);
-    
+
     // 【断言】：确保 V2 引擎在解包复杂 AST 和追踪堆内存时，不存在错误计算导致的误报
-    const oobIssues = issues.filter(issue => issue.ruleId.includes("ARRAY_OOB"));
+    const oobIssues = issues.filter((issue) =>
+      issue.ruleId.includes("ARRAY_OOB"),
+    );
     expect(oobIssues.length).toBe(0);
   });
 
@@ -240,16 +257,17 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       arr[k] = 99;
     `;
     const issues = await runEngine(code);
-    
-    const suspectedIssues = issues.filter(issue => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_SUSPECTED");
+
+    const suspectedIssues = issues.filter(
+      (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_SUSPECTED",
+    );
     expect(suspectedIssues.length).toBeGreaterThan(0);
-    
+
     // 【断言】：当区间发散到极致时，不应当错报 Must-Issue，而必须退化为 May-Issue 保守预警，将判断权交还给用户
     expect(suspectedIssues[0].meta).toMatchObject({
       arrayName: "arr",
       maxValidIndex: 9,
-      indexInterval: "[-Infinity, Infinity]"
+      indexInterval: "[-Infinity, Infinity]",
     });
   });
-
 });

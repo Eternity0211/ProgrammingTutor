@@ -20,7 +20,9 @@ export default function AuthWrapper() {
                 onClick={async () => {
                   try {
                     setIsGoogleLoading(true);
-                    await signIn("google");
+                    await signIn("google", {
+                      prompt: "select_account",
+                    });
                   } catch (error) {
                     // Handle error if needed
                     console.log(error);

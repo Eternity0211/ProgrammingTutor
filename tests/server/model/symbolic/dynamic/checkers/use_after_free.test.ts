@@ -29,7 +29,9 @@ describe("Dynamic Analysis Checker - Use After Free", () => {
       *p = 7;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
     expect(definite[0].meta?.pointerName).toBe("p");
   });
@@ -44,7 +46,9 @@ describe("Dynamic Analysis Checker - Use After Free", () => {
       *p = 1;
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_SUSPECTED");
+    const suspected = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_SUSPECTED",
+    );
     expect(suspected.length).toBeGreaterThan(0);
     expect(String(suspected[0].meta?.freeState)).toContain("1");
   });
@@ -57,7 +61,9 @@ describe("Dynamic Analysis Checker - Use After Free", () => {
       p->x = 3;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
   });
 
@@ -69,7 +75,9 @@ describe("Dynamic Analysis Checker - Use After Free", () => {
       foo(p);
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_SUSPECTED");
+    const suspected = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_SUSPECTED",
+    );
     expect(suspected.length).toBeGreaterThan(0);
   });
 });

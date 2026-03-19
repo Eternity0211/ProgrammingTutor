@@ -27,7 +27,9 @@ describe("Dynamic Analysis Checker - Format String", () => {
       printf(fmt);
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_FORMAT_STRING_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_FORMAT_STRING_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
   });
 
@@ -38,7 +40,9 @@ describe("Dynamic Analysis Checker - Format String", () => {
       printf(fmt);
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_FORMAT_STRING_SUSPECTED");
+    const suspected = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_FORMAT_STRING_SUSPECTED",
+    );
     expect(suspected.length).toBeGreaterThan(0);
   });
 

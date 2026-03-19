@@ -27,7 +27,9 @@ describe("Dynamic Analysis Checker - Cast Overflow", () => {
       char c = (char)x;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_CAST_OVERFLOW_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_CAST_OVERFLOW_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
   });
 
@@ -37,7 +39,9 @@ describe("Dynamic Analysis Checker - Cast Overflow", () => {
       unsigned char c = (unsigned char)x;
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_CAST_OVERFLOW_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_CAST_OVERFLOW_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
   });
 
@@ -47,7 +51,9 @@ describe("Dynamic Analysis Checker - Cast Overflow", () => {
       char c = (char)x;
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_CAST_OVERFLOW_SUSPECTED");
+    const suspected = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_CAST_OVERFLOW_SUSPECTED",
+    );
     expect(suspected.length).toBeGreaterThan(0);
   });
 });

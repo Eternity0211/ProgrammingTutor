@@ -30,7 +30,9 @@ describe("Dynamic Analysis Checker - Parameter Taint", () => {
       sink(a);
     `;
     const issues = await runEngine(code);
-    const definite = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_PARAM_TAINT_DEFINITE");
+    const definite = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_PARAM_TAINT_DEFINITE",
+    );
     expect(definite.length).toBeGreaterThan(0);
     expect(definite[0].meta?.paramName).toBe("a");
   });
@@ -46,7 +48,9 @@ describe("Dynamic Analysis Checker - Parameter Taint", () => {
       sink(a);
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_PARAM_TAINT_SUSPECTED");
+    const suspected = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_PARAM_TAINT_SUSPECTED",
+    );
     expect(suspected.length).toBeGreaterThan(0);
   });
 
@@ -57,7 +61,9 @@ describe("Dynamic Analysis Checker - Parameter Taint", () => {
       sink(a);
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter((i) => i.ruleId === "CPP_DYNAMIC_PARAM_TAINT_SUSPECTED");
+    const suspected = issues.filter(
+      (i) => i.ruleId === "CPP_DYNAMIC_PARAM_TAINT_SUSPECTED",
+    );
     expect(suspected.length).toBeGreaterThan(0);
   });
 });

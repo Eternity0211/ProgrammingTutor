@@ -19,8 +19,11 @@ export const BufferOverflowChecker: Checker = {
   check(node: SyntaxNode, env: Environment): RawIssue | null {
     if (node.type !== "call_expression") return null;
 
-    const functionNode = node.childForFieldName("function") || node.namedChildren[0];
-    const argsNode = node.childForFieldName("arguments") || node.namedChildren.find((c) => c.type === "argument_list");
+    const functionNode =
+      node.childForFieldName("function") || node.namedChildren[0];
+    const argsNode =
+      node.childForFieldName("arguments") ||
+      node.namedChildren.find((c) => c.type === "argument_list");
     if (!functionNode || !argsNode) return null;
 
     const fnName = functionNode.text.trim();
@@ -79,7 +82,7 @@ function classifyOverflow(
   functionName: string,
   bufferName: string,
   bufferSize: number | null,
-  writeSize: Interval
+  writeSize: Interval,
 ): RawIssue | null {
   if (bufferSize === null) {
     return buildIssue(node, "CPP_DYNAMIC_BUFFER_OVERFLOW_SUSPECTED", {
@@ -98,17 +101,23 @@ function classifyOverflow(
 
   return buildIssue(
     node,
-    isDefinite ? "CPP_DYNAMIC_BUFFER_OVERFLOW_DEFINITE" : "CPP_DYNAMIC_BUFFER_OVERFLOW_SUSPECTED",
+    isDefinite
+      ? "CPP_DYNAMIC_BUFFER_OVERFLOW_DEFINITE"
+      : "CPP_DYNAMIC_BUFFER_OVERFLOW_SUSPECTED",
     {
       functionName,
       bufferName,
       bufferSize,
       writeSize: writeSize.toString(),
-    }
+    },
   );
 }
 
-function buildIssue(node: SyntaxNode, ruleId: string, meta: Record<string, string | number>): RawIssue {
+function buildIssue(
+  node: SyntaxNode,
+  ruleId: string,
+  meta: Record<string, string | number>,
+): RawIssue {
   return {
     ruleId,
     location: {
@@ -131,7 +140,10 @@ function extractIdentifierName(node: SyntaxNode | null): string | null {
     return node.text.trim();
   }
 
-  if (node.type === "pointer_expression" || node.type === "reference_expression") {
+  if (
+    node.type === "pointer_expression" ||
+    node.type === "reference_expression"
+  ) {
     return extractIdentifierName(node.namedChildren[0] || null);
   }
 

@@ -10,18 +10,18 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const service_1 = require("../../../../src/server/model/symbolic/service");
 async function main() {
-    // ============================================================
-    // ✏️ 在这里直接修改测试代码
-    // ============================================================
-    // 示例代码：一次性触发多种规则，便于人工观察：
-    // - CPP_NEGATIVE_INDEX_ACCESS         : a[-1]
-    // - CPP_RESERVED_IDENTIFIER           : int _X, int __system
-    // - CPP_VAR_NAMING (warning, style)   : int a = 0;
-    // - CPP_DIVISION_BY_ZERO_LITERAL      : x / 0
-    // - CPP_MISSING_BREAK                 : switch case 缺少 break
-    // - CPP_NON_VOID_NO_RETURN            : 非 void 函数无 return
-    // - CPP_SWITCH_NO_DEFAULT (warning)   : switch 缺少 default
-    const sourceCode = `
+  // ============================================================
+  // ✏️ 在这里直接修改测试代码
+  // ============================================================
+  // 示例代码：一次性触发多种规则，便于人工观察：
+  // - CPP_NEGATIVE_INDEX_ACCESS         : a[-1]
+  // - CPP_RESERVED_IDENTIFIER           : int _X, int __system
+  // - CPP_VAR_NAMING (warning, style)   : int a = 0;
+  // - CPP_DIVISION_BY_ZERO_LITERAL      : x / 0
+  // - CPP_MISSING_BREAK                 : switch case 缺少 break
+  // - CPP_NON_VOID_NO_RETURN            : 非 void 函数无 return
+  // - CPP_SWITCH_NO_DEFAULT (warning)   : switch 缺少 default
+  const sourceCode = `
     #include <stdio.h>
 
     int _X = 0;         // CPP_RESERVED_IDENTIFIER
@@ -67,33 +67,32 @@ async function main() {
       // 无显式返回语句
     }
   `;
-    console.log("=======================================");
-    console.log("Symbolic Analysis Debug Session Start");
-    console.log("=======================================\n");
-    console.log("📥 Input Source Code:\n");
-    console.log(sourceCode);
+  console.log("=======================================");
+  console.log("Symbolic Analysis Debug Session Start");
+  console.log("=======================================\n");
+  console.log("📥 Input Source Code:\n");
+  console.log(sourceCode);
+  console.log("\n---------------------------------------\n");
+  try {
+    console.log("Before analyzeCode");
+    const result = await (0, service_1.analyzeCode)(sourceCode);
+    console.log("After analyzeCode");
+    console.log("📤 Analysis Result:\n");
+    console.log(JSON.stringify(result, null, 2));
     console.log("\n---------------------------------------\n");
-    try {
-        console.log("Before analyzeCode");
-        const result = await (0, service_1.analyzeCode)(sourceCode);
-        console.log("After analyzeCode");
-        console.log("📤 Analysis Result:\n");
-        console.log(JSON.stringify(result, null, 2));
-        console.log("\n---------------------------------------\n");
-        console.log("📊 Summary:");
-        console.log(`Errors   : ${result.errors.length}`);
-        console.log(`Warnings : ${result.warnings.length}`);
-        if (result.metadata) {
-            console.log(`Parse Time (ms): ${result.metadata.parseTime?.toFixed(2)}`);
-            console.log(`AST Node Count : ${result.metadata.nodeCount}`);
-        }
+    console.log("📊 Summary:");
+    console.log(`Errors   : ${result.errors.length}`);
+    console.log(`Warnings : ${result.warnings.length}`);
+    if (result.metadata) {
+      console.log(`Parse Time (ms): ${result.metadata.parseTime?.toFixed(2)}`);
+      console.log(`AST Node Count : ${result.metadata.nodeCount}`);
     }
-    catch (error) {
-        console.error("❌ Debug execution failed:");
-        console.error(error);
-    }
-    console.log("\n=======================================");
-    console.log("Debug Session End");
-    console.log("=======================================");
+  } catch (error) {
+    console.error("❌ Debug execution failed:");
+    console.error(error);
+  }
+  console.log("\n=======================================");
+  console.log("Debug Session End");
+  console.log("=======================================");
 }
 main();

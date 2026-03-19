@@ -16,7 +16,15 @@ import { Checker } from "./index";
 
 const SHADOW_PREFIX = "__param_taint__";
 
-const SOURCE_FUNCTIONS = new Set(["scanf", "fscanf", "sscanf", "gets", "fgets", "read", "recv"]);
+const SOURCE_FUNCTIONS = new Set([
+  "scanf",
+  "fscanf",
+  "sscanf",
+  "gets",
+  "fgets",
+  "read",
+  "recv",
+]);
 
 export const ParamTaintChecker: Checker = {
   check(node: SyntaxNode, env: Environment): RawIssue | RawIssue[] | null {
@@ -24,8 +32,11 @@ export const ParamTaintChecker: Checker = {
 
     if (node.type !== "call_expression") return null;
 
-    const functionNode = node.childForFieldName("function") || node.namedChildren[0];
-    const argsNode = node.childForFieldName("arguments") || node.namedChildren.find((c) => c.type === "argument_list");
+    const functionNode =
+      node.childForFieldName("function") || node.namedChildren[0];
+    const argsNode =
+      node.childForFieldName("arguments") ||
+      node.namedChildren.find((c) => c.type === "argument_list");
     if (!functionNode || !argsNode) return null;
 
     const fnName = functionNode.text.trim();
@@ -75,17 +86,22 @@ export const ParamTaintChecker: Checker = {
 
 function trackTaintState(node: SyntaxNode, env: Environment): void {
   // 变量声明：初始化清洁状态，保证分支合并可形成 [0,1]
-  if (node.type === "declaration" || node.type === "local_variable_declaration") {
+  if (
+    node.type === "declaration" ||
+    node.type === "local_variable_declaration"
+  ) {
     for (const child of node.namedChildren) {
       if (child.type === "identifier") {
         setTaint(child.text.trim(), new Interval(0, 0), env);
       }
       if (child.type === "init_declarator") {
-        const declNode = child.childForFieldName("declarator") || child.namedChildren[0];
+        const declNode =
+          child.childForFieldName("declarator") || child.namedChildren[0];
         const name = extractIdentifierName(declNode);
         if (!name) continue;
 
-        const valueNode = child.childForFieldName("value") || child.namedChildren[1];
+        const valueNode =
+          child.childForFieldName("value") || child.namedChildren[1];
         if (!valueNode) {
           setTaint(name, new Interval(0, 0), env);
           continue;
@@ -108,7 +124,8 @@ function trackTaintState(node: SyntaxNode, env: Environment): void {
     const hasTrack = !!env.get(taintVarName(leftName));
     const rhsName = extractIdentifierName(rightNode);
     const rhsHasTrack = rhsName ? !!env.get(taintVarName(rhsName)) : false;
-    const rhsIsSourceCall = rightNode.type === "call_expression" && isSourceCall(rightNode);
+    const rhsIsSourceCall =
+      rightNode.type === "call_expression" && isSourceCall(rightNode);
 
     if (!hasTrack && !rhsHasTrack && !rhsIsSourceCall) return;
 
@@ -118,8 +135,11 @@ function trackTaintState(node: SyntaxNode, env: Environment): void {
 
   // 输入源函数调用 taint 注入
   if (node.type === "call_expression") {
-    const functionNode = node.childForFieldName("function") || node.namedChildren[0];
-    const argsNode = node.childForFieldName("arguments") || node.namedChildren.find((c) => c.type === "argument_list");
+    const functionNode =
+      node.childForFieldName("function") || node.namedChildren[0];
+    const argsNode =
+      node.childForFieldName("arguments") ||
+      node.namedChildren.find((c) => c.type === "argument_list");
     if (!functionNode || !argsNode) return;
 
     const fnName = functionNode.text.trim();
@@ -148,7 +168,12 @@ function trackTaintState(node: SyntaxNode, env: Environment): void {
   }
 }
 
-function markFromArgs(args: SyntaxNode[], startIndex: number, env: Environment, count: number = Number.MAX_SAFE_INTEGER): void {
+function markFromArgs(
+  args: SyntaxNode[],
+  startIndex: number,
+  env: Environment,
+  count: number = Number.MAX_SAFE_INTEGER,
+): void {
   const end = Math.min(args.length, startIndex + count);
   for (let i = startIndex; i < end; i++) {
     const name = extractIdentifierName(args[i]);
@@ -166,7 +191,11 @@ function evalRhsTaint(rhs: SyntaxNode, env: Environment): Interval {
     return getTaint(rhsName, env);
   }
 
-  if (rhs.type === "number_literal" || rhs.type === "char_literal" || rhs.type === "string_literal") {
+  if (
+    rhs.type === "number_literal" ||
+    rhs.type === "char_literal" ||
+    rhs.type === "string_literal"
+  ) {
     return new Interval(0, 0);
   }
 
@@ -174,7 +203,8 @@ function evalRhsTaint(rhs: SyntaxNode, env: Environment): Interval {
 }
 
 function isSourceCall(callNode: SyntaxNode): boolean {
-  const functionNode = callNode.childForFieldName("function") || callNode.namedChildren[0];
+  const functionNode =
+    callNode.childForFieldName("function") || callNode.namedChildren[0];
   const fnName = functionNode?.text.trim() || "";
   return SOURCE_FUNCTIONS.has(fnName);
 }
@@ -202,7 +232,10 @@ function extractIdentifierName(node: SyntaxNode | null): string | null {
     return node.text.trim();
   }
 
-  if (node.type === "pointer_expression" || node.type === "reference_expression") {
+  if (
+    node.type === "pointer_expression" ||
+    node.type === "reference_expression"
+  ) {
     const arg = node.childForFieldName("argument") || node.namedChildren[0];
     return extractIdentifierName(arg);
   }

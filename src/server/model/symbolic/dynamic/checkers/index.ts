@@ -28,7 +28,6 @@ import { CastOverflowChecker } from "./cast_overflow";
 // TODO: [扩充规则 1] 组员在新增规则文件后，请在此处导入。
 // 示例: import { NullDerefChecker } from "./null_deref";
 
-
 // ============================================================================
 // 接口定义区 (Interface Definition)
 // ============================================================================
@@ -56,16 +55,16 @@ export interface Checker {
  * 引擎 (AnalysisEngine) 在每条语句执行后，会自动遍历此数组并触发所有规则的 check 方法。
  */
 export const ALL_CHECKERS: Checker[] = [
-  ArrayBoundsChecker,         // 数组越界检查器
-  DivByZeroChecker,           // 除零检查器
-  NullDerefChecker,           // 空指针解引用检查器
-  UninitializedVarChecker,    // 未初始化变量检查器
-  UseAfterFreeChecker,        // 释放后使用检查器
-  ArithOverflowChecker,       // 算术溢出检查器
-  BufferOverflowChecker,      // 缓冲区溢出检查器
-  FormatStringChecker,        // 格式化字符串检查器
-  ParamTaintChecker,          // 参数污点检查器
-  CastOverflowChecker,        // 类型转换溢出检查器
-  
+  ArrayBoundsChecker, // 数组越界检查器
+  DivByZeroChecker, // 除零检查器
+  NullDerefChecker, // 空指针解引用检查器
+  UninitializedVarChecker, // 未初始化变量检查器
+  UseAfterFreeChecker, // 释放后使用检查器
+  ArithOverflowChecker, // 算术溢出检查器
+  BufferOverflowChecker, // 缓冲区溢出检查器
+  FormatStringChecker, // 格式化字符串检查器
+  ParamTaintChecker, // 参数污点检查器
+  CastOverflowChecker, // 类型转换溢出检查器
+
   // TODO: [扩充规则 2] 请将上面导入的检查器实例追加到此数组中。
 ];

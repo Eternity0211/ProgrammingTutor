@@ -29,12 +29,12 @@ export default async function ClassesPage() {
           text="Access and manage your coding classes."
         />
         <Link href={ROUTES.PROFILE}>
-            <Button variant="outline" className="flex gap-2">
-              <UserCircle className="w-4 h-4" />
-              个人中心
-            </Button>
-          </Link>
-        </div>
+          <Button variant="outline" className="flex gap-2">
+            <UserCircle className="w-4 h-4" />
+            个人中心
+          </Button>
+        </Link>
+      </div>
       <ClassGrid classes={classes || []} role={role || "STUDENT"} />
     </div>
   );

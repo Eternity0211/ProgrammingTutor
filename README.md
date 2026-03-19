@@ -111,11 +111,11 @@ To set up your environment variables:
   6.  Set "Authorized JavaScript origins" to `http://localhost:3000` (for local development).
   7.  Set "Authorized redirect URIs" to `http://localhost:3000/api/auth/callback/google` (this is crucial for NextAuth.js).
   8.  After creation, your Client ID and Client Secret will be displayed. These are your `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` respectively.
-- **Judge0 API (`JUDGE0_API_KEY`, `RAPID_API_HOST`)**:
+- **Judge0 API (`JUDGE0_API_KEY`, `JUDGE0_API_HOST`)**:
   1.  Go to [RapidAPI Hub](https://www.google.com/search?q=https://rapidapi.com/judge0/api/judge0-ce).
   2.  Sign up or log in.
   3.  Subscribe to the Judge0 API (even the free tier will give you an API key).
-  4.  On the API details page, you'll find your `X-RapidAPI-Key` (which is your `JUDGE0_API_KEY`) and `X-RapidAPI-Host` (which is your `RAPID_API_HOST`).
+  4.  On the API details page, you'll find your `X-RapidAPI-Key` (which is your `JUDGE0_API_KEY`) and `X-RapidAPI-Host` (which is your `JUDGE0_API_HOST`).
 
 #### 3.3 Database Setup
 

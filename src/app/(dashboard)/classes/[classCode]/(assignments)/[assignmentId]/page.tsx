@@ -42,16 +42,18 @@ export default async function AssignmentPage({
   // 从 questions 数组中尝试获取第一个题目的初始代码
   // 如果 questions 为空，则回退到默认字符串
   // return <AssignmentLayout assignment={assignment} classCode={classCode} />;
-  const defaultCode = assignment.questions?.[0]?.codeSubmission?.[0]?.code || "// 在此编写代码...";
+  const defaultCode =
+    assignment.questions?.[0]?.codeSubmission?.[0]?.code ||
+    "// 在此编写代码...";
 
   return (
     <div className="relative min-h-screen">
       <AssignmentLayout assignment={assignment} classCode={classCode} />
-      
+
       {/* 注入 AI 审查智能体模块 */}
-      <AiCodeReview 
-        assignmentTitle={assignment.title} 
-        initialCode={defaultCode} 
+      <AiCodeReview
+        assignmentTitle={assignment.title}
+        initialCode={defaultCode}
       />
     </div>
   );

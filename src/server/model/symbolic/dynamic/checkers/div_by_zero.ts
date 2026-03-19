@@ -22,8 +22,9 @@ export const DivByZeroChecker: Checker = {
     // 只关注二元表达式
     if (node.type !== "binary_expression") return null;
 
-    const opNode = node.childForFieldName("operator") || node.namedChildren.find(c => 
-      c.text === "/" || c.text === "%");
+    const opNode =
+      node.childForFieldName("operator") ||
+      node.namedChildren.find((c) => c.text === "/" || c.text === "%");
     if (!opNode) return null;
     const op = opNode.text;
     if (op !== "/" && op !== "%") return null;
@@ -35,14 +36,17 @@ export const DivByZeroChecker: Checker = {
     const divisorInterval = evaluateExpression(rightNode, env);
 
     const isDefinite = divisorInterval.min === 0 && divisorInterval.max === 0;
-    const isSuspected = divisorInterval.min <= 0 && divisorInterval.max >= 0 && !isDefinite;
+    const isSuspected =
+      divisorInterval.min <= 0 && divisorInterval.max >= 0 && !isDefinite;
 
     if (!isDefinite && !isSuspected) return null;
 
     const meta = {
       operator: op,
       divisorInterval: divisorInterval.toString(),
-      numeratorInterval: leftNode ? evaluateExpression(leftNode, env).toString() : "?"
+      numeratorInterval: leftNode
+        ? evaluateExpression(leftNode, env).toString()
+        : "?",
     };
     const location = {
       line: node.startPosition.row + 1,
@@ -54,7 +58,7 @@ export const DivByZeroChecker: Checker = {
     } else {
       return { ruleId: "CPP_DYNAMIC_DIV_ZERO_SUSPECTED", location, meta };
     }
-  }
+  },
 };
 
 // 简化表达式求值器，与 array_bounds 中的类似，但足够支持本检查器的常见情形
@@ -80,15 +84,24 @@ function evaluateExpression(node: SyntaxNode, env: Environment): Interval {
       const li = evaluateExpression(left, env);
       const ri = evaluateExpression(right, env);
       switch (op) {
-        case "+": return li.add(ri);
-        case "-": return li.sub(ri);
-        case "*": return li.mul(ri);
+        case "+":
+          return li.add(ri);
+        case "-":
+          return li.sub(ri);
+        case "*":
+          return li.mul(ri);
         case "/": // interval division conservatively
           return new Interval(
-            ri.min < 0 && ri.max > 0 ? -Infinity :
-            ri.min === 0 ? Infinity : Math.floor(li.min / ri.min),
-            ri.min < 0 && ri.max > 0 ? Infinity :
-            ri.max === 0 ? Infinity : Math.ceil(li.max / ri.max)
+            ri.min < 0 && ri.max > 0
+              ? -Infinity
+              : ri.min === 0
+                ? Infinity
+                : Math.floor(li.min / ri.min),
+            ri.min < 0 && ri.max > 0
+              ? Infinity
+              : ri.max === 0
+                ? Infinity
+                : Math.ceil(li.max / ri.max),
           );
       }
     }

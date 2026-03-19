@@ -45,7 +45,9 @@ export const UseAfterFreeChecker: Checker = {
     }
 
     if (node.type === "call_expression") {
-      const args = node.childForFieldName("arguments") || node.namedChildren.find((c) => c.type === "argument_list");
+      const args =
+        node.childForFieldName("arguments") ||
+        node.namedChildren.find((c) => c.type === "argument_list");
       if (!args) return null;
 
       const issues: RawIssue[] = [];
@@ -80,7 +82,8 @@ function trackFreeState(node: SyntaxNode, env: Environment): void {
 
   // 指针声明（有初始化）
   if (node.type === "init_declarator") {
-    const declaratorNode = node.childForFieldName("declarator") || node.namedChildren[0];
+    const declaratorNode =
+      node.childForFieldName("declarator") || node.namedChildren[0];
     if (!containsPointerDeclarator(declaratorNode)) return;
 
     const pointerName = extractIdentifierName(declaratorNode);
@@ -110,7 +113,8 @@ function trackFreeState(node: SyntaxNode, env: Environment): void {
 
   // delete p;
   if (node.type === "delete_expression") {
-    const target = node.namedChildren[0] || node.childForFieldName("value") || null;
+    const target =
+      node.namedChildren[0] || node.childForFieldName("value") || null;
     const pointerName = extractIdentifierName(target);
     if (!pointerName) return;
     setStatus(pointerName, new Interval(1, 1), env);
@@ -126,10 +130,16 @@ function trackFreeState(node: SyntaxNode, env: Environment): void {
     const leftName = leftNode.text.trim();
     const hasTrackedStatus = !!env.get(statusVarName(leftName));
     const rhsName = extractIdentifierName(rightNode);
-    const rhsHasTrackedStatus = rhsName ? !!env.get(statusVarName(rhsName)) : false;
+    const rhsHasTrackedStatus = rhsName
+      ? !!env.get(statusVarName(rhsName))
+      : false;
 
     // 仅在明显涉及指针语义时更新状态，避免污染普通整数变量
-    if (!hasTrackedStatus && rightNode.type !== "new_expression" && !rhsHasTrackedStatus) {
+    if (
+      !hasTrackedStatus &&
+      rightNode.type !== "new_expression" &&
+      !rhsHasTrackedStatus
+    ) {
       return;
     }
 
@@ -147,7 +157,12 @@ function trackFreeState(node: SyntaxNode, env: Environment): void {
   }
 }
 
-function classifyUse(pointerName: string, env: Environment, node: SyntaxNode, accessKind: string): RawIssue | null {
+function classifyUse(
+  pointerName: string,
+  env: Environment,
+  node: SyntaxNode,
+  accessKind: string,
+): RawIssue | null {
   const freeState = getStatus(pointerName, env);
   const containsFreed = freeState.max >= 1;
   const isDefinitelyFreed = freeState.min === 1 && freeState.max === 1;
@@ -204,7 +219,11 @@ function getStatus(pointerName: string, env: Environment): Interval {
   return state?.interval || new Interval(0, 1);
 }
 
-function setStatus(pointerName: string, interval: Interval, env: Environment): void {
+function setStatus(
+  pointerName: string,
+  interval: Interval,
+  env: Environment,
+): void {
   const name = statusVarName(pointerName);
   if (!env.get(name)) {
     env.declareVar(name, "uaf_status");
@@ -218,7 +237,11 @@ function extractIdentifierName(node: SyntaxNode | null): string | null {
     return node.text.trim();
   }
 
-  if (node.type === "pointer_declarator" || node.type === "reference_declarator" || node.type === "array_declarator") {
+  if (
+    node.type === "pointer_declarator" ||
+    node.type === "reference_declarator" ||
+    node.type === "array_declarator"
+  ) {
     const inner = node.childForFieldName("declarator") || node.namedChildren[0];
     return extractIdentifierName(inner);
   }

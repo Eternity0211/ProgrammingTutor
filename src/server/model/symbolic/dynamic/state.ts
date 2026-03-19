@@ -15,29 +15,38 @@
 /** 变量的安全生命周期与内存初始化状态 */
 export enum InitState {
   UNINITIALIZED = "UNINITIALIZED", // 仅声明未赋值 (高危状态)
-  INITIALIZED = "INITIALIZED",     // 已赋初始安全值
-  NULL_PTR = "NULL_PTR",           // 指针被显式赋空
-  TAINTED = "TAINTED"              // 数据存在污染标记 (如用户输入或溢出关联)
+  INITIALIZED = "INITIALIZED", // 已赋初始安全值
+  NULL_PTR = "NULL_PTR", // 指针被显式赋空
+  TAINTED = "TAINTED", // 数据存在污染标记 (如用户输入或溢出关联)
 }
 
 /** * 数学区间类 (Interval Lattice)
  * 作为数据流分析的基石，用于界定变量在运行期中可能的极值边界。
  */
 export class Interval {
-  constructor(public min: number, public max: number) {}
+  constructor(
+    public min: number,
+    public max: number,
+  ) {}
 
   /**
    * 并集评估 (Union)：合并不同控制流分支可能产生的所有边界情况 (May-Analysis)
    */
   public union(other: Interval): Interval {
-    return new Interval(Math.min(this.min, other.min), Math.max(this.max, other.max));
+    return new Interval(
+      Math.min(this.min, other.min),
+      Math.max(this.max, other.max),
+    );
   }
 
   /**
    * 交集评估 (Intersect)：运用数学约束进一步收敛已知范围界限 (Must-Analysis)
    */
   public intersect(other: Interval): Interval {
-    return new Interval(Math.max(this.min, other.min), Math.min(this.max, other.max));
+    return new Interval(
+      Math.max(this.min, other.min),
+      Math.min(this.max, other.max),
+    );
   }
 
   /**
@@ -48,12 +57,12 @@ export class Interval {
   public widen(old: Interval): Interval {
     return new Interval(
       this.min < old.min ? -Infinity : old.min,
-      this.max > old.max ? Infinity : old.max
+      this.max > old.max ? Infinity : old.max,
     );
   }
 
   // --- 符号算术推导体系 ---
-  
+
   public add(other: Interval): Interval {
     return new Interval(this.min + other.min, this.max + other.max);
   }
@@ -64,8 +73,10 @@ export class Interval {
 
   public mul(other: Interval): Interval {
     const vals = [
-      this.min * other.min, this.min * other.max,
-      this.max * other.min, this.max * other.max
+      this.min * other.min,
+      this.min * other.max,
+      this.max * other.min,
+      this.max * other.max,
     ];
     return new Interval(Math.min(...vals), Math.max(...vals));
   }
@@ -81,7 +92,8 @@ export class Interval {
   }
 
   public toString(): string {
-    const format = (n: number) => n === -Infinity ? "-Infinity" : (n === Infinity ? "Infinity" : n);
+    const format = (n: number) =>
+      n === -Infinity ? "-Infinity" : n === Infinity ? "Infinity" : n;
     return `[${format(this.min)}, ${format(this.max)}]`;
   }
 }
@@ -90,22 +102,22 @@ export class Interval {
 export interface PointerState {
   canBeNull: boolean;
   canBeValid: boolean;
-  possibleTargets: Set<string>; 
+  possibleTargets: Set<string>;
 }
 
 /** 针对容器类型边界及初始化的元数据追踪结构 */
 export interface CollectionState {
-  size: Interval;       
-  elementInit: boolean; 
+  size: Interval;
+  elementInit: boolean;
 }
 
 /** 变量实体的综合抽象状态包 */
 export interface VarState {
   init: InitState;
   interval: Interval;
-  type: string;                 
-  pointer?: PointerState;       
-  collection?: CollectionState; 
+  type: string;
+  pointer?: PointerState;
+  collection?: CollectionState;
 }
 
 // =============================================================================
@@ -124,7 +136,12 @@ export class Environment {
   }
 
   /** 向环境注册新变量并附带元数据初始化 */
-  public declareVar(name: string, type: string, isArray: boolean = false, arraySize?: number) {
+  public declareVar(
+    name: string,
+    type: string,
+    isArray: boolean = false,
+    arraySize?: number,
+  ) {
     const state: VarState = {
       init: InitState.UNINITIALIZED,
       interval: new Interval(-Infinity, Infinity),
@@ -133,7 +150,7 @@ export class Environment {
     if (isArray) {
       state.collection = {
         size: new Interval(arraySize ?? 0, arraySize ?? 0),
-        elementInit: false
+        elementInit: false,
       };
     }
     this.store.set(name, state);
@@ -175,8 +192,18 @@ export class Environment {
       newStore.set(k, {
         ...v,
         interval: new Interval(v.interval.min, v.interval.max),
-        collection: v.collection ? { ...v.collection, size: new Interval(v.collection.size.min, v.collection.size.max) } : undefined,
-        pointer: v.pointer ? { ...v.pointer, possibleTargets: new Set(v.pointer.possibleTargets) } : undefined
+        collection: v.collection
+          ? {
+              ...v.collection,
+              size: new Interval(v.collection.size.min, v.collection.size.max),
+            }
+          : undefined,
+        pointer: v.pointer
+          ? {
+              ...v.pointer,
+              possibleTargets: new Set(v.pointer.possibleTargets),
+            }
+          : undefined,
       });
     }
     return new Environment(newStore);
@@ -197,8 +224,11 @@ export class Environment {
       thisVs.interval = thisVs.interval.union(otherVs.interval);
 
       if (thisVs.collection && otherVs.collection) {
-        thisVs.collection.size = thisVs.collection.size.union(otherVs.collection.size);
-        thisVs.collection.elementInit = thisVs.collection.elementInit && otherVs.collection.elementInit;
+        thisVs.collection.size = thisVs.collection.size.union(
+          otherVs.collection.size,
+        );
+        thisVs.collection.elementInit =
+          thisVs.collection.elementInit && otherVs.collection.elementInit;
       }
     }
     return this;
@@ -206,7 +236,12 @@ export class Environment {
 
   /** 根据危害等级动态筛选出高优先级状态 */
   private pickMostDangerous(a: InitState, b: InitState): InitState {
-    const rank = { [InitState.UNINITIALIZED]: 3, [InitState.TAINTED]: 2, [InitState.NULL_PTR]: 1, [InitState.INITIALIZED]: 0 };
+    const rank = {
+      [InitState.UNINITIALIZED]: 3,
+      [InitState.TAINTED]: 2,
+      [InitState.NULL_PTR]: 1,
+      [InitState.INITIALIZED]: 0,
+    };
     return rank[a] >= rank[b] ? a : b;
   }
 
@@ -215,7 +250,8 @@ export class Environment {
     if (this.store.size !== other.store.size) return false;
     for (const [k, v] of this.store.entries()) {
       const ov = other.store.get(k);
-      if (!ov || v.init !== ov.init || !v.interval.equals(ov.interval)) return false;
+      if (!ov || v.init !== ov.init || !v.interval.equals(ov.interval))
+        return false;
     }
     return true;
   }
