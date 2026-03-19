@@ -75,11 +75,13 @@ export default function TestCaseGenarationDialog({
         }),
       });
 
+      const responseData = await response.json().catch(() => null);
+
       if (!response.ok) {
-        throw new Error("Failed to generate test cases");
+        throw new Error(responseData?.error || "Failed to generate test cases");
       }
 
-      const { testCases } = await response.json();
+      const { testCases } = responseData;
 
       const newTestCases = testCases.map(
         (tc: Omit<TestCase, "id">, index: number) => ({
@@ -94,7 +96,11 @@ export default function TestCaseGenarationDialog({
       setOpen(false);
     } catch (error) {
       console.error("Error generating test cases:", error);
-      toast.error("Failed to generate test cases. Please try again.");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to generate test cases. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }

@@ -1,6 +1,25 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
-import { groq } from "@ai-sdk/groq";
+import { createGroq } from "@ai-sdk/groq";
 import { generateText } from "ai";
+
+function getGroqApiKey(): string {
+  const rawApiKey = process.env.GROQ_API_KEY ?? process.env.AI_GROQ_API_KEY;
+  const apiKey = rawApiKey?.trim().replace(/^['\"]|['\"]$/g, "");
+
+  if (!apiKey || apiKey === "your-groq-api-key") {
+    throw new Error(
+      "AI service is not configured. Please set a valid GROQ_API_KEY.",
+    );
+  }
+
+  if (!apiKey.startsWith("gsk_")) {
+    throw new Error(
+      "GROQ_API_KEY format looks invalid. Expected a key starting with gsk_.",
+    );
+  }
+
+  return apiKey;
+}
 
 export function buildTestCaseGenerationPrompt(
   title: string,
@@ -54,6 +73,9 @@ Generate the test cases now:`;
 
 export async function generateTestCases(prompt: string) {
   try {
+    const groqApiKey = getGroqApiKey();
+    const groq = createGroq({ apiKey: groqApiKey });
+
     const { text } = await generateText({
       model: groq("llama-3.3-70b-versatile"),
       prompt: prompt,
@@ -65,8 +87,17 @@ export async function generateTestCases(prompt: string) {
     const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
     const testCases: Omit<TestCase, "id">[] = JSON.parse(jsonText);
     return testCases;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error calling LLM:", error);
-    throw new Error("Failed to generate test cases");
+    const message =
+      error instanceof Error ? error.message : "Failed to generate test cases";
+
+    if (/invalid api key|401/i.test(message)) {
+      throw new Error(
+        "Groq API key is invalid. Please update GROQ_API_KEY in your environment.",
+      );
+    }
+
+    throw new Error(message || "Failed to generate test cases");
   }
 }

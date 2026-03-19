@@ -12,7 +12,6 @@ import { RawIssue } from "../../../../src/lib/types/symbolic-types";
 // =============================================================================
 
 describe("Symbolic Mapper (Transformation Layer)", () => {
-
   // ---------------------------------------------------------------------------
   /**
    * @test Case: Error Enrichment | 错误信息富化
@@ -23,8 +22,8 @@ describe("Symbolic Mapper (Transformation Layer)", () => {
     const raw: RawIssue[] = [
       {
         ruleId: "CPP_ASSIGNMENT_IN_IF",
-        location: { line: 2, column: 5 }
-      }
+        location: { line: 2, column: 5 },
+      },
     ];
 
     const result = mapIssues(raw, []);
@@ -48,9 +47,9 @@ describe("Symbolic Mapper (Transformation Layer)", () => {
         meta: {
           use_index: 10,
           def_name: "arr",
-          def_size: 5
-        }
-      }
+          def_size: 5,
+        },
+      },
     ];
 
     const result = mapIssues(raw, []);
@@ -71,14 +70,16 @@ describe("Symbolic Mapper (Transformation Layer)", () => {
     const rawWarnings: RawIssue[] = [
       {
         ruleId: "CPP_VAR_NAMING",
-        location: { line: 1, column: 1 }
-      }
+        location: { line: 1, column: 1 },
+      },
     ];
 
     const result = mapIssues([], rawWarnings);
 
     expect(result.warnings.length).toBe(1);
-    expect(result.warnings[0].display_name).toBe("Non-Standard Variable Naming");
+    expect(result.warnings[0].display_name).toBe(
+      "Non-Standard Variable Naming",
+    );
   });
 
   // ---------------------------------------------------------------------------
@@ -91,8 +92,8 @@ describe("Symbolic Mapper (Transformation Layer)", () => {
     const rawWarnings: RawIssue[] = [
       {
         ruleId: "CPP_NO_GOTO",
-        location: { line: 5, column: 2 }
-      }
+        location: { line: 5, column: 2 },
+      },
     ];
 
     const result = mapIssues([], rawWarnings);
@@ -112,8 +113,8 @@ describe("Symbolic Mapper (Transformation Layer)", () => {
     const raw: RawIssue[] = [
       {
         ruleId: "UNKNOWN_RULE",
-        location: { line: 1, column: 1 }
-      }
+        location: { line: 1, column: 1 },
+      },
     ];
 
     const result = mapIssues(raw, []);

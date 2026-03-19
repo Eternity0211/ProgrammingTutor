@@ -1,7 +1,7 @@
 /**
  * @file symbolic.ts
  * @description Symbolic Analysis Engine 本地调试脚本
- * 
+ *
  * 使用方式：
  * 先编译：npx tsc -p tsconfig.symbolic.json
  * 再运行：node dist-symbolic/tests/server/model/symbolic/symbolic.js
@@ -84,7 +84,6 @@ async function main() {
 
     console.log("After analyzeCode");
 
-
     console.log("📤 Analysis Result:\n");
     console.log(JSON.stringify(result, null, 2));
 
@@ -98,7 +97,6 @@ async function main() {
       console.log(`Parse Time (ms): ${result.metadata.parseTime?.toFixed(2)}`);
       console.log(`AST Node Count : ${result.metadata.nodeCount}`);
     }
-
   } catch (error) {
     console.error("❌ Debug execution failed:");
     console.error(error);

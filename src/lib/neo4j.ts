@@ -8,31 +8,29 @@ const globalForNeo4j = global as unknown as { neo4j?: Driver };
 
 export const neo4jDriver =
   globalForNeo4j.neo4j ??
-  neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD),
-  {
+  neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD), {
     encrypted: "ENCRYPTION_OFF",
     disableLosslessIntegers: true,
-  }
-);
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalForNeo4j.neo4j = neo4jDriver;
 }
 
 export async function runCypherQuery(
-    cypher: string,
-    params: Record<string, any> = {}
-  ): Promise<QueryResult> {
-    const session = neo4jDriver.session();
-    try {
-      return await session.run(cypher, params);
-    } catch (err) {
-      console.error("Cypher 查询失败:", err);
-      throw err;
-    } finally {
-      await session.close();
-    }
+  cypher: string,
+  params: Record<string, any> = {},
+): Promise<QueryResult> {
+  const session = neo4jDriver.session();
+  try {
+    return await session.run(cypher, params);
+  } catch (err) {
+    console.error("Cypher 查询失败:", err);
+    throw err;
+  } finally {
+    await session.close();
   }
+}
 
 export const getNeo4jSession = () => neo4jDriver.session();
 

@@ -20,7 +20,6 @@ import { ArrayBoundsChecker } from "./array_bounds";
 // 示例: import { DivisionByZeroChecker } from "./div_by_zero";
 // 示例: import { UninitializedChecker } from "./uninitialized";
 
-
 // ============================================================================
 // 接口定义区 (Interface Definition)
 // ============================================================================
@@ -49,7 +48,7 @@ export interface Checker {
  */
 export const ALL_CHECKERS: Checker[] = [
   ArrayBoundsChecker, // 数组越界检查器
-  
+
   // TODO: [扩充规则 2] 请将上面导入的检查器实例追加到此数组中。
   // 示例: DivisionByZeroChecker,
   // 示例: UninitializedChecker,

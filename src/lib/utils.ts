@@ -87,7 +87,7 @@ export const titleCase = (str: string): string => {
     .join(" ");
 };
 
-// URL 有效性检查 
+// URL 有效性检查
 export const isValidUrl = (string: string) => {
   try {
     new URL(string);
@@ -123,13 +123,32 @@ export function formatNumberShort(num: number | string): string {
 
 // 绝对 URL 生成
 export const absoluteUrl = (path: string) => {
-  return new URL(path, process.env.NEXT_PUBLIC_APP_URL).toString();
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  try {
+    return new URL(path, baseUrl).toString();
+  } catch (error) {
+    console.error("Failed to construct URL:", error);
+    // Fallback to relative path if URL construction fails
+    return path;
+  }
 };
 
-// 随机卡片背景色获取
-export const getCardBgColor = (theme: string | undefined) => {
+const getStableHash = (input: string) => {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+};
+
+// 稳定卡片背景色获取（同一个 seed 始终返回同一颜色，避免 SSR/CSR 不一致）
+export const getCardBgColor = (
+  theme: string | undefined,
+  seed: string = "default",
+) => {
   const palette = theme === "dark" ? darkCardColors : lightCardColors;
-  return palette[Math.floor(Math.random() * palette.length)];
+  const index = getStableHash(seed) % palette.length;
+  return palette[index];
 };
 
 // 课堂代码生成
@@ -291,7 +310,6 @@ export function transformStudentDataForGrading(
   };
 }
 
-
 // 将符号引擎的 Location 转换为 Monaco 的 Range 格式
 export function locationToMonacoRange(loc: SourceLocation) {
   return {
@@ -305,5 +323,8 @@ export function locationToMonacoRange(loc: SourceLocation) {
 // 格式化 AI 反馈，屏蔽 Markdown 代码块防止作弊
 export function formatCausalFeedback(text: string): string {
   // 移除所有 ```cpp ... ``` 或 ``` ... ``` 代码块
-  return text.replace(/```[\s\S]*?```/g, "_[代码修复建议已根据教学原则隐藏，请参考下方逻辑思路]_");
+  return text.replace(
+    /```[\s\S]*?```/g,
+    "_[代码修复建议已根据教学原则隐藏，请参考下方逻辑思路]_",
+  );
 }

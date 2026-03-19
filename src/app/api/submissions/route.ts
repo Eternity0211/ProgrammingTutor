@@ -130,6 +130,27 @@ export async function POST(req: NextRequest) {
       })),
     });
 
+    const judgeHost = process.env.JUDGE0_API_HOST;
+    const judgeKey = process.env.JUDGE0_API_KEY;
+    if (!judgeHost) {
+      throw new Error("Judge0 is not configured. Please set JUDGE0_API_HOST.");
+    }
+
+    const isRapidApiHost = judgeHost.includes("rapidapi.com");
+    if (isRapidApiHost && !judgeKey) {
+      throw new Error(
+        "Judge0 RapidAPI key is missing. Please set JUDGE0_API_KEY.",
+      );
+    }
+
+    const requestHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (isRapidApiHost) {
+      requestHeaders["x-rapidapi-key"] = judgeKey as string;
+      requestHeaders["x-rapidapi-host"] = judgeHost;
+    }
+
     const testCasePromises = question.testCases.map(async (testCase) => {
       const webhookPayload: WebhookPayload = {
         codeSubmissionId: codeSubmission.id,
@@ -143,16 +164,12 @@ export async function POST(req: NextRequest) {
       const webhookUrl = `${process.env.APP_URL}/api/webhook/judge0?payload=${encodedPayload}`;
 
       const response = await fetch(
-        `https://${process.env.JUDGE0_API_HOST}/submissions?base64_encoded=true&fields=*&callback_url=${encodeURIComponent(
+        `https://${judgeHost}/submissions?base64_encoded=true&fields=*&callback_url=${encodeURIComponent(
           webhookUrl,
         )}`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-rapidapi-key": process.env.JUDGE0_API_KEY || "",
-            "x-rapidapi-host": process.env.JUDGE0_API_HOST || "",
-          },
+          headers: requestHeaders,
           body: JSON.stringify({
             language_id:
               LANGUAGE_ID_MAP[language as keyof typeof LANGUAGE_ID_MAP],
@@ -167,9 +184,32 @@ export async function POST(req: NextRequest) {
         },
       );
 
+      if (!response.ok) {
+        const errorText = await response.text();
+
+        if (
+          response.status === 403 &&
+          /not subscribed to this api/i.test(errorText)
+        ) {
+          throw new Error(
+            "Judge0 RapidAPI subscription is missing for this API key. Subscribe to Judge0 CE on RapidAPI or switch JUDGE0_API_HOST to your self-hosted Judge0 endpoint.",
+          );
+        }
+
+        throw new Error(
+          `Judge0 submit failed for test case ${testCase.id} (${response.status}): ${errorText || "No response body"}`,
+        );
+      }
+
       const judgeData = await response.json();
       if (!judgeData.token) {
-        throw new Error(`Failed to submit test case ${testCase.id}`);
+        throw new Error(
+          `Failed to submit test case ${testCase.id}: ${
+            judgeData.error ||
+            judgeData.message ||
+            "Judge0 did not return token"
+          }`,
+        );
       }
 
       await prisma.testCaseResult.update({

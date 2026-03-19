@@ -7,12 +7,14 @@
  * 3. 复杂环境账本合并 (State Join)：May-Analysis 保守降级策略、多维元数据 (如集合、指针) 的深拷贝与防污染机制。
  */
 
-import { Environment, Interval, InitState } from "../../../../../src/server/model/symbolic/dynamic/state";
+import {
+  Environment,
+  Interval,
+  InitState,
+} from "../../../../../src/server/model/symbolic/dynamic/state";
 
 describe("Dynamic Analysis - Symbolic State (Competition Level)", () => {
-
   describe("1. Interval Lattice & Arithmetic (区间格运算与符号推导)", () => {
-    
     it("1.1 应该正确处理包含正负边界交叉的复杂区间乘法", () => {
       // 场景描述: 变量 a 存在于 [-2, 3], 变量 b 存在于 [-5, 4]
       // 边界极值演算：-2*-5=10, -2*4=-8, 3*-5=-15, 3*4=12
@@ -20,7 +22,7 @@ describe("Dynamic Analysis - Symbolic State (Competition Level)", () => {
       const a = new Interval(-2, 3);
       const b = new Interval(-5, 4);
       const res = a.mul(b);
-      
+
       expect(res.min).toBe(-15);
       expect(res.max).toBe(12);
     });
@@ -30,7 +32,7 @@ describe("Dynamic Analysis - Symbolic State (Competition Level)", () => {
       const a = new Interval(10, 20);
       const b = new Interval(2, 5);
       const res = a.sub(b);
-      
+
       expect(res.min).toBe(5);
       expect(res.max).toBe(18);
 
@@ -43,7 +45,7 @@ describe("Dynamic Analysis - Symbolic State (Competition Level)", () => {
 
     it("1.3 应该精准触发 Widening (加宽算子) 以强制循环收敛", () => {
       const oldState = new Interval(0, 5);
-      
+
       // 场景 A: 探测到上界被突破，安全策略要求直接将上界推向 Infinity (正无穷)
       const rightGrow = new Interval(0, 6);
       const resA = rightGrow.widen(oldState);
@@ -69,14 +71,13 @@ describe("Dynamic Analysis - Symbolic State (Competition Level)", () => {
       const original = new Interval(0, 20);
       const constraint = new Interval(-Infinity, 9);
       const res = original.intersect(constraint);
-      
+
       expect(res.min).toBe(0);
       expect(res.max).toBe(9);
     });
   });
 
   describe("2. Environment & State Merging (执行环境与状态汇聚)", () => {
-    
     it("2.1 分支合并必须严格遵循 '最危险原则' (May-Analysis 保守降级)", () => {
       const envMain = new Environment();
       envMain.declareVar("x", "int");
@@ -95,7 +96,7 @@ describe("Dynamic Analysis - Symbolic State (Competition Level)", () => {
       // 验证降级逻辑：汇聚 A 和 B 时，只要有一条路径是 UNINITIALIZED，就必须报 UNINITIALIZED
       envMain.merge(envA).merge(envB);
       expect(envMain.get("x")?.init).toBe(InitState.UNINITIALIZED);
-      
+
       // 验证区间并集：应当包含 [100, 100] 和 [-Infinity, Infinity] 的最大外包络
       expect(envMain.getInterval("x").max).toBe(Infinity);
 
@@ -103,10 +104,10 @@ describe("Dynamic Analysis - Symbolic State (Competition Level)", () => {
       const envSafe = new Environment();
       envSafe.declareVar("y", "int");
       envSafe.setVal("y", 1);
-      
+
       const envPolluted = envSafe.clone();
       envPolluted.get("y")!.init = InitState.TAINTED;
-      
+
       envSafe.merge(envPolluted);
       expect(envSafe.get("y")?.init).toBe(InitState.TAINTED);
     });
@@ -118,7 +119,7 @@ describe("Dynamic Analysis - Symbolic State (Competition Level)", () => {
       const env2 = env1.clone();
       // 在衍生分支 2 中模拟对数组发生扩容或偏移推断
       env2.get("arr")!.collection!.size = new Interval(20, 20);
-      
+
       // 安全断言：原始环境 env1 绝不能受到 env2 内存修改的影响
       expect(env1.get("arr")?.collection?.size.max).toBe(10);
       expect(env2.get("arr")?.collection?.size.max).toBe(20);
@@ -142,5 +143,4 @@ describe("Dynamic Analysis - Symbolic State (Competition Level)", () => {
       expect(env1.equals(env3)).toBe(false);
     });
   });
-
 });

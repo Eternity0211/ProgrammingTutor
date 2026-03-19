@@ -1,15 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Onest } from "next/font/google";
 import "@/app/styles/globals.css";
 import { ThemeProvider } from "@/lib/providers/theme-provider";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
-
-const onest = Onest({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-onest",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://grade-it-ten.vercel.app"),
@@ -102,11 +95,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${onest.className} antialiased`}
-      suppressHydrationWarning
-    >
+    <html lang="en" className="antialiased" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-title" content="GradeIT" />
         <script

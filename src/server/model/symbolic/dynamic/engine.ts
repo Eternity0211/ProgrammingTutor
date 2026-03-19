@@ -44,7 +44,7 @@ export class AnalysisEngine {
     while (worklist.length > 0) {
       const currentBlock = worklist.shift()!;
       const inEnv = this.blockInStates.get(currentBlock.id)!;
-      
+
       const count = (this.visitCounts.get(currentBlock.id) || 0) + 1;
       this.visitCounts.set(currentBlock.id, count);
 
@@ -57,8 +57,13 @@ export class AnalysisEngine {
         let branchEnv = outEnv.clone();
 
         // 针对条件控制块，按真假路径对环境进行物理约束裁剪 (约定 index 0 为 True 分支)
-        if (currentBlock.successors.length > 1 && currentBlock.id.includes("cond") && currentBlock.statements.length > 0) {
-          const condition = currentBlock.statements[currentBlock.statements.length - 1];
+        if (
+          currentBlock.successors.length > 1 &&
+          currentBlock.id.includes("cond") &&
+          currentBlock.statements.length > 0
+        ) {
+          const condition =
+            currentBlock.statements[currentBlock.statements.length - 1];
           branchEnv = this.refineBranchState(condition, branchEnv, i === 0);
         }
 
@@ -69,18 +74,22 @@ export class AnalysisEngine {
         } else {
           // 对多条汇聚的执行路径进行保守的状态合并 (Lattice Join)
           const merged = existingIn.clone().merge(branchEnv);
-          
+
           // 【核心防御】：循环控制流的强制收敛机制 (Widening Operator)
           // 仅在循环头部 (cond块) 触发，避免污染分支内有效的物理约束
-          if (count > this.WIDENING_THRESHOLD && successor.id.includes("cond")) {
+          if (
+            count > this.WIDENING_THRESHOLD &&
+            successor.id.includes("cond")
+          ) {
             const store = (merged as any).store;
             for (const varName of store.keys()) {
               const oldIntv = existingIn.getInterval(varName);
               const newIntv = merged.getInterval(varName);
               // 若边界呈现单调扩张趋势，则直接推向无穷
-              merged.updateInterval(varName, 
+              merged.updateInterval(
+                varName,
                 newIntv.min < oldIntv.min ? -Infinity : oldIntv.min,
-                newIntv.max > oldIntv.max ? Infinity : oldIntv.max
+                newIntv.max > oldIntv.max ? Infinity : oldIntv.max,
               );
             }
           }
@@ -130,31 +139,41 @@ export class AnalysisEngine {
    */
   private extractIdentifierName(node: SyntaxNode | null): string | null {
     if (!node) return null;
-    if (node.type === "identifier" || node.type === "field_identifier") return node.text;
-    
-    if (node.type === "pointer_declarator" || node.type === "reference_declarator" || node.type === "array_declarator") {
-      const inner = node.childForFieldName("declarator") || node.namedChildren[0];
+    if (node.type === "identifier" || node.type === "field_identifier")
+      return node.text;
+
+    if (
+      node.type === "pointer_declarator" ||
+      node.type === "reference_declarator" ||
+      node.type === "array_declarator"
+    ) {
+      const inner =
+        node.childForFieldName("declarator") || node.namedChildren[0];
       return this.extractIdentifierName(inner);
     }
     // 终极兜底方案：强行用正则抹除符号特征
-    return node.text.replace(/[\*&\[\]0-9]/g, '').trim();
+    return node.text.replace(/[\*&\[\]0-9]/g, "").trim();
   }
 
   /**
    * 解析多维数组声明，精准提取出变量名与最高维度的大小。
    */
-  private extractArrayDeclaration(node: SyntaxNode): { name: string, sizeNode: SyntaxNode | null } | null {
+  private extractArrayDeclaration(
+    node: SyntaxNode,
+  ): { name: string; sizeNode: SyntaxNode | null } | null {
     let current: SyntaxNode | null = node;
     let sizeNode: SyntaxNode | null = null;
 
     // 向内层不断剥离 array_declarator，直到抵达核心标识符
     while (current && current.type === "array_declarator") {
       // 显式声明类型为 SyntaxNode | null，切断 TypeScript 的循环推导判定
-      const decl: SyntaxNode | null = current.childForFieldName("declarator") || current.namedChildren[0];
-      const sz: SyntaxNode | null = current.childForFieldName("size") || current.namedChildren[1];
-      
+      const decl: SyntaxNode | null =
+        current.childForFieldName("declarator") || current.namedChildren[0];
+      const sz: SyntaxNode | null =
+        current.childForFieldName("size") || current.namedChildren[1];
+
       // 在 C/C++ 的 AST 模型中，最内层的 array_declarator 通常对应数组的最高维度
-      if (sz) sizeNode = sz; 
+      if (sz) sizeNode = sz;
       current = decl;
     }
 
@@ -168,13 +187,22 @@ export class AnalysisEngine {
    * 提取动态内存分配 (Heap Allocation) 的请求大小。
    * @description 支持识别 `new int[n]` 等格式，并通过内部解析出数组尺寸区间。
    */
-  private extractDynamicArraySize(valNode: SyntaxNode, env: Environment): Interval | null {
+  private extractDynamicArraySize(
+    valNode: SyntaxNode,
+    env: Environment,
+  ): Interval | null {
     if (valNode.type === "new_expression") {
       const newDeclarator = this.findNode(valNode, ["new_declarator"]);
       if (newDeclarator) {
         // 兼容不同版本的 tree-sitter-cpp 解析器 (字段法或类型遍历法)
-        const lengthNode = newDeclarator.childForFieldName("length") || 
-                           newDeclarator.children.find(c => c.isNamed && c.type !== "type_identifier" && c.type !== "primitive_type");
+        const lengthNode =
+          newDeclarator.childForFieldName("length") ||
+          newDeclarator.children.find(
+            (c) =>
+              c.isNamed &&
+              c.type !== "type_identifier" &&
+              c.type !== "primitive_type",
+          );
         if (lengthNode) {
           return this.evaluateExpression(lengthNode, env);
         }
@@ -191,13 +219,22 @@ export class AnalysisEngine {
    * 基于控制流条件表达式，对环境中的变量区间实施反向裁剪。
    * @description 通过智能化推演 (例如自动适应 `i < 10` 与 `10 > i`)，实现 Must-Analysis 的绝对精度。
    */
-  private refineBranchState(cond: SyntaxNode, env: Environment, isTrueBranch: boolean): Environment {
+  private refineBranchState(
+    cond: SyntaxNode,
+    env: Environment,
+    isTrueBranch: boolean,
+  ): Environment {
     const binExpr = this.findNode(cond, ["binary_expression"]);
     if (!binExpr) return env;
 
     const left = binExpr.childForFieldName("left") || binExpr.namedChildren[0];
-    const right = binExpr.childForFieldName("right") || binExpr.namedChildren[1];
-    const op = binExpr.childForFieldName("operator")?.text || binExpr.children.find(c => ["<", ">", "<=", ">=", "==", "!="].includes(c.type))?.text;
+    const right =
+      binExpr.childForFieldName("right") || binExpr.namedChildren[1];
+    const op =
+      binExpr.childForFieldName("operator")?.text ||
+      binExpr.children.find((c) =>
+        ["<", ">", "<=", ">=", "==", "!="].includes(c.type),
+      )?.text;
 
     if (left && right) {
       let varName = "";
@@ -218,7 +255,7 @@ export class AnalysisEngine {
       }
 
       if (!env.get(varName)) env.declareVar(varName, "auto");
-      
+
       const current = env.getInterval(varName);
       let constraint: Interval;
       const valMax = rightInterval.max;
@@ -234,14 +271,33 @@ export class AnalysisEngine {
       }
 
       // 根据操作符及真假分支实施区间交集裁剪
-      if (actualOp === "<") constraint = isTrueBranch ? new Interval(-Infinity, valMax - 1) : new Interval(valMin, Infinity);
-      else if (actualOp === "<=") constraint = isTrueBranch ? new Interval(-Infinity, valMax) : new Interval(valMin + 1, Infinity);
-      else if (actualOp === ">") constraint = isTrueBranch ? new Interval(valMin + 1, Infinity) : new Interval(-Infinity, valMax);
-      else if (actualOp === ">=") constraint = isTrueBranch ? new Interval(valMin, Infinity) : new Interval(-Infinity, valMax - 1);
-      else if (actualOp === "==") constraint = isTrueBranch ? new Interval(rightInterval.min, rightInterval.max) : new Interval(-Infinity, Infinity);
+      if (actualOp === "<")
+        constraint = isTrueBranch
+          ? new Interval(-Infinity, valMax - 1)
+          : new Interval(valMin, Infinity);
+      else if (actualOp === "<=")
+        constraint = isTrueBranch
+          ? new Interval(-Infinity, valMax)
+          : new Interval(valMin + 1, Infinity);
+      else if (actualOp === ">")
+        constraint = isTrueBranch
+          ? new Interval(valMin + 1, Infinity)
+          : new Interval(-Infinity, valMax);
+      else if (actualOp === ">=")
+        constraint = isTrueBranch
+          ? new Interval(valMin, Infinity)
+          : new Interval(-Infinity, valMax - 1);
+      else if (actualOp === "==")
+        constraint = isTrueBranch
+          ? new Interval(rightInterval.min, rightInterval.max)
+          : new Interval(-Infinity, Infinity);
       else return env;
 
-      env.updateInterval(varName, Math.max(current.min, constraint.min), Math.min(current.max, constraint.max));
+      env.updateInterval(
+        varName,
+        Math.max(current.min, constraint.min),
+        Math.min(current.max, constraint.max),
+      );
     }
     return env;
   }
@@ -264,17 +320,21 @@ export class AnalysisEngine {
     if (!node) return env;
 
     // 1. 解析局部与全局变量声明
-    const decls = this.findAllNodes(node, ["declaration", "local_variable_declaration"]);
+    const decls = this.findAllNodes(node, [
+      "declaration",
+      "local_variable_declaration",
+    ]);
     for (const decl of decls) {
       const typeStr = decl.childForFieldName("type")?.text || "int";
       for (const child of decl.namedChildren) {
-        
         // 场景 A: 带初始化的常规声明 (包括涉及 new 关键字的指针分配)
         if (child.type === "init_declarator") {
-          const nameNode = child.childForFieldName("declarator") || child.namedChildren[0];
-          const valNode = child.childForFieldName("value") || child.namedChildren[1];
+          const nameNode =
+            child.childForFieldName("declarator") || child.namedChildren[0];
+          const valNode =
+            child.childForFieldName("value") || child.namedChildren[1];
           const actualName = this.extractIdentifierName(nameNode);
-          
+
           if (actualName) {
             env.declareVar(actualName, typeStr);
             if (valNode) {
@@ -285,19 +345,29 @@ export class AnalysisEngine {
               // 拦截并追踪基于 Heap 分配的动态数组大小
               const dynamicSize = this.extractDynamicArraySize(valNode, env);
               if (dynamicSize) {
-                env.get(actualName)!.collection = { size: dynamicSize, elementInit: false };
+                env.get(actualName)!.collection = {
+                  size: dynamicSize,
+                  elementInit: false,
+                };
               }
             }
           }
-        } 
+        }
         // 场景 B: 静态数组声明 (支持多维)
         else if (child.type === "array_declarator") {
           const arrInfo = this.extractArrayDeclaration(child);
           if (arrInfo && arrInfo.name) {
-            const sizeVal = arrInfo.sizeNode ? this.evaluateExpression(arrInfo.sizeNode, env).max : 0;
-            env.declareVar(arrInfo.name, typeStr, true, isNaN(sizeVal) ? 0 : sizeVal);
+            const sizeVal = arrInfo.sizeNode
+              ? this.evaluateExpression(arrInfo.sizeNode, env).max
+              : 0;
+            env.declareVar(
+              arrInfo.name,
+              typeStr,
+              true,
+              isNaN(sizeVal) ? 0 : sizeVal,
+            );
           }
-        } 
+        }
         // 场景 C: 仅声明，不含初始值
         else if (child.type === "identifier") {
           if (!env.get(child.text)) env.declareVar(child.text, typeStr);
@@ -306,12 +376,15 @@ export class AnalysisEngine {
     }
 
     // 2. 解析后续的变量赋值操作
-    const assignments = this.findAllNodes(node, ["assignment_expression", "assignment"]);
+    const assignments = this.findAllNodes(node, [
+      "assignment_expression",
+      "assignment",
+    ]);
     for (const a of assignments) {
       const leftNode = a.childForFieldName("left") || a.namedChildren[0];
       const valNode = a.childForFieldName("right") || a.namedChildren[1];
       const actualName = this.extractIdentifierName(leftNode);
-      
+
       if (actualName && valNode) {
         if (!env.get(actualName)) env.declareVar(actualName, "auto");
         const res = this.evaluateExpression(valNode, env);
@@ -321,22 +394,33 @@ export class AnalysisEngine {
         // 如果给指针重新分配了堆内存，则重置其追踪边界
         const dynamicSize = this.extractDynamicArraySize(valNode, env);
         if (dynamicSize) {
-           env.get(actualName)!.collection = { size: dynamicSize, elementInit: false };
+          env.get(actualName)!.collection = {
+            size: dynamicSize,
+            elementInit: false,
+          };
         }
       }
     }
 
     // 3. 处理单目增量/减量更新表达式 (如 i++ 或 --j)
-    const updates = this.findAllNodes(node, ["update_expression", "postfix_expression", "prefix_expression"]);
+    const updates = this.findAllNodes(node, [
+      "update_expression",
+      "postfix_expression",
+      "prefix_expression",
+    ]);
     for (const u of updates) {
       const argNode = u.childForFieldName("argument") || u.namedChildren[0];
-      const op = u.childForFieldName("operator")?.text || u.children.find(c => ["++", "--"].includes(c.type))?.type;
+      const op =
+        u.childForFieldName("operator")?.text ||
+        u.children.find((c) => ["++", "--"].includes(c.type))?.type;
       const actualName = this.extractIdentifierName(argNode);
       if (actualName && op) {
         if (!env.get(actualName)) env.declareVar(actualName, "auto");
         const cur = env.getInterval(actualName);
-        if (op === "++") env.updateInterval(actualName, cur.min + 1, cur.max + 1);
-        else if (op === "--") env.updateInterval(actualName, cur.min - 1, cur.max - 1);
+        if (op === "++")
+          env.updateInterval(actualName, cur.min + 1, cur.max + 1);
+        else if (op === "--")
+          env.updateInterval(actualName, cur.min - 1, cur.max - 1);
       }
     }
 
@@ -348,21 +432,29 @@ export class AnalysisEngine {
    */
   private evaluateExpression(node: SyntaxNode, env: Environment): Interval {
     if (!node) return new Interval(-Infinity, Infinity);
-    if (node.type === "parenthesized_expression") return this.evaluateExpression(node.namedChildren[0], env);
-    
+    if (node.type === "parenthesized_expression")
+      return this.evaluateExpression(node.namedChildren[0], env);
+
     if (node.type === "number_literal") {
       const v = parseInt(node.text);
       return isNaN(v) ? new Interval(-Infinity, Infinity) : new Interval(v, v);
     }
-    
+
     if (node.type === "identifier") return env.getInterval(node.text);
-    
-    const binExpr = node.type === "binary_expression" ? node : this.findNode(node, ["binary_expression"]);
+
+    const binExpr =
+      node.type === "binary_expression"
+        ? node
+        : this.findNode(node, ["binary_expression"]);
     if (binExpr) {
-      const leftNode = binExpr.childForFieldName("left") || binExpr.namedChildren[0];
-      const rightNode = binExpr.childForFieldName("right") || binExpr.namedChildren[1];
-      const op = binExpr.childForFieldName("operator")?.text || binExpr.children.find(c => !c.isNamed)?.text;
-      
+      const leftNode =
+        binExpr.childForFieldName("left") || binExpr.namedChildren[0];
+      const rightNode =
+        binExpr.childForFieldName("right") || binExpr.namedChildren[1];
+      const op =
+        binExpr.childForFieldName("operator")?.text ||
+        binExpr.children.find((c) => !c.isNamed)?.text;
+
       if (leftNode && rightNode) {
         const left = this.evaluateExpression(leftNode, env);
         const right = this.evaluateExpression(rightNode, env);

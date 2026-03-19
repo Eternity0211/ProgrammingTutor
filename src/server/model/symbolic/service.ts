@@ -12,7 +12,7 @@ import { parseCode } from "./parser";
 import { analyzeErrors } from "./static/errors";
 import { analyzeWarnings } from "./static/warnings";
 // 优雅地通过 dynamic 模块的统一门面 (Facade) 接入动态引擎，隔离底层复杂性
-import { analyzeDataFlow } from "./dynamic"; 
+import { analyzeDataFlow } from "./dynamic";
 import { mapIssues } from "./mapper";
 import { SymbolicResult } from "../../../lib/types/symbolic-types";
 
@@ -36,13 +36,13 @@ export async function analyzeCode(sourceCode: string): Promise<SymbolicResult> {
     // 1. [基础设施层] 构建抽象语法树 (AST)
     // 语法树是所有后续静态/动态分析的公共基建，必须在此优先等待其构建完成
     const tree = await parseCode(sourceCode);
-    
+
     // 2. [分析层] 静态规则扫描与动态流推演并行调度
     // 充分利用 Node.js 异步非阻塞特性与 Promise.all，实现分析任务的完美并发，榨干 CPU 效能
     const [rawErrors, rawWarnings, dynamicIssues] = await Promise.all([
-      analyzeErrors(tree),   // 静态层：严重错误模式匹配
+      analyzeErrors(tree), // 静态层：严重错误模式匹配
       analyzeWarnings(tree), // 静态层：代码风格与隐患模式匹配
-      analyzeDataFlow(tree)  // 动态层：数据流分析与符号推演
+      analyzeDataFlow(tree), // 动态层：数据流分析与符号推演
     ]);
 
     // 3. [转换与聚合层] 缺陷数据统一充血映射
@@ -58,27 +58,29 @@ export async function analyzeCode(sourceCode: string): Promise<SymbolicResult> {
       metadata: {
         parseTime: endTime - startTime,
         nodeCount: tree.rootNode.descendantCount,
-        analyzedAt: new Date().toISOString()
-      }
+        analyzedAt: new Date().toISOString(),
+      },
     };
-
   } catch (error) {
     // 顶层灾难性异常兜底拦截 (Catch-all Fallback)
     // 确保即使在极端输入导致内部模块彻底崩溃时，依然能向网关或客户端返回合法、友好的 JSON 响应
     console.error("[Symbolic Service] Analysis failed criticaly:", error);
-    
+
     return {
-      errors: [{
-        ruleId: "SYS_INTERNAL_ERROR",
-        severity: "Critical",
-        display_name: "Analysis Engine Error",
-        message: "An internal error occurred during code analysis. Please try again.",
-        pedagogical_label: "System",
-        knowledge_concept: "none",
-        location: { line: 0, column: 0 },
-        remediation: "Check server logs for details."
-      }],
-      warnings: []
+      errors: [
+        {
+          ruleId: "SYS_INTERNAL_ERROR",
+          severity: "Critical",
+          display_name: "Analysis Engine Error",
+          message:
+            "An internal error occurred during code analysis. Please try again.",
+          pedagogical_label: "System",
+          knowledge_concept: "none",
+          location: { line: 0, column: 0 },
+          remediation: "Check server logs for details.",
+        },
+      ],
+      warnings: [],
     };
   }
 }

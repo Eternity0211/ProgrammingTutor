@@ -14,7 +14,6 @@ import { AnalysisEngine } from "../../../../../src/server/model/symbolic/dynamic
 import { Environment } from "../../../../../src/server/model/symbolic/dynamic/state";
 
 describe("Dynamic Analysis - DFA Engine (Competition Level)", () => {
-
   /**
    * 工具函数：越过封装屏障，提取引擎结束推导后的最终全景内存快照。
    * @param engine - 分析引擎实例
@@ -24,7 +23,10 @@ describe("Dynamic Analysis - DFA Engine (Competition Level)", () => {
     const states = (engine as any).blockInStates as Map<string, Environment>;
     const cfg = (engine as any).cfg;
     const exitState = states.get(cfg.exit.id);
-    if (!exitState) throw new Error("Critical: Exit block state unresolved. DFA might have diverged or stalled.");
+    if (!exitState)
+      throw new Error(
+        "Critical: Exit block state unresolved. DFA might have diverged or stalled.",
+      );
     return exitState;
   }
 
@@ -39,9 +41,9 @@ describe("Dynamic Analysis - DFA Engine (Competition Level)", () => {
     const tree = await parseCode(code);
     const engine = new AnalysisEngine(buildCFG(tree));
     engine.run();
-    
+
     const env = getExitEnvironment(engine);
-    
+
     // 逻辑验证：引擎必须能正确追踪所有计算操作带来的边界偏移
     expect(env.getInterval("c").min).toBe(21);
     expect(env.getInterval("d").max).toBe(16);
@@ -63,13 +65,13 @@ describe("Dynamic Analysis - DFA Engine (Competition Level)", () => {
     const tree = await parseCode(code);
     const engine = new AnalysisEngine(buildCFG(tree));
     engine.run();
-    
+
     const env = getExitEnvironment(engine);
-    
+
     // 验证 1: 变量 y 在两个分支经过不同的显式赋值，汇聚后区间必然是外包络 [1, 2]
     expect(env.getInterval("y").min).toBe(1);
     expect(env.getInterval("y").max).toBe(2);
-    
+
     // 验证 2: 变量 x 虽然在各自分支中受到了裁剪 (<=9 和 >=10)，
     // 但在汇聚点，这两个子集合的并集应该重新还原回无约束状态 ([-Infinity, Infinity])
     expect(env.getInterval("x").min).toBe(-Infinity);
@@ -91,17 +93,17 @@ describe("Dynamic Analysis - DFA Engine (Competition Level)", () => {
     //         - 真分支被裁剪为 i=[0, 4] (重返循环体)
     //         - 假分支被推断为 i=[5, Infinity] (脱离循环流)
     // [结论] 最终能在系统出口存活的只有假分支的状态，因此 i 的下限被完美确定为 5。
-    
+
     const tree = await parseCode(code);
     const engine = new AnalysisEngine(buildCFG(tree));
-    
+
     // 注意：若 Widening 机制失效，引擎将尝试将 i 执行到 5 才停止；
     // 甚至如果条件是 i < 1e9，没有 Widening 的系统会导致 Node.js 服务器直接内存溢出。
-    engine.run(); 
-    
+    engine.run();
+
     const env = getExitEnvironment(engine);
     const iInterval = env.getInterval("i");
-    
+
     // 安全断言：引擎必须能在跳出循环时保留其逆向条件约束
     expect(iInterval.min).toBe(5);
     expect(iInterval.max).toBe(Infinity);
@@ -115,15 +117,14 @@ describe("Dynamic Analysis - DFA Engine (Competition Level)", () => {
     const tree = await parseCode(code);
     const engine = new AnalysisEngine(buildCFG(tree));
     engine.run();
-    
+
     const env = getExitEnvironment(engine);
     const arrState = env.get("arr");
-    
+
     // 验证前置准备：确保引擎为后续挂载的 OOB Checker (越界检查器) 提供准确的数组界限
     expect(arrState?.collection).toBeDefined();
     expect(arrState?.collection?.size.min).toBe(100);
     expect(arrState?.collection?.size.max).toBe(100);
     expect(env.getInterval("n").min).toBe(50);
   });
-
 });

@@ -43,7 +43,12 @@ export function useCodeRunner({
           language: language,
         }),
       });
-      const { output } = await response.json();
+      const data = await response.json();
+      const output = data?.output;
+
+      if (!response.ok || output?.status === "failed") {
+        throw new Error(output?.error || "Failed to run code");
+      }
 
       setTestResults([output]);
       toast.success("Your code ran successfully");

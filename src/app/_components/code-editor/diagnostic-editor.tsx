@@ -10,7 +10,11 @@ interface Props {
   selectedIssueId?: string;
 }
 
-export default function DiagnosticEditor({ code, issues, selectedIssueId }: Props) {
+export default function DiagnosticEditor({
+  code,
+  issues,
+  selectedIssueId,
+}: Props) {
   const editorRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
 
@@ -38,7 +42,7 @@ export default function DiagnosticEditor({ code, issues, selectedIssueId }: Prop
     const newDecorations = issues.map((issue) => {
       // 修复：确保 locationToMonacoRange 返回正确的 monaco.Range
       const range = locationToMonacoRange(issue.location);
-      
+
       // 按 severity 区分高亮样式
       let bgColor = "bg-yellow-500/20"; // 默认 Medium/Low
       if (issue.severity === "Critical" || issue.severity === "High") {
@@ -50,27 +54,34 @@ export default function DiagnosticEditor({ code, issues, selectedIssueId }: Prop
           range.startLineNumber,
           range.startColumn,
           range.endLineNumber || range.startLineNumber,
-          range.endColumn || range.startColumn + 1
+          range.endColumn || range.startColumn + 1,
         ),
         options: {
           isWholeLine: true, // 整行高亮
           className: bgColor,
-          glyphMarginClassName: issue.severity === "Critical" ? "text-red-500" : "text-yellow-500",
-          hoverMessage: { 
-            value: `**${issue.display_name}**\n\n${issue.message}\n\n修复建议：${issue.remediation || "无"}` 
+          glyphMarginClassName:
+            issue.severity === "Critical" ? "text-red-500" : "text-yellow-500",
+          hoverMessage: {
+            value: `**${issue.display_name}**\n\n${issue.message}\n\n修复建议：${issue.remediation || "无"}`,
           },
         },
       };
     });
 
     // 应用装饰器（清除旧的，添加新的）
-    decorationsRef.current = editor.deltaDecorations(decorationsRef.current, newDecorations);
+    decorationsRef.current = editor.deltaDecorations(
+      decorationsRef.current,
+      newDecorations,
+    );
 
     // 滚动到选中的错误
     if (selectedIssueId) {
-      const selected = issues.find(i => i.ruleId === selectedIssueId);
+      const selected = issues.find((i) => i.ruleId === selectedIssueId);
       if (selected) {
-        editor.revealLineInCenter(selected.location.line, monaco.editor.ScrollType.Smooth);
+        editor.revealLineInCenter(
+          selected.location.line,
+          monaco.editor.ScrollType.Smooth,
+        );
       }
     }
 
@@ -91,9 +102,9 @@ export default function DiagnosticEditor({ code, issues, selectedIssueId }: Prop
         language="cpp" // 明确指定 c++ 语言
         theme="vs-dark"
         value={code}
-        options={{ 
-          readOnly: true, 
-          minimap: { enabled: false }, 
+        options={{
+          readOnly: true,
+          minimap: { enabled: false },
           glyphMargin: true, // 显示左侧图标边距
           lineNumbers: "on", // 显示行号
           scrollBeyondLastLine: false,

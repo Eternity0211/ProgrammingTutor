@@ -28,7 +28,6 @@ import {
   Task01Icon,
   Layers01Icon,
   LicenseIcon,
-
   AiBrain01Icon,
   AiProgrammingIcon,
   AiChat01Icon,
