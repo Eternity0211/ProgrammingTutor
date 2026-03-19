@@ -8,6 +8,13 @@ import { getClassIdFromCode } from "./utility-actions";
 import { SubmissionStatus } from "@prisma/client";
 import { GradingTableHeaderResponse } from "@/lib/types/assignment-tyes";
 import { ROUTES } from "@/config/route";
+import { z } from "zod";
+
+const updateDueDateSchema = z.object({
+  assignmentId: z.string().min(1, "Assignment ID is required"),
+  classCode: z.string().min(1, "Class code is required"),
+  dueDate: z.string().datetime().nullable(),
+});
 
 export const createAssignment = async (formData: AssignmentSchema) => {
   const session = await auth();
@@ -159,6 +166,60 @@ export const getAssignments = async (classroomId: string) => {
     return { status: "success", assignments: formattedAssignments };
   } catch (error) {
     return { status: "failed", message: error };
+  }
+};
+
+export const updateAssignmentDueDate = async (formData: {
+  assignmentId: string;
+  classCode: string;
+  dueDate: string | null;
+}) => {
+  const session = await auth();
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  const validation = updateDueDateSchema.safeParse(formData);
+  if (!validation.success) {
+    return {
+      status: "error",
+      message: "Invalid due date payload",
+      errors: validation.error.format(),
+    };
+  }
+
+  const { assignmentId, classCode, dueDate } = validation.data;
+
+  try {
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: assignmentId },
+      include: { classroom: true },
+    });
+
+    if (!assignment) {
+      return { status: "error", message: "Assignment not found" };
+    }
+
+    if (assignment.classroom.facultyId !== session.user.id) {
+      return { status: "error", message: "Forbidden" };
+    }
+
+    await prisma.assignment.update({
+      where: { id: assignmentId },
+      data: {
+        DueDate: dueDate ? new Date(dueDate) : null,
+      },
+    });
+
+    revalidatePath(ROUTES.CLASS_DETAILS(classCode));
+    revalidatePath(`/classes/${classCode}/${assignmentId}`);
+    revalidatePath(`/classes/${classCode}/${assignmentId}/submissions`);
+    revalidatePath(`/classes/${classCode}/${assignmentId}/grading`);
+
+    return { status: "success" };
+  } catch (error) {
+    console.error("Failed to update assignment due date:", error);
+    return { status: "error", message: "Failed to update due date" };
   }
 };
 

@@ -61,7 +61,7 @@ export function FacultyView({
 
   return (
     <div className="container mx-auto max-w-7xl p-6">
-      <AssignmentHeader assignment={assignment} />
+      <AssignmentHeader assignment={assignment} classCode={classCode} />
 
       <FacultyStatsCards
         totalStudents={totalStudents}

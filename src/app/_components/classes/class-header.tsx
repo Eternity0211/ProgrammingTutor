@@ -1,18 +1,25 @@
 "use client";
+import type { CSSProperties } from "react";
 import { UserClassroom } from "@/lib/types/class-types";
 import { getCardBgColor } from "@/lib/utils";
-import { useTheme } from "next-themes";
 interface ClassHeaderProps {
   classData: UserClassroom;
 }
 
 export function ClassHeader({ classData }: ClassHeaderProps) {
-  const { resolvedTheme } = useTheme();
+  const lightBgColor = getCardBgColor("light", classData.id);
+  const darkBgColor = getCardBgColor("dark", classData.id);
+
   return (
     <div className="relative">
       <div
-        className="relative h-44 w-full rounded-2xl"
-        style={{ backgroundColor: getCardBgColor(resolvedTheme, classData.id) }}
+        className="relative h-44 w-full rounded-2xl [background-color:var(--class-bg-light)] dark:[background-color:var(--class-bg-dark)]"
+        style={
+          {
+            "--class-bg-light": lightBgColor,
+            "--class-bg-dark": darkBgColor,
+          } as CSSProperties
+        }
       ></div>
       <div className="relative mx-auto max-w-6xl px-6">
         <div className="absolute -top-16 flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
