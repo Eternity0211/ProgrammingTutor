@@ -17,6 +17,7 @@ import {
 } from "./evaluation-metrics";
 import { createAssignment } from "@/server/actions/assignment-actions";
 import { Question } from "@/lib/types/assignment-tyes";
+import type { AssignmentSchema } from "@/lib/validators/schema";
 import { toast } from "sonner";
 import { Switch } from "../../ui/switch";
 
@@ -46,6 +47,7 @@ export function CreateAssignmentForm({
       title: "",
       description: "",
       language: "Python",
+      cppStandard: "c++17",
       testCases: [
         {
           id: "1",
@@ -70,12 +72,19 @@ export function CreateAssignmentForm({
     e.preventDefault();
     setLoading(true);
     try {
+      const normalizedQuestions: AssignmentSchema["questions"] = questions.map(
+        (question) => ({
+          ...question,
+          cppStandard: question.cppStandard ?? "c++17",
+        }),
+      );
+
       const response = await createAssignment({
         title,
         description,
         dueDate,
         classCode,
-        questions,
+        questions: normalizedQuestions,
         copyPastePrevention,
         fullScreenEnforcement,
         testCaseWeight,

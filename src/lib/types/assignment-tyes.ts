@@ -5,6 +5,7 @@ export interface Question {
   title: string;
   description: string;
   language: string;
+  cppStandard?: "c++11" | "c++17";
   testCases: TestCase[];
 }
 
