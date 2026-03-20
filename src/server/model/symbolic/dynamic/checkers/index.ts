@@ -25,8 +25,14 @@ import { BufferOverflowChecker } from "./buffer_overflow";
 import { FormatStringChecker } from "./format_string";
 import { ParamTaintChecker } from "./param_taint";
 import { CastOverflowChecker } from "./cast_overflow";
-// TODO: [扩充规则 1] 组员在新增规则文件后，请在此处导入。
-// 示例: import { NullDerefChecker } from "./null_deref";
+import { UninitParamChecker } from "./uninit_param";
+import { TaintedIndexChecker } from "./tainted_index";
+import { DoubleFreeChecker } from "./double_free";
+import { TaintedReturnChecker } from "./tainted_return";
+import { TaintedDerefChecker } from "./tainted_deref";
+import { UninitDerefChecker } from "./uninit_deref";
+import { UseAfterFreeParamChecker } from "./use_after_free_param";
+
 
 // ============================================================================
 // 接口定义区 (Interface Definition)
@@ -65,6 +71,11 @@ export const ALL_CHECKERS: Checker[] = [
   FormatStringChecker, // 格式化字符串检查器
   ParamTaintChecker, // 参数污点检查器
   CastOverflowChecker, // 类型转换溢出检查器
-
-  // TODO: [扩充规则 2] 请将上面导入的检查器实例追加到此数组中。
+  UninitParamChecker, // P1: 未初始化参数检查器
+  TaintedIndexChecker, // P1: 污点数组下标检查器
+  DoubleFreeChecker, // P1: 双重释放检查器
+  TaintedReturnChecker, // P1: 污点返回值检查器
+  TaintedDerefChecker, // P2: 污点指针解引用检查器
+  UninitDerefChecker, // P2: 未初始化指针解引用检查器
+  UseAfterFreeParamChecker, // P2: 释放后使用参数检查器
 ];
