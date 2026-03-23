@@ -1,0 +1,26 @@
+id,title,knowledge_points,question_stem,difficulty,source,source_url
+EX001,Binary Search on Sorted Array,binary search;arrays;invariants,Given a sorted integer array and a target value return the index of target or -1 if not found.,EASY,LeetCode 704,https://leetcode.com/problems/binary-search/
+EX002,First Bad Version,binary search;monotonic predicate;api design,You are given an API isBadVersion and need to find the first bad version with minimum calls.,EASY,LeetCode 278,https://leetcode.com/problems/first-bad-version/
+EX003,Search in Rotated Sorted Array,binary search;arrays;case analysis,Find a target in a rotated sorted array in O(log n) time.,MEDIUM,LeetCode 33,https://leetcode.com/problems/search-in-rotated-sorted-array/
+EX004,Find Minimum in Rotated Sorted Array,binary search;arrays;boundary handling,Return the minimum element in a rotated sorted array without duplicates.,MEDIUM,LeetCode 153,https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/
+EX005,Two Sum,hash map;arrays,Return indices of two numbers in an array that add up to target.,EASY,LeetCode 1,https://leetcode.com/problems/two-sum/
+EX006,Group Anagrams,hash map;strings;sorting,Group a list of strings into anagram groups.,MEDIUM,LeetCode 49,https://leetcode.com/problems/group-anagrams/
+EX007,Valid Parentheses,stack;strings,Determine if input parentheses string is valid and properly nested.,EASY,LeetCode 20,https://leetcode.com/problems/valid-parentheses/
+EX008,Min Stack,stack;design,Design a stack that supports push pop top and retrieving minimum in O(1).,MEDIUM,LeetCode 155,https://leetcode.com/problems/min-stack/
+EX009,Merge Two Sorted Lists,linked list;two pointers,Merge two sorted linked lists and return the merged sorted list.,EASY,LeetCode 21,https://leetcode.com/problems/merge-two-sorted-lists/
+EX010,Reverse Linked List,linked list;iteration,Reverse a singly linked list and return the head of reversed list.,EASY,LeetCode 206,https://leetcode.com/problems/reverse-linked-list/
+EX011,Number of Islands,graph;dfs;bfs;matrix,Count the number of islands in a grid of 0 and 1 cells.,MEDIUM,LeetCode 200,https://leetcode.com/problems/number-of-islands/
+EX012,Clone Graph,graph;dfs;bfs;hash map,Given a reference to a node in a connected undirected graph return a deep copy of the graph.,MEDIUM,LeetCode 133,https://leetcode.com/problems/clone-graph/
+EX013,Course Schedule,graph;topological sort;cycle detection,Determine if you can finish all courses given prerequisite pairs.,MEDIUM,LeetCode 207,https://leetcode.com/problems/course-schedule/
+EX014,Dijkstra Shortest Path,graph;priority queue;shortest path,Find shortest paths from source to all nodes in a weighted graph with non negative weights.,HARD,ICPC Archive,https://icpc.global/
+EX015,Longest Increasing Subsequence,dynamic programming;binary search;arrays,Return length of longest strictly increasing subsequence in an integer array.,MEDIUM,LeetCode 300,https://leetcode.com/problems/longest-increasing-subsequence/
+EX016,0 1 Knapsack,dynamic programming;state transition,Given items with weights and values maximize total value under capacity constraint.,MEDIUM,Classic DP,https://cp-algorithms.com/dynamic_programming/knapsack.html
+EX017,Coin Change,dynamic programming;unbounded knapsack,Given coin denominations compute the minimum number of coins for target amount.,MEDIUM,LeetCode 322,https://leetcode.com/problems/coin-change/
+EX018,Sliding Window Maximum,deque;sliding window;arrays,Find max value in every window of size k for a given array.,HARD,LeetCode 239,https://leetcode.com/problems/sliding-window-maximum/
+EX019,Longest Substring Without Repeating Characters,sliding window;strings;hash set,Return length of the longest substring without repeated characters.,MEDIUM,LeetCode 3,https://leetcode.com/problems/longest-substring-without-repeating-characters/
+EX020,Top K Frequent Elements,hash map;heap;frequency counting,Return k most frequent elements from an integer array.,MEDIUM,LeetCode 347,https://leetcode.com/problems/top-k-frequent-elements/
+EX021,Prefix Sum Range Query,prefix sum;arrays,Given an array answer multiple range sum queries efficiently.,EASY,LeetCode 303,https://leetcode.com/problems/range-sum-query-immutable/
+EX022,Difference Array Range Update,difference array;prefix sum;arrays,Apply multiple range increment updates and return final array values.,MEDIUM,OI Wiki,https://oi-wiki.org/basic/prefix-sum/
+EX023,Union Find Connectivity,disjoint set union;graph,Support union and connectivity query operations efficiently.,MEDIUM,LeetCode 547,https://leetcode.com/problems/number-of-provinces/
+EX024,Minimum Spanning Tree,graph;union find;greedy,Construct a minimum spanning tree for weighted undirected graph.,HARD,Kruskal Prim Practice,https://cp-algorithms.com/graph/mst_kruskal.html
+

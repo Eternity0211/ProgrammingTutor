@@ -157,17 +157,20 @@ export const technicalHighlights = [
   {
     icon: Lock,
     title: "Secure Execution",
-    description: "Sandboxed Judge0 containers with resource limits (2s CPU, 128MB memory)",
+    description:
+      "Sandboxed Judge0 containers with resource limits (2s CPU, 128MB memory)",
   },
   {
     icon: Brain,
     title: "Groq AI Integration",
-    description: "Llama 3.3 70B model for intelligent test generation and code evaluation",
+    description:
+      "Llama 3.3 70B model for intelligent test generation and code evaluation",
   },
   {
     icon: Zap,
     title: "Webhook Architecture",
-    description: "Asynchronous processing for scalable code execution and grading",
+    description:
+      "Asynchronous processing for scalable code execution and grading",
   },
   {
     icon: Shield,
@@ -180,7 +183,7 @@ export const technicalHighlights = [
 export const supportedLanguages = [
   "Python",
   "JavaScript",
-  "TypeScript", 
+  "TypeScript",
   "Java",
   "C",
   "C++",
