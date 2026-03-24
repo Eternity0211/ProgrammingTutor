@@ -9,6 +9,7 @@ import { Button } from "@/app/_components/ui/button";
 import Link from "next/link";
 import { ROUTES } from "@/config/route";
 import { UserCircle } from "lucide-react";
+import { Role } from "@prisma/client";
 
 export const metadata: Metadata = {
   title: "Classes | gradeIT",
@@ -28,14 +29,16 @@ export default async function ClassesPage() {
           heading="Classes"
           text="Access and manage your coding classes."
         />
-        <Link href={ROUTES.PROFILE}>
-          <Button variant="outline" className="flex gap-2">
-            <UserCircle className="w-4 h-4" />
-            个人中心
-          </Button>
-        </Link>
+        {role === "STUDENT" && (
+          <Link href={ROUTES.PROFILE}>
+            <Button variant="outline" className="flex gap-2">
+              <UserCircle className="w-4 h-4" />
+              个人中心
+            </Button>
+          </Link>
+        )}
       </div>
-      <ClassGrid classes={classes || []} role={role || "STUDENT"} />
+      <ClassGrid classes={classes || []} role={(role as Role) || "STUDENT"} />
     </div>
   );
 }

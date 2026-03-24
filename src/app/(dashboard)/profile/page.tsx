@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Lightbulb,
   ArrowRight,
+  ArrowLeft,
 } from "lucide-react";
 import { Badge } from "@/app/_components/ui/badge";
 import { getStudentFeedbackHistory } from "@/server/actions/submission-actions";
@@ -80,10 +81,22 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-8 p-6 py-0 pb-10">
-      <PageHeader
-        heading="个人中心"
-        text="查看你的 C++ 学习画像、掌握进度及智能反馈。"
-      />
+      <div className="flex items-center justify-between mt-4">
+      <div>
+      <h1 className="text-2xl font-bold">个人中心</h1>
+      <p className="text-muted-foreground mt-1">
+        查看你的 C++ 学习画像、掌握进度及智能反馈。
+      </p>
+    </div>
+
+    {/* 右侧：返回教室按钮 */}
+    <Link href="/classes">
+      <Button variant="outline" className="gap-2">
+        <ArrowLeft className="w-4 h-4" />
+        返回教室
+      </Button>
+    </Link>
+  </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 左侧：可视化画像 */}
