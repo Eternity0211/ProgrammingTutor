@@ -33,7 +33,7 @@ describe("Dynamic Analysis Checker - Buffer Overflow", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_BUFFER_OVERFLOW_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta?.bufferName).toBe("dst");
+    expect(definite[0]!.meta?.bufferName).toBe("dst");
   });
 
   it("3. [May-Issue] memcpy 写入长度未知时应报 Suspected", async () => {

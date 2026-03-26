@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { signIn } from "next-auth/react";
+import { ROUTES } from "@/config/route";
 
 export default function AuthWrapper() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -21,6 +22,7 @@ export default function AuthWrapper() {
                   try {
                     setIsGoogleLoading(true);
                     await signIn("google", {
+                      callbackUrl: ROUTES.CLASSES,
                       prompt: "select_account",
                     });
                   } catch (error) {

@@ -34,7 +34,7 @@ describe("Dynamic Analysis Checker - Parameter Taint", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_PARAM_TAINT_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta?.paramName).toBe("a");
+    expect(definite[0]!.meta?.paramName).toBe("a");
   });
 
   it("3. [May-Issue] 分支中可能被污染，传参应报 Suspected", async () => {

@@ -125,7 +125,6 @@ function extractIdentifierName(node: SyntaxNode | null): string | null {
 
   const text = node.text.trim();
   return /^[a-zA-Z_]\w*$/.test(text) ? text : null;
-
 }
 
 function trackPointerState(node: SyntaxNode, env: Environment): void {
@@ -267,7 +266,10 @@ function getPointerState(name: string, env: Environment): number {
   if (!state) return PTR_MAYBE;
 
   if (state.init === InitState.UNINITIALIZED) return PTR_UNINIT;
-  if (state.init === InitState.NULL_PTR || state.interval.min === 0 && state.interval.max === 0) {
+  if (
+    state.init === InitState.NULL_PTR ||
+    (state.interval.min === 0 && state.interval.max === 0)
+  ) {
     return PTR_NULL;
   }
   if (state.init === InitState.TAINTED) return PTR_MAYBE;
@@ -314,13 +316,19 @@ function isConditionalContext(node: SyntaxNode): boolean {
   return false;
 }
 
-function isGuardedByNonNullCheck(pointerName: string, node: SyntaxNode): boolean {
+function isGuardedByNonNullCheck(
+  pointerName: string,
+  node: SyntaxNode,
+): boolean {
   let current: SyntaxNode | null = node.parent;
   while (current) {
     if (current.type === "if_statement" || current.type === "while_statement") {
-      const condition = current.childForFieldName("condition") || current.namedChildren[0];
+      const condition =
+        current.childForFieldName("condition") || current.namedChildren[0];
       const consequence =
-        current.childForFieldName("consequence") || current.namedChildren[1] || null;
+        current.childForFieldName("consequence") ||
+        current.namedChildren[1] ||
+        null;
 
       if (
         condition &&
@@ -347,7 +355,10 @@ function isInside(node: SyntaxNode, ancestor: SyntaxNode): boolean {
   return false;
 }
 
-function isPositiveNonNullGuard(condition: SyntaxNode, pointerName: string): boolean {
+function isPositiveNonNullGuard(
+  condition: SyntaxNode,
+  pointerName: string,
+): boolean {
   let text = condition.text.replace(/\s+/g, "");
   if (condition.type === "condition_clause") {
     text = text.replace(/^\(/, "").replace(/\)$/, "");
@@ -371,5 +382,4 @@ function stateLabel(state: number): string {
   if (state === PTR_NULL) return "NULL_PTR";
   if (state === PTR_UNINIT) return "UNINITIALIZED";
   return "MAYBE_UNINIT";
-  return null;
 }

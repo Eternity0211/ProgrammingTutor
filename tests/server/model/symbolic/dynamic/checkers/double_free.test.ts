@@ -48,7 +48,7 @@ describe("Dynamic Analysis Checker - Double Free", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_DOUBLE_FREE_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta.pointerName).toBe("p");
+    expect(definite[0]!.meta?.pointerName).toBe("p");
   });
 
   it("4. [May-Issue] 条件分支中可能两次释放应报 Suspected", async () => {
@@ -89,9 +89,7 @@ describe("Dynamic Analysis Checker - Double Free", () => {
       delete p;
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter(
-      (i) => i.ruleId.includes("DOUBLE_FREE"),
-    );
+    const suspected = issues.filter((i) => i.ruleId.includes("DOUBLE_FREE"));
     expect(suspected.length).toBeGreaterThan(0);
   });
 });

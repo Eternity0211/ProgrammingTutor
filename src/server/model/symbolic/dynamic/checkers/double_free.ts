@@ -93,7 +93,11 @@ function trackFreeState(node: SyntaxNode, env: Environment): void {
           if (!argName) continue;
           const hasTrack = !!env.get(freeVar(argName));
           if (!hasTrack) continue;
-          setFreeState(argName, getFreeState(argName, env).union(new Interval(1, 1)), env);
+          setFreeState(
+            argName,
+            getFreeState(argName, env).union(new Interval(1, 1)),
+            env,
+          );
         }
       }
     }
@@ -236,7 +240,10 @@ function isAllocationExpression(node: SyntaxNode): boolean {
     const fnName = fnNode?.text?.trim() || "";
     return fnName === "malloc" || fnName === "calloc" || fnName === "realloc";
   }
-  if (node.type === "cast_expression" || node.type === "parenthesized_expression") {
+  if (
+    node.type === "cast_expression" ||
+    node.type === "parenthesized_expression"
+  ) {
     const inner =
       node.childForFieldName("value") ||
       node.childForFieldName("argument") ||

@@ -60,9 +60,7 @@ describe("Dynamic Analysis Checker - Tainted Return", () => {
       int result = x + 10;
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter(
-      (i) => i.ruleId.includes("TAINTED_RETURN"),
-    );
+    const suspected = issues.filter((i) => i.ruleId.includes("TAINTED_RETURN"));
     expect(suspected.length).toBeGreaterThan(0);
   });
 
@@ -75,9 +73,7 @@ describe("Dynamic Analysis Checker - Tainted Return", () => {
       arr[idx_copy] = 1;
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter(
-      (i) => i.ruleId.includes("TAINTED_RETURN"),
-    );
+    const suspected = issues.filter((i) => i.ruleId.includes("TAINTED_RETURN"));
     expect(suspected.length).toBeGreaterThan(0);
   });
 

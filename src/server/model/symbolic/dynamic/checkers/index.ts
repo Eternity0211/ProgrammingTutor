@@ -33,7 +33,6 @@ import { TaintedDerefChecker } from "./tainted_deref";
 import { UninitDerefChecker } from "./uninit_deref";
 import { UseAfterFreeParamChecker } from "./use_after_free_param";
 
-
 // ============================================================================
 // 接口定义区 (Interface Definition)
 // ============================================================================

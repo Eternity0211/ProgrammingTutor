@@ -31,7 +31,7 @@ describe("Dynamic Analysis Checker - Null Dereference", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_NULL_DEREF_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta.pointerInterval).toBe("[0, 0]");
+    expect(definite[0]!.meta?.pointerInterval).toBe("[0, 0]");
   });
 
   it("3. [May-Issue] 未初始化指针或未知地址 => Suspected", async () => {
@@ -44,7 +44,7 @@ describe("Dynamic Analysis Checker - Null Dereference", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_NULL_DEREF_SUSPECTED",
     );
     expect(suspect.length).toBeGreaterThan(0);
-    expect(suspect[0].meta.pointerInterval).toContain("Infinity");
+    expect(suspect[0]!.meta?.pointerInterval).toContain("Infinity");
   });
 
   it("4. [May-Issue] 箭头访问也应被检测", async () => {

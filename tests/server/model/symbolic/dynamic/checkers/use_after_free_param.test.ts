@@ -36,7 +36,7 @@ describe("Dynamic Analysis Checker - Use-After-Free Parameter", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_PARAM_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta.paramName).toBe("p");
+    expect(definite[0]!.meta?.paramName).toBe("p");
   });
 
   it("3. [True Negative] 释放前传递应放行", async () => {
@@ -96,6 +96,6 @@ describe("Dynamic Analysis Checker - Use-After-Free Parameter", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_PARAM_DEFINITE",
     );
     expect(uaf.length).toBeGreaterThan(0);
-    expect(uaf[0].meta.paramName).toBe("p1");
+    expect(uaf[0]!.meta?.paramName).toBe("p1");
   });
 });

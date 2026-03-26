@@ -4,6 +4,76 @@ import Google from "next-auth/providers/google";
 import { prisma } from "./prisma";
 import { Role } from "@prisma/client";
 import crypto from "crypto";
+import { ROUTES } from "@/config/route";
+
+let fetchRetryPatched = false;
+
+const FETCH_RETRYABLE_ERROR_CODES = new Set([
+  "ECONNRESET",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "ECONNREFUSED",
+  "EAI_AGAIN",
+]);
+const FETCH_RETRY_MAX_ATTEMPTS = 4;
+const FETCH_BACKOFF_BASE_MS = 500;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const shouldRetryFetchError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const errnoError = error as NodeJS.ErrnoException;
+  if (errnoError.code && FETCH_RETRYABLE_ERROR_CODES.has(errnoError.code)) {
+    return true;
+  }
+
+  const lowerMessage = error.message?.toLowerCase() ?? "";
+  return (
+    lowerMessage.includes("connection reset") ||
+    lowerMessage.includes("timed out")
+  );
+};
+
+const patchGlobalFetchWithRetry = () => {
+  if (fetchRetryPatched) {
+    return;
+  }
+
+  const baseFetch = globalThis.fetch?.bind(globalThis);
+  if (!baseFetch) {
+    return;
+  }
+
+  globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    let lastError: unknown;
+
+    for (let attempt = 0; attempt <= FETCH_RETRY_MAX_ATTEMPTS; attempt++) {
+      try {
+        return await baseFetch(input, init);
+      } catch (error) {
+        lastError = error;
+
+        if (
+          attempt === FETCH_RETRY_MAX_ATTEMPTS ||
+          !shouldRetryFetchError(error)
+        ) {
+          throw error;
+        }
+
+        await wait(FETCH_BACKOFF_BASE_MS * Math.pow(2, attempt));
+      }
+    }
+
+    throw lastError;
+  };
+
+  fetchRetryPatched = true;
+};
+
+patchGlobalFetchWithRetry();
 
 const isPlaceholderValue = (value?: string) => {
   if (!value) return true;
@@ -72,6 +142,33 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   // 把 secret 传入 NextAuth 配置中
   secret: AUTH_SECRET,
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      const classesUrl = `${baseUrl}${ROUTES.CLASSES}`;
+
+      if (!url) {
+        return classesUrl;
+      }
+
+      if (url.startsWith("/")) {
+        const normalizedPath = url.startsWith(ROUTES.CLASSES)
+          ? url
+          : ROUTES.CLASSES;
+        return `${baseUrl}${normalizedPath}`;
+      }
+
+      try {
+        const target = new URL(url);
+        if (target.origin === baseUrl) {
+          return target.pathname.startsWith(ROUTES.CLASSES)
+            ? target.toString()
+            : classesUrl;
+        }
+      } catch {
+        // Ignore malformed redirect URLs and fall back to classes.
+      }
+
+      return classesUrl;
+    },
     async jwt({ token, user }) {
       if (user && user.id) {
         token.id = user.id;

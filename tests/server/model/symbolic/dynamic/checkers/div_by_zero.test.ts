@@ -36,7 +36,7 @@ describe("Dynamic Analysis Checker - Division By Zero", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_DIV_ZERO_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta.divisorInterval).toBe("[0, 0]");
+    expect(definite[0]!.meta?.divisorInterval).toBe("[0, 0]");
   });
 
   it("3. [May-Issue] 未初始化或未知变量作为除数时应发出保守预警", async () => {
@@ -51,6 +51,6 @@ describe("Dynamic Analysis Checker - Division By Zero", () => {
     );
     expect(suspect.length).toBeGreaterThan(0);
     // 未初始化变量的区间通常为 [-Infinity, Infinity]
-    expect(suspect[0].meta.divisorInterval).toContain("Infinity");
+    expect(suspect[0]!.meta?.divisorInterval).toContain("Infinity");
   });
 });

@@ -35,7 +35,7 @@ describe("Dynamic Analysis Checker - Uninitialized Parameter", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_UNINIT_PARAM_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta.paramName).toBe("a");
+    expect(definite[0]!.meta?.paramName).toBe("a");
   });
 
   it("3. [Must-Issue] 多个未初始化参数应逐一报告", async () => {

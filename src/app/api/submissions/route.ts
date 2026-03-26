@@ -6,9 +6,7 @@ import {
   CodeEvaluationStatus,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { LANGUAGE_ID_MAP } from "@/config/constants";
-// import { pollJudge0Submissions } from "@/server/actions/submission-actions";
-import { WebhookPayload } from "@/lib/types/config-types";
+import { evaluateSubmissionInsidePlatform } from "@/server/model/pipeline/submission-evaluation-service";
 
 export async function POST(req: NextRequest) {
   try {
@@ -130,117 +128,18 @@ export async function POST(req: NextRequest) {
       })),
     });
 
-    const judgeHost = process.env.JUDGE0_API_HOST;
-    const judgeKey = process.env.JUDGE0_API_KEY;
-    if (!judgeHost) {
-      throw new Error("Judge0 is not configured. Please set JUDGE0_API_HOST.");
-    }
-
-    const isRapidApiHost = judgeHost.includes("rapidapi.com");
-    if (isRapidApiHost && !judgeKey) {
-      throw new Error(
-        "Judge0 RapidAPI key is missing. Please set JUDGE0_API_KEY.",
-      );
-    }
-
-    const requestHeaders: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (isRapidApiHost) {
-      requestHeaders["x-rapidapi-key"] = judgeKey as string;
-      requestHeaders["x-rapidapi-host"] = judgeHost;
-    }
-
-    const testCasePromises = question.testCases.map(async (testCase) => {
-      const webhookPayload: WebhookPayload = {
-        codeSubmissionId: codeSubmission.id,
-        testCaseId: testCase.id,
-        questionId,
-      };
-
-      const encodedPayload = Buffer.from(
-        JSON.stringify(webhookPayload),
-      ).toString("base64");
-      const webhookUrl = `${process.env.APP_URL}/api/webhook/judge0?payload=${encodedPayload}`;
-
-      const response = await fetch(
-        `https://${judgeHost}/submissions?base64_encoded=true&fields=*&callback_url=${encodeURIComponent(
-          webhookUrl,
-        )}`,
-        {
-          method: "POST",
-          headers: requestHeaders,
-          body: JSON.stringify({
-            language_id:
-              LANGUAGE_ID_MAP[language as keyof typeof LANGUAGE_ID_MAP],
-            source_code: Buffer.from(code).toString("base64"),
-            stdin: Buffer.from(testCase.input).toString("base64"),
-            expected_output: Buffer.from(testCase.expectedOutput).toString(
-              "base64",
-            ),
-            cpu_time_limit: 2, // 2 seconds
-            memory_limit: 128000, // 128MB
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-
-        if (
-          response.status === 403 &&
-          /not subscribed to this api/i.test(errorText)
-        ) {
-          throw new Error(
-            "Judge0 RapidAPI subscription is missing for this API key. Subscribe to Judge0 CE on RapidAPI or switch JUDGE0_API_HOST to your self-hosted Judge0 endpoint.",
-          );
-        }
-
-        throw new Error(
-          `Judge0 submit failed for test case ${testCase.id} (${response.status}): ${errorText || "No response body"}`,
-        );
-      }
-
-      const judgeData = await response.json();
-      if (!judgeData.token) {
-        throw new Error(
-          `Failed to submit test case ${testCase.id}: ${
-            judgeData.error ||
-            judgeData.message ||
-            "Judge0 did not return token"
-          }`,
-        );
-      }
-
-      await prisma.testCaseResult.update({
-        where: {
-          codeSubmissionId_testCaseId: {
-            codeSubmissionId: codeSubmission.id,
-            testCaseId: testCase.id,
-          },
-        },
-        data: {
-          judge0Token: judgeData.token,
-        },
-      });
-
-      return judgeData.token;
-    });
-
     try {
-      await Promise.all(testCasePromises);
-      //await pollJudge0Submissions(codeSubmission.id);
+      await evaluateSubmissionInsidePlatform(codeSubmission.id);
 
       return NextResponse.json({
         submissionId: codeSubmission.id,
-        message: "Submission created and test cases queued",
+        message: "Submission created and evaluated by internal pipeline",
       });
     } catch (error) {
       await prisma.codeSubmission.update({
         where: { id: codeSubmission.id },
         data: {
-          codeEvaluationStatus:
-            CodeEvaluationStatus.TEST_CASES_EVALUATION_FAILED,
+          codeEvaluationStatus: CodeEvaluationStatus.LLM_EVALUATION_FAILED,
         },
       });
 
