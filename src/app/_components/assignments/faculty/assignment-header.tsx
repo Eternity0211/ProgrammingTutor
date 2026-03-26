@@ -13,7 +13,11 @@ import {
 } from "@/app/_components/ui/dialog";
 import { Input } from "@/app/_components/ui/input";
 import { Label } from "@/app/_components/ui/label";
-import { updateAssignmentDueDate } from "@/server/actions/assignment-actions";
+import {
+  deleteAssignment,
+  updateAssignmentDueDate,
+} from "@/server/actions/assignment-actions";
+import { ROUTES } from "@/config/route";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { CalendarClock } from "lucide-react";
@@ -83,6 +87,8 @@ export function AssignmentHeader({
   const [dueDate, setDueDate] = useState<string>(() =>
     formatDateForInput(assignment.dueDate),
   );
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const formattedDueDate = formatDueDateStable(assignment.dueDate);
 
@@ -111,6 +117,30 @@ export function AssignmentHeader({
     }
   };
 
+  const handleDeleteAssignment = async () => {
+    try {
+      setIsDeleting(true);
+      const result = await deleteAssignment({
+        assignmentId: assignment.id,
+        classCode,
+      });
+
+      if (result.status === "success") {
+        toast.success("作业已删除");
+        setIsDeleteDialogOpen(false);
+        router.push(ROUTES.CLASS_DETAILS(classCode));
+        return;
+      }
+
+      toast.warning(result.message || "删除作业失败");
+    } catch (error) {
+      console.error("Failed to delete assignment:", error);
+      toast.error("删除作业时发生错误");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="mb-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -121,64 +151,109 @@ export function AssignmentHeader({
           <p className="mt-1 text-muted-foreground">Due {formattedDueDate}</p>
         </div>
 
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (open) {
-              setDueDate(formatDateForInput(assignment.dueDate));
-            }
-          }}
-        >
-          <Button
-            type="button"
-            variant="outline"
-            className="border-border"
-            onClick={() => setIsDialogOpen(true)}
+        <div className="flex flex-wrap gap-2">
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (open) {
+                setDueDate(formatDateForInput(assignment.dueDate));
+              }
+            }}
           >
-            <CalendarClock className="h-4 w-4" />
-            Change DDL
-          </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="border-border"
+              onClick={() => setIsDialogOpen(true)}
+            >
+              <CalendarClock className="h-4 w-4" />
+              Change DDL
+            </Button>
 
-          <DialogContent className="sm:max-w-[460px]">
-            <DialogHeader>
-              <DialogTitle>修改作业截止时间</DialogTitle>
-              <DialogDescription>
-                可设置新的截至日期，或清空后保存以移除截止时间。
-              </DialogDescription>
-            </DialogHeader>
+            <DialogContent className="sm:max-w-[460px]">
+              <DialogHeader>
+                <DialogTitle>修改作业截止时间</DialogTitle>
+                <DialogDescription>
+                  可设置新的截至日期，或清空后保存以移除截止时间。
+                </DialogDescription>
+              </DialogHeader>
 
-            <div className="grid gap-2 py-2">
-              <Label htmlFor="assignment-due-date">截止日期</Label>
-              <Input
-                id="assignment-due-date"
-                type="datetime-local"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="border-border"
-              />
-            </div>
+              <div className="grid gap-2 py-2">
+                <Label htmlFor="assignment-due-date">截止日期</Label>
+                <Input
+                  id="assignment-due-date"
+                  type="datetime-local"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className="border-border"
+                />
+              </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-                className="border-border"
-              >
-                取消
-              </Button>
-              <Button
-                type="button"
-                disabled={loading}
-                onClick={handleUpdateDueDate}
-                className="bg-primary-button text-white hover:bg-primary-button-hover disabled:opacity-50"
-              >
-                {loading ? "保存中..." : "保存"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="border-border"
+                >
+                  取消
+                </Button>
+                <Button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleUpdateDueDate}
+                  className="bg-primary-button text-white hover:bg-primary-button-hover disabled:opacity-50"
+                >
+                  {loading ? "保存中..." : "保存"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={(open) => setIsDeleteDialogOpen(open)}
+          >
+            <Button
+              type="button"
+              variant="destructive"
+              className="border-border"
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              Delete Assignment
+            </Button>
+
+            <DialogContent className="sm:max-w-[460px]">
+              <DialogHeader>
+                <DialogTitle>删除作业</DialogTitle>
+                <DialogDescription>
+                  所有学生提交、分数等数据都会被删掉，此操作不可撤销。
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                  className="border-border"
+                >
+                  取消
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDeleteAssignment}
+                  disabled={isDeleting}
+                  className="text-white"
+                >
+                  {isDeleting ? "删除中..." : "确认删除"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </div>
   );

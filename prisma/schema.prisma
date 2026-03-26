@@ -22,7 +22,6 @@ model User {
   submissions       Submission[]
   accounts          Account[]
   enrolledClasses   Classroom[]        @relation("StudentClasses")
-  password          String?
 
   @@map("users")
 }
@@ -160,6 +159,29 @@ model CodeSubmission {
   submission           Submission               @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   metricResults        SubmissionMetricResult[]
   testCaseResults      TestCaseResult[]
+  evaluationRuns       EvaluationRun[]
+}
+
+model EvaluationRun {
+  id                 String         @id @default(uuid())
+  codeSubmissionId   String
+  submissionId       String
+  questionId         String
+  language           String
+  branch             String
+  symbolicErrorCount Int            @default(0)
+  symbolicWarningCount Int          @default(0)
+  score              Float          @default(0)
+  metricScore        Float          @default(0)
+  hasNavigation      Boolean        @default(false)
+  hasEmotion         Boolean        @default(false)
+  payload            Json?
+  createdAt          DateTime       @default(now())
+  codeSubmission     CodeSubmission @relation(fields: [codeSubmissionId], references: [id], onDelete: Cascade)
+
+  @@index([codeSubmissionId])
+  @@index([submissionId])
+  @@index([questionId])
 }
 
 model SubmissionMetricResult {

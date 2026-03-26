@@ -34,7 +34,7 @@ describe("Dynamic Analysis Checker - Uninitialized Variable", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_UNINITIALIZED_VAR_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta.varName).toBe("z");
+    expect(definite[0]!.meta?.varName).toBe("z");
   });
 
   it("3. [True Negative] 声明且初始化后使用应放行，即使值为 0", async () => {

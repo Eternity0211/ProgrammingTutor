@@ -25,6 +25,7 @@ services:
       - AI_GROQ_API_KEY=${AI_GROQ_API_KEY:-}
     depends_on:
       - db
+    command: sh -c "npx prisma migrate deploy && npm run dev"
 volumes:
   gradeit_node_modules:
   db_data:

@@ -85,7 +85,8 @@ function trackTaintForNode(node: SyntaxNode, env: Environment): void {
       if (child.type === "init_declarator") {
         const declNode =
           child.childForFieldName("declarator") || child.namedChildren[0];
-        const valueNode = child.childForFieldName("value") || child.namedChildren[1];
+        const valueNode =
+          child.childForFieldName("value") || child.namedChildren[1];
         const name = extractIdentifierName(declNode);
         if (!name) continue;
 
@@ -116,7 +117,8 @@ function trackTaintForNode(node: SyntaxNode, env: Environment): void {
     const hasTrack = !!env.get(taintVar(lhsName));
     const rhsName = extractIdentifierName(rhs);
     const rhsHasTrack = rhsName ? !!env.get(taintVar(rhsName)) : false;
-    const rhsIsSource = rhs.type === "call_expression" && isSourceFunctionCall(rhs);
+    const rhsIsSource =
+      rhs.type === "call_expression" && isSourceFunctionCall(rhs);
     if (!hasTrack && !rhsHasTrack && !rhsIsSource) return;
 
     let rhsTaint = evalRhsTaint(rhs, env);
@@ -169,9 +171,7 @@ function isArraySubscript(node: SyntaxNode): boolean {
   return node.type === "subscript_expression";
 }
 
-function getArrayFromSubscript(
-  node: SyntaxNode,
-): SyntaxNode | null {
+function getArrayFromSubscript(node: SyntaxNode): SyntaxNode | null {
   // subscript_expression: array [index]
   return (
     node.childForFieldName("argument") ||

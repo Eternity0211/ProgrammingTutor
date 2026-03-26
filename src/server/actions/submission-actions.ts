@@ -12,8 +12,6 @@ import {
 } from "./grading-actions";
 import { cookies } from "next/headers";
 import { judgeResult } from "@/lib/types/code-types";
-import { EmotionAnalysisResult } from "../model/neural/emotionAgent";
-import { LearningNavigationResult } from "../model/neural/navigationAgent";
 
 export async function processJudgeResultWebhook(
   testCaseId: string,
@@ -256,13 +254,6 @@ export async function getSubmissionsById(codeSubmissionId: string) {
   const cookieStore = await cookies();
   const studentId = cookieStore.get("student")?.value || session.user.id;
   try {
-    const whereCondition = {
-      id: codeSubmissionId,
-      ...(session.user.role === "STUDENT" && {
-        submission: { studentId: studentId }, // 学生仅能查自己的提交
-      }),
-    };
-
     const codeSubmission = await prisma.codeSubmission.findUnique({
       where: {
         id: codeSubmissionId,
@@ -288,6 +279,15 @@ export async function getSubmissionsById(codeSubmissionId: string) {
       };
     }
 
+    let parsedFeedback: any = null;
+    try {
+      parsedFeedback = codeSubmission.feedback
+        ? JSON.parse(codeSubmission.feedback)
+        : null;
+    } catch {
+      parsedFeedback = null;
+    }
+
     const formattedSubmission = {
       id: codeSubmission.id,
       studentId: codeSubmission.submission.studentId,
@@ -303,9 +303,12 @@ export async function getSubmissionsById(codeSubmissionId: string) {
         session.user.role === "FACULTY"
           ? codeSubmission.codeEvaluationStatus
           : undefined,
-      aiFeedback: codeSubmission.submission.aiFeedback,
-      emotion: codeSubmission.submission.emotion,
-      recommendedQuestions: codeSubmission.submission.recommendedQuestions,
+      aiFeedback: parsedFeedback?.aiFeedback || null,
+      emotion: parsedFeedback?.emotion || null,
+      recommendedQuestions:
+        parsedFeedback?.navigation?.learning_navigation
+          ?.recommended_exercises || [],
+      symbolicOutput: parsedFeedback?.symbolic || null,
     };
 
     return { status: "success", submission: formattedSubmission };
@@ -442,24 +445,23 @@ export async function getStudentFeedbackHistory() {
   });
 
   return submissions.map((sub) => {
-    // 1. 给解析后的变量一个明确的联合类型，或者初始化为 null
     let parsedFeedback: any = null;
 
     try {
       if (sub.feedback) {
-        // 尝试解析 JSON
         parsedFeedback = JSON.parse(sub.feedback);
       }
-    } catch (e) {
-      // 【关键修改】：如果解析失败，说明 sub.feedback 是纯文本
-      // 我们手动模拟一个 JSON 结构，确保下方可选链能够访问到数据
-      console.warn("发现非 JSON 格式反馈，已转为兼容模式:", sub.id);
+    } catch {
       parsedFeedback = {
-        emotion_analysis: {
-          supportive_guidance: sub.feedback, // 将纯文本直接作为指导语显示
+        emotion: {
+          emotion_analysis: {
+            supportive_guidance: sub.feedback,
+          },
         },
-        learning_navigation: {
-          learning_path: [{ topic: "基础逻辑修正" }], // 给一个默认建议
+        navigation: {
+          learning_navigation: {
+            learning_path: [{ topic: "基础逻辑修正" }],
+          },
         },
       };
     }
@@ -471,16 +473,15 @@ export async function getStudentFeedbackHistory() {
       date: sub.createdAt.toLocaleDateString(),
       assignment: sub.submission.assignment.title,
       score: sub.score || 0,
-
-      // 2. 使用可选链（Optional Chaining）安全访问
-      // 这里的报错就会消失，因为 parsedFeedback 现在知道自己拥有这些属性了
       emotionFeedback:
-        parsedFeedback?.emotion_analysis?.supportive_guidance || "暂无情绪反馈",
+        parsedFeedback?.emotion?.emotion_analysis?.supportive_guidance ||
+        "暂无情绪反馈",
       navigatorTips:
-        parsedFeedback?.learning_navigation?.learning_path?.[0]?.topic ||
-        "暂无学习建议",
+        parsedFeedback?.navigation?.learning_navigation?.learning_path?.[0]
+          ?.topic || "暂无学习建议",
       recommendations:
-        parsedFeedback?.learning_navigation?.recommended_exercises || [],
+        parsedFeedback?.navigation?.learning_navigation
+          ?.recommended_exercises || [],
     };
   });
 }

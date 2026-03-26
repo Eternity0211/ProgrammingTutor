@@ -36,7 +36,7 @@ export const UseAfterFreeParamChecker: Checker = {
     if (shouldSkipFunction(fnName)) return null;
 
     const args = argsNode.namedChildren.filter(
-      (c) => c.type !== "," && c.type !== ";"
+      (c) => c.type !== "," && c.type !== ";",
     );
     const issues: RawIssue[] = [];
 
@@ -45,7 +45,7 @@ export const UseAfterFreeParamChecker: Checker = {
       if (!argName) continue;
 
       const freeState = getFreeState(argName, env);
-      
+
       // 检查是否为已释放指针
       const isDefiniteFreed = freeState.min === 1 && freeState.max === 1;
       const isSuspectedFreed =
@@ -154,7 +154,7 @@ function trackFreeState(node: SyntaxNode, env: Environment): void {
   if (node.type === "call_expression") {
     const fnNode = node.childForFieldName("function") || node.namedChildren[0];
     const fnName = fnNode?.text?.trim() || "";
-    
+
     if (fnName === "free") {
       const argsNode =
         node.childForFieldName("arguments") ||
@@ -166,7 +166,11 @@ function trackFreeState(node: SyntaxNode, env: Environment): void {
           if (varName) {
             const freed = new Interval(1, 1);
             if (isConditionalContext(node)) {
-              setFreeState(varName, getFreeState(varName, env).union(freed), env);
+              setFreeState(
+                varName,
+                getFreeState(varName, env).union(freed),
+                env,
+              );
             } else {
               setFreeState(varName, freed, env);
             }
@@ -253,7 +257,10 @@ function isAllocationExpression(node: SyntaxNode): boolean {
     const fnName = fnNode?.text?.trim() || "";
     return fnName === "malloc" || fnName === "calloc" || fnName === "realloc";
   }
-  if (node.type === "cast_expression" || node.type === "parenthesized_expression") {
+  if (
+    node.type === "cast_expression" ||
+    node.type === "parenthesized_expression"
+  ) {
     const inner =
       node.childForFieldName("value") ||
       node.childForFieldName("argument") ||

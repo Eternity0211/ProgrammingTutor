@@ -16,6 +16,11 @@ const updateDueDateSchema = z.object({
   dueDate: z.string().datetime().nullable(),
 });
 
+const deleteAssignmentSchema = z.object({
+  assignmentId: z.string().min(1, "Assignment ID is required"),
+  classCode: z.string().min(1, "Class code is required"),
+});
+
 export const createAssignment = async (formData: AssignmentSchema) => {
   const session = await auth();
   if (!session?.user) {
@@ -220,6 +225,55 @@ export const updateAssignmentDueDate = async (formData: {
   } catch (error) {
     console.error("Failed to update assignment due date:", error);
     return { status: "error", message: "Failed to update due date" };
+  }
+};
+
+export const deleteAssignment = async (formData: {
+  assignmentId: string;
+  classCode: string;
+}) => {
+  const session = await auth();
+  if (!session?.user) {
+    throw new Error("Unauthorized");
+  }
+
+  const validation = deleteAssignmentSchema.safeParse(formData);
+  if (!validation.success) {
+    return {
+      status: "error",
+      message: "Invalid delete payload",
+      errors: validation.error.format(),
+    };
+  }
+
+  const { assignmentId, classCode } = validation.data;
+
+  try {
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: assignmentId },
+      include: { classroom: true },
+    });
+
+    if (!assignment) {
+      return { status: "error", message: "Assignment not found" };
+    }
+
+    if (assignment.classroom.facultyId !== session.user.id) {
+      return { status: "error", message: "Forbidden" };
+    }
+
+    await prisma.assignment.delete({
+      where: { id: assignmentId },
+    });
+
+    revalidatePath(ROUTES.CLASS_DETAILS(classCode));
+    revalidatePath(ROUTES.ASSIGNMENT_DETAILS(assignmentId));
+    revalidatePath(ROUTES.ASSIGNMENT_GRADING(assignmentId));
+
+    return { status: "success" };
+  } catch (error) {
+    console.error("Failed to delete assignment:", error);
+    return { status: "error", message: "Failed to delete assignment" };
   }
 };
 

@@ -71,7 +71,7 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
     expect(definiteIssues.length).toBeGreaterThan(0);
 
     // 【断言】：验证模板插值的上下文元数据 (Meta) 是否完美生成，以便前端渲染精准的错误提示
-    expect(definiteIssues[0].meta).toMatchObject({
+    expect(definiteIssues[0]!.meta).toMatchObject({
       arrayName: "scores",
       maxValidIndex: 4,
       indexInterval: "[5, 5]",
@@ -93,7 +93,7 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE",
     );
     expect(definiteIssues.length).toBeGreaterThan(0);
-    expect(definiteIssues[0].meta?.indexInterval).toBe("[-2, -2]");
+    expect(definiteIssues[0]!.meta?.indexInterval).toBe("[-2, -2]");
   });
 
   /**
@@ -113,7 +113,7 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
       (issue) => issue.ruleId === "CPP_DYNAMIC_ARRAY_OOB_DEFINITE",
     );
     expect(definiteIssues.length).toBe(1);
-    expect(definiteIssues[0].meta?.indexInterval).toBe("[-15, -15]");
+    expect(definiteIssues[0]!.meta?.indexInterval).toBe("[-15, -15]");
   });
 
   /**
@@ -137,7 +137,7 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
     expect(suspectedIssues.length).toBeGreaterThan(0);
 
     // 【断言】：区间 [0, 5] 中 '5' 已越界但 '0-4' 安全，符合保守警告特征，不应误报为 Must-Issue
-    expect(suspectedIssues[0].meta).toMatchObject({
+    expect(suspectedIssues[0]!.meta).toMatchObject({
       arrayName: "arr",
       maxValidIndex: 4,
       indexInterval: "[0, 5]",
@@ -166,7 +166,7 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
     expect(definiteIssues.length).toBeGreaterThan(0);
 
     // 【断言】：确保引擎能穿透 'matrix[i][0]' 的两层 AST 壳，精准提取根标识符 'matrix'
-    expect(definiteIssues[0].meta).toMatchObject({
+    expect(definiteIssues[0]!.meta).toMatchObject({
       arrayName: "matrix",
       maxValidIndex: 9,
       indexInterval: "[12, 12]",
@@ -190,7 +190,7 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
     expect(definiteIssues.length).toBeGreaterThan(0);
 
     // 【断言】：验证引擎能从 new_expression 树节点中反向抽取 size 并挂载于 ptr 账本
-    expect(definiteIssues[0].meta).toMatchObject({
+    expect(definiteIssues[0]!.meta).toMatchObject({
       arrayName: "ptr",
       maxValidIndex: 9,
       indexInterval: "[10, 10]",
@@ -218,7 +218,7 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
     expect(suspectedIssues.length).toBeGreaterThan(0);
 
     // 【断言】：验证引擎底层 refineBranchState 已完全具备运算符反转计算能力
-    expect(suspectedIssues[0].meta).toMatchObject({
+    expect(suspectedIssues[0]!.meta).toMatchObject({
       arrayName: "arr",
       maxValidIndex: 4,
       indexInterval: "[0, 5]",
@@ -264,7 +264,7 @@ describe("Dynamic Analysis Checker - Array Bounds (OOB)", () => {
     expect(suspectedIssues.length).toBeGreaterThan(0);
 
     // 【断言】：当区间发散到极致时，不应当错报 Must-Issue，而必须退化为 May-Issue 保守预警，将判断权交还给用户
-    expect(suspectedIssues[0].meta).toMatchObject({
+    expect(suspectedIssues[0]!.meta).toMatchObject({
       arrayName: "arr",
       maxValidIndex: 9,
       indexInterval: "[-Infinity, Infinity]",

@@ -33,7 +33,7 @@ describe("Dynamic Analysis Checker - Use After Free", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta?.pointerName).toBe("p");
+    expect(definite[0]!.meta?.pointerName).toBe("p");
   });
 
   it("3. [May-Issue] 条件分支中可能 delete，后续访问应报 Suspected", async () => {
@@ -50,7 +50,7 @@ describe("Dynamic Analysis Checker - Use After Free", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_USE_AFTER_FREE_SUSPECTED",
     );
     expect(suspected.length).toBeGreaterThan(0);
-    expect(String(suspected[0].meta?.freeState)).toContain("1");
+    expect(String(suspected[0]!.meta?.freeState)).toContain("1");
   });
 
   it("4. [Must-Issue] delete 后箭头访问 p->x 应报 Definite", async () => {

@@ -18,9 +18,7 @@ describe("Dynamic Analysis Checker - Uninitialized Pointer Dereference", () => {
       int y = *ptr;
     `;
     const issues = await runEngine(code);
-    const derefIssues = issues.filter((i) =>
-      i.ruleId.includes("UNINIT_DEREF"),
-    );
+    const derefIssues = issues.filter((i) => i.ruleId.includes("UNINIT_DEREF"));
     expect(derefIssues.length).toBe(0);
   });
 
@@ -34,7 +32,7 @@ describe("Dynamic Analysis Checker - Uninitialized Pointer Dereference", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_UNINIT_DEREF_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta.operationType).toBe("*");
+    expect(definite[0]!.meta?.operationType).toBe("*");
   });
 
   it("3. [May-Issue] 未初始化指针的成员访问应报 Suspected", async () => {
@@ -70,9 +68,7 @@ describe("Dynamic Analysis Checker - Uninitialized Pointer Dereference", () => {
       }
     `;
     const issues = await runEngine(code);
-    const derefIssues = issues.filter((i) =>
-      i.ruleId.includes("UNINIT_DEREF"),
-    );
+    const derefIssues = issues.filter((i) => i.ruleId.includes("UNINIT_DEREF"));
     expect(derefIssues.length).toBe(0);
   });
 

@@ -22,6 +22,7 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
         },
       },
       include: {
+        submission: true,
         testCaseResults: {
           orderBy: {
             createdAt: "asc",
@@ -62,6 +63,15 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
       };
     });
 
+    let parsedFeedback: any = null;
+    try {
+      parsedFeedback = submission.feedback
+        ? JSON.parse(submission.feedback)
+        : null;
+    } catch {
+      parsedFeedback = null;
+    }
+
     return NextResponse.json({
       id: submission.id,
       status: submission.codeEvaluationStatus,
@@ -70,6 +80,10 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
       language: submission.language,
       createdAt: submission.createdAt,
       questionId: submission.questionId,
+      aiFeedback: parsedFeedback?.aiFeedback || null,
+      navigation: parsedFeedback?.navigation || null,
+      emotion: parsedFeedback?.emotion || null,
+      symbolicOutput: parsedFeedback?.symbolic || null,
     });
   } catch (error: any) {
     console.error("Error fetching submission:", error);

@@ -100,6 +100,7 @@ if (!ParserImp) {
 
 const PUBLIC_DIR = path.join(process.cwd(), "public");
 const WASM_FILE = "tree-sitter-cpp.wasm";
+const WEB_TS_WASM_FILE = "web-tree-sitter.wasm";
 
 /** 解析器实例缓存 (单例) */
 let parserInstance: Parser | null = null;
@@ -125,7 +126,21 @@ export async function getParser(): Promise<Parser> {
 
   // 1. 初始化底层运行时
   try {
-    await ParserImp.init();
+    await ParserImp.init({
+      // In Next.js server (especially Docker), resolve runtime wasm explicitly
+      // instead of relying on bundler-generated vendor chunk paths.
+      locateFile(scriptName: string) {
+        if (scriptName === WEB_TS_WASM_FILE) {
+          return path.join(
+            process.cwd(),
+            "node_modules",
+            "web-tree-sitter",
+            WEB_TS_WASM_FILE,
+          );
+        }
+        return scriptName;
+      },
+    });
   } catch (e) {
     console.error("[Parser] Runtime initialization failed:", e);
     throw new Error("Parser initialization failed");

@@ -34,7 +34,7 @@ describe("Dynamic Analysis Checker - Tainted Pointer Dereference", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_TAINTED_DEREF_SUSPECTED",
     );
     expect(suspected.length).toBeGreaterThan(0);
-    expect(suspected[0].meta.operationType).toBe("*");
+    expect(suspected[0]!.meta?.operationType).toBe("*");
   });
 
   it("3. [May-Issue] 污染指针的成员访问应报 Suspected", async () => {

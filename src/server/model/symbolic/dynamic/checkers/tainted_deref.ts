@@ -257,7 +257,8 @@ function markArgsTainted(
 }
 
 function isSourceCall(callNode: SyntaxNode): boolean {
-  const fnNode = callNode.childForFieldName("function") || callNode.namedChildren[0];
+  const fnNode =
+    callNode.childForFieldName("function") || callNode.namedChildren[0];
   const fnName = fnNode?.text?.trim() || "";
   return SOURCE_FUNCTIONS.has(fnName);
 }
@@ -319,7 +320,8 @@ function getEnclosingFunctionName(node: SyntaxNode): string | null {
   while (current) {
     if (current.type === "function_definition") {
       const declarator =
-        current.childForFieldName("declarator") || current.namedChildren.find((c) => c.type.includes("declarator"));
+        current.childForFieldName("declarator") ||
+        current.namedChildren.find((c) => c.type.includes("declarator"));
       return extractIdentifierName(declarator || null);
     }
     current = current.parent;

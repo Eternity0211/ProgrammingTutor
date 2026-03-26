@@ -85,7 +85,8 @@ function trackReturnTaint(node: SyntaxNode, env: Environment): void {
       }
 
       if (child.type === "init_declarator") {
-        const lhs = child.childForFieldName("declarator") || child.namedChildren[0];
+        const lhs =
+          child.childForFieldName("declarator") || child.namedChildren[0];
         const rhs = child.childForFieldName("value") || child.namedChildren[1];
         const lhsName = extractIdentifierName(lhs);
         if (!lhsName) continue;
@@ -121,7 +122,8 @@ function trackReturnTaint(node: SyntaxNode, env: Environment): void {
     const hasTrack = !!env.get(taintVar(lhsName));
     const rhsName = extractIdentifierName(rhs);
     const rhsHasTrack = rhsName ? !!env.get(taintVar(rhsName)) : false;
-    const rhsIsSource = rhs.type === "call_expression" && isTaintedReturnCall(rhs);
+    const rhsIsSource =
+      rhs.type === "call_expression" && isTaintedReturnCall(rhs);
     if (!hasTrack && !rhsHasTrack && !rhsIsSource) return;
 
     let rhsTaint = evalExprTaint(rhs, env);
@@ -130,7 +132,11 @@ function trackReturnTaint(node: SyntaxNode, env: Environment): void {
     }
 
     if (isConditionalContext(node)) {
-      setReturnTaint(lhsName, getReturnTaint(lhsName, env).union(rhsTaint), env);
+      setReturnTaint(
+        lhsName,
+        getReturnTaint(lhsName, env).union(rhsTaint),
+        env,
+      );
     } else {
       setReturnTaint(lhsName, rhsTaint, env);
     }
@@ -240,8 +246,7 @@ function checkAssignmentUsingTaintedReturn(
 
   const taint = getReturnTaint(rhsName, env);
   const isDefiniteTaint = taint.min === 1 && taint.max === 1;
-  const isSuspectedTaint =
-    taint.min <= 0 && taint.max >= 1 && !isDefiniteTaint;
+  const isSuspectedTaint = taint.min <= 0 && taint.max >= 1 && !isDefiniteTaint;
 
   if (!isDefiniteTaint && !isSuspectedTaint) return null;
 
@@ -339,7 +344,9 @@ function checkBinaryWithTaintedReturn(
   if (rightName) {
     const rightTaint = getReturnTaint(rightName, env);
     if (rightTaint.max >= 1) {
-      issues.push(createTaintedReturnIssue(rightNode, rightName, rightTaint, 1));
+      issues.push(
+        createTaintedReturnIssue(rightNode, rightName, rightTaint, 1),
+      );
     }
   }
 

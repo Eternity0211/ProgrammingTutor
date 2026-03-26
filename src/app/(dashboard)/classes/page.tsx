@@ -3,13 +3,16 @@ import { ClassGrid } from "@/app/_components/classes/class-grid";
 import { PageHeader } from "@/app/_components/page-header";
 import { getUserClasses } from "@/server/actions/class-actions";
 import { auth } from "@/lib/auth";
-import Loading from "./loading";
 
 import { Button } from "@/app/_components/ui/button";
 import Link from "next/link";
 import { ROUTES } from "@/config/route";
 import { UserCircle } from "lucide-react";
 import { Role } from "@prisma/client";
+import AuthWrapper from "@/app/_components/auth/auth-wrapper";
+
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export const metadata: Metadata = {
   title: "Classes | gradeIT",
@@ -19,7 +22,11 @@ export const metadata: Metadata = {
 export default async function ClassesPage() {
   const session = await auth();
   if (!session?.user) {
-    return <Loading />;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <AuthWrapper />
+      </div>
+    );
   }
   const { classes, role } = await getUserClasses();
   return (

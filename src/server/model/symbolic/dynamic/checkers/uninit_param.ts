@@ -35,7 +35,7 @@ export const UninitParamChecker: Checker = {
     if (shouldSkipFunction(fnName)) return null;
 
     const args = argsNode.namedChildren.filter(
-      (c) => c.type !== "," && c.type !== ";"
+      (c) => c.type !== "," && c.type !== ";",
     );
     const issues: RawIssue[] = [];
 
@@ -53,15 +53,16 @@ export const UninitParamChecker: Checker = {
 
       // 检查是否为确定未初始化
       const isDefiniteUninit = state.init === InitState.UNINITIALIZED;
-      
+
       // 检查是否为可疑状态
       // 1. NULL_PTR或TAINTED初始化状态
       // 2. 区间为[0,0]的指针（表示nullptr/NULL）
       // 3. checker 影子状态判定为 null-like
-      const hasNullInterval = state.interval && state.interval.min === 0 && state.interval.max === 0;
+      const hasNullInterval =
+        state.interval && state.interval.min === 0 && state.interval.max === 0;
       const isTrackedNull = getNullLikeState(argName, env).max >= 1;
       const isSuspectedUninit =
-        state.init === InitState.NULL_PTR || 
+        state.init === InitState.NULL_PTR ||
         state.init === InitState.TAINTED ||
         hasNullInterval ||
         isTrackedNull;
@@ -97,7 +98,8 @@ export const UninitParamChecker: Checker = {
 
 function trackNullLikeState(node: SyntaxNode, env: Environment): void {
   if (node.type === "init_declarator") {
-    const declaratorNode = node.childForFieldName("declarator") || node.namedChildren[0];
+    const declaratorNode =
+      node.childForFieldName("declarator") || node.namedChildren[0];
     const valueNode = node.childForFieldName("value") || node.namedChildren[1];
     if (!containsPointerDeclarator(declaratorNode)) return;
 
@@ -111,7 +113,9 @@ function trackNullLikeState(node: SyntaxNode, env: Environment): void {
 
     setNullLikeState(
       name,
-      isNullLikeExpression(valueNode, env) ? new Interval(1, 1) : new Interval(0, 0),
+      isNullLikeExpression(valueNode, env)
+        ? new Interval(1, 1)
+        : new Interval(0, 0),
       env,
     );
     return;
@@ -135,7 +139,9 @@ function trackNullLikeState(node: SyntaxNode, env: Environment): void {
 
     setNullLikeState(
       lhsName,
-      isNullLikeExpression(right, env) ? new Interval(1, 1) : new Interval(0, 0),
+      isNullLikeExpression(right, env)
+        ? new Interval(1, 1)
+        : new Interval(0, 0),
       env,
     );
   }
@@ -150,7 +156,11 @@ function getNullLikeState(name: string, env: Environment): Interval {
   return st?.interval || new Interval(0, 0);
 }
 
-function setNullLikeState(name: string, state: Interval, env: Environment): void {
+function setNullLikeState(
+  name: string,
+  state: Interval,
+  env: Environment,
+): void {
   const shadow = nullStateVar(name);
   if (!env.get(shadow)) {
     env.declareVar(shadow, "uninit_param_null");
@@ -167,7 +177,10 @@ function containsPointerDeclarator(node: SyntaxNode | null): boolean {
 function isNullLikeExpression(node: SyntaxNode, env: Environment): boolean {
   if (isNullLiteral(node)) return true;
 
-  if (node.type === "parenthesized_expression" || node.type === "cast_expression") {
+  if (
+    node.type === "parenthesized_expression" ||
+    node.type === "cast_expression"
+  ) {
     const inner =
       node.childForFieldName("value") ||
       node.childForFieldName("argument") ||
@@ -178,7 +191,9 @@ function isNullLikeExpression(node: SyntaxNode, env: Environment): boolean {
   const name = extractIdentifierName(node);
   if (name) {
     const iv = env.getInterval(name);
-    return iv.min === 0 && iv.max === 0 || getNullLikeState(name, env).max >= 1;
+    return (
+      (iv.min === 0 && iv.max === 0) || getNullLikeState(name, env).max >= 1
+    );
   }
 
   return false;

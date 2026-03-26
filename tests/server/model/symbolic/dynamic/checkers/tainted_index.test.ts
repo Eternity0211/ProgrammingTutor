@@ -48,7 +48,7 @@ describe("Dynamic Analysis Checker - Tainted Index", () => {
       (i) => i.ruleId === "CPP_DYNAMIC_TAINTED_INDEX_DEFINITE",
     );
     expect(definite.length).toBeGreaterThan(0);
-    expect(definite[0].meta.indexName).toBe("idx");
+    expect(definite[0]!.meta?.indexName).toBe("idx");
   });
 
   it("4. [May-Issue] 由污点变量赋值的下标应报 Suspected", async () => {
@@ -77,9 +77,7 @@ describe("Dynamic Analysis Checker - Tainted Index", () => {
       arr[idx] = 1;
     `;
     const issues = await runEngine(code);
-    const suspected = issues.filter(
-      (i) => i.ruleId.includes("TAINTED_INDEX"),
-    );
+    const suspected = issues.filter((i) => i.ruleId.includes("TAINTED_INDEX"));
     expect(suspected.length).toBeGreaterThan(0);
   });
 });
