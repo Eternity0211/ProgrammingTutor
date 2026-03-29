@@ -47,7 +47,8 @@ export function QuestionsList({
       id: `${questions.length + 1}`,
       title: "",
       description: "",
-      language: "Python",
+      language: "C++",
+      cppStandard: "c++17",
       testCases: [
         {
           id: "1",
@@ -56,6 +57,7 @@ export function QuestionsList({
           hidden: false,
         },
       ],
+      symbolicRules: [],
     };
     lastAddedQuestionId.current = newQuestion.id;
     setOpenAccordion(newQuestion.id);

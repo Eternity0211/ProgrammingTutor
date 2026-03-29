@@ -49,12 +49,6 @@ export default async function AssignmentPage({
   return (
     <div className="relative min-h-screen">
       <AssignmentLayout assignment={assignment} classCode={classCode} />
-
-      {/* 注入 AI 审查智能体模块 */}
-      <AiCodeReview
-        assignmentTitle={assignment.title}
-        initialCode={defaultCode}
-      />
     </div>
   );
 }

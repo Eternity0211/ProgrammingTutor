@@ -15,6 +15,9 @@ import { LANGUAGE_ID_MAP } from "@/config/constants";
 import { LanguageIcon } from "../../ui/language-icon";
 import { Language } from "@/lib/types/config-types";
 import { TestCasesList } from "./test-cases-list";
+import { SymbolicRuleSelector } from "./symbolic-rule-selector";
+
+import { ShieldCheck } from "lucide-react";
 
 interface QuestionFormProps {
   question: Question;
@@ -66,32 +69,54 @@ export function QuestionForm({ question, onChange }: QuestionFormProps) {
           />
         </div>
 
-        <div className="grid gap-2">
-          <Label
-            htmlFor={`question-${question.id}-language`}
-            className="text-foreground"
-          >
-            Programming Language
-          </Label>
-          <Select
-            value={question.language}
-            onValueChange={(value) => updateField("language", value)}
-          >
-            <SelectTrigger
-              id={`question-${question.id}-language`}
-              className="bg-background border border-border text-foreground"
+        <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor={`question-${question.id}-language`}>Programming Language</Label>
+            <Select
+              value={question.language}
+              onValueChange={(value) => updateField("language", value)}
             >
-              <SelectValue placeholder="Select a language" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.keys(LANGUAGE_ID_MAP).map((language) => (
-                <SelectItem key={language} value={language}>
-                  <LanguageIcon language={language as Language} />
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+              <SelectTrigger id={`question-${question.id}-language`} className="bg-background border-border">
+                <SelectValue placeholder="Select a language" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.keys(LANGUAGE_ID_MAP).map((language) => (
+                  <SelectItem key={language} value={language}>
+                    <LanguageIcon language={language as Language} />
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* 新增：C++ 标准选择 */}
+          <div className="grid gap-2">
+            <Label htmlFor={`question-${question.id}-standard`}>C++ Standard</Label>
+            <Select
+              value={question.cppStandard}
+              onValueChange={(value) => updateField("cppStandard", value)}
+            >
+              <SelectTrigger id={`question-${question.id}-standard`} className="bg-background border-border">
+                <SelectValue placeholder="Select standard" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="c++11">C++11</SelectItem>
+                <SelectItem value="c++17">C++17</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {/* <div className="grid gap-2">
+          <Label>Symbolic Analysis Rules</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Select specific C++ static analysis rules to be enforced for this question.
+          </p>
+          <SymbolicRuleSelector
+            selectedRules={question.symbolicRules || []} 
+            onChange={(rules) => updateField("symbolicRules", rules)}
+          />
+        </div> */}
       </div>
 
       <Separator className="my-6 bg-border" />
@@ -104,6 +129,22 @@ export function QuestionForm({ question, onChange }: QuestionFormProps) {
         questionLanguage={question.language}
         questionId={question.id}
       />
+
+<Separator className="my-6 bg-border" />
+      <div className="grid gap-2 mt-4">
+        {/* 保持标题和语义结构，但移除图标 */}
+        <Label className="text-base font-semibold">
+          Neuro-Symbolic Analysis Rules
+        </Label>
+        <p className="text-xs text-muted-foreground mb-3">
+          Select specific static analysis rules from the platform library to apply for this question. 
+          You can also define custom rules in the rules library.
+        </p>
+        <SymbolicRuleSelector
+          selectedRules={question.symbolicRules || []}
+          onChange={(rules) => updateField("symbolicRules", rules)}
+        />
+      </div>
     </div>
   );
 }

@@ -24,6 +24,7 @@ interface TestCaseGenDialogProps {
   language: string;
   updateField: <K extends keyof Question>(field: K, value: Question[K]) => void;
   existingTestCases: TestCase[];
+  onGenerated?: (generatedCases: any[]) => void;
 }
 
 export default function TestCaseGenarationDialog({
@@ -32,6 +33,7 @@ export default function TestCaseGenarationDialog({
   language,
   updateField,
   existingTestCases,
+  onGenerated,
 }: TestCaseGenDialogProps) {
   const [number, SetNumber] = useState(5);
   const [isGenerating, setIsGenerating] = useState(false);

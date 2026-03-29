@@ -7,6 +7,7 @@ export interface Question {
   language: string;
   cppStandard?: "c++11" | "c++17";
   testCases: TestCase[];
+  symbolicRules?: string[];
 }
 
 export interface TestCase {
