@@ -39,7 +39,9 @@ export function CreateAssignmentForm({
     useState<boolean>(false);
   const [fullScreenEnforcement, setFullScreenEnforcement] =
     useState<boolean>(false);
-  const [selectedRules, setSelectedRules] = useState<string[]>(["CPP_ARRAY_OOB_LITERAL"]);
+  const [selectedRules, setSelectedRules] = useState<string[]>([
+    "CPP_ARRAY_OOB_LITERAL",
+  ]);
   const [metrics, setMetrics] = useState<EvaluationMetric[]>([]);
   const [testCaseWeight, setTestCaseWeight] = useState(60);
   const [metricsWeight, setMetricsWeight] = useState(40);

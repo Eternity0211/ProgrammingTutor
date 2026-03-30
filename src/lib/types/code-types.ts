@@ -28,6 +28,9 @@ export interface CodeRunner {
   output: string;
   error: string;
   hidden: boolean;
+  expectedOutput?: string | null;
+  caseLabel?: string;
+  isCustom?: boolean;
 }
 
 export interface SymbolicResult {

@@ -71,24 +71,34 @@ export function QuestionForm({ question, onChange }: QuestionFormProps) {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label htmlFor={`question-${question.id}-language`}>Programming Language</Label>
+            <Label htmlFor={`question-${question.id}-language`}>
+              Programming Language
+            </Label>
             <Select
               value={question.language}
               onValueChange={(value) => updateField("language", value)}
             >
-              <SelectTrigger id={`question-${question.id}-language`} className="bg-background border-border">
+              <SelectTrigger
+                id={`question-${question.id}-language`}
+                className="bg-background border-border"
+              >
                 <SelectValue placeholder="Select a language" />
               </SelectTrigger>
               <SelectContent>
                 {Object.keys(LANGUAGE_ID_MAP).map((language) => (
                   <SelectItem key={language} value={language}>
-                  <div className="flex items-center gap-2">
-                    <LanguageIcon language={language as Language} showText={false} />
-                    <span className={language === "cpp" ? "text-sky-400" : ""}>
-                      {language}
-                    </span>
-                  </div>
-                </SelectItem>
+                    <div className="flex items-center gap-2">
+                      <LanguageIcon
+                        language={language as Language}
+                        showText={false}
+                      />
+                      <span
+                        className={language === "cpp" ? "text-sky-400" : ""}
+                      >
+                        {language}
+                      </span>
+                    </div>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -96,12 +106,17 @@ export function QuestionForm({ question, onChange }: QuestionFormProps) {
 
           {/* 新增：C++ 标准选择 */}
           <div className="grid gap-2">
-            <Label htmlFor={`question-${question.id}-standard`}>C++ Standard</Label>
+            <Label htmlFor={`question-${question.id}-standard`}>
+              C++ Standard
+            </Label>
             <Select
               value={question.cppStandard}
               onValueChange={(value) => updateField("cppStandard", value)}
             >
-              <SelectTrigger id={`question-${question.id}-standard`} className="bg-background border-border">
+              <SelectTrigger
+                id={`question-${question.id}-standard`}
+                className="bg-background border-border"
+              >
                 <SelectValue placeholder="Select standard" />
               </SelectTrigger>
               <SelectContent>
@@ -135,15 +150,16 @@ export function QuestionForm({ question, onChange }: QuestionFormProps) {
         questionId={question.id}
       />
 
-<Separator className="my-6 bg-border" />
+      <Separator className="my-6 bg-border" />
       <div className="grid gap-2 mt-4">
         {/* 保持标题和语义结构，但移除图标 */}
         <Label className="text-base font-semibold">
           Neuro-Symbolic Analysis Rules
         </Label>
         <p className="text-xs text-muted-foreground mb-3">
-          Select specific static analysis rules from the platform library to apply for this question. 
-          You can also define custom rules in the rules library.
+          Select specific static analysis rules from the platform library to
+          apply for this question. You can also define custom rules in the rules
+          library.
         </p>
         <SymbolicRuleSelector
           selectedRules={question.symbolicRules || []}

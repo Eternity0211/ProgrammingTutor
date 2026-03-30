@@ -23,9 +23,62 @@ services:
       - DATABASE_URL=postgresql://gradeitDB:mypassword@db:5432/gradeit
       - GROQ_API_KEY=${GROQ_API_KEY:-}
       - AI_GROQ_API_KEY=${AI_GROQ_API_KEY:-}
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY:-}
+      - JUDGE0_API_URL=http://judge0-server:2358
+      - JUDGE0_API_KEY=
+      - JUDGE0_API_HOST=
+      - JUDGE0_CPP_LANGUAGE_ID=54
     depends_on:
       - db
+      - judge0-server
     command: sh -c "npx prisma migrate deploy && npm run dev"
+
+  judge0-server:
+    image: judge0/judge0:latest
+    privileged: true
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    ports:
+      - "2358:2358"
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    restart: unless-stopped
+
+  judge0-worker:
+    image: judge0/judge0:latest
+    command: ["./scripts/workers"]
+    privileged: true
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    restart: unless-stopped
+
+  judge0-db:
+    image: postgres:16.2
+    env_file:
+      - ./judge0.conf
+    volumes:
+      - judge0_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  judge0-redis:
+    image: redis:7.2.4
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "judge0_redis_password",
+      ]
+    volumes:
+      - judge0_redis_data:/data
+    restart: unless-stopped
 volumes:
   gradeit_node_modules:
   db_data:
+  judge0_postgres_data:
+  judge0_redis_data:

@@ -26,6 +26,11 @@ services:
       NODE_ENV: development # 设为开发模式
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       AI_GROQ_API_KEY: ${AI_GROQ_API_KEY:-}
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      JUDGE0_API_URL: http://judge0-server:2358
+      JUDGE0_API_KEY: ""
+      JUDGE0_API_HOST: ""
+      JUDGE0_CPP_LANGUAGE_ID: "54"
     volumes:
       # 核心挂载：将当前目录映射到容器的 /app，排除 node_modules
       - .:/app
@@ -33,9 +38,58 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      judge0-server:
+        condition: service_started
     # 开发容器启动时先应用 Prisma 迁移，避免 schema 与数据库不一致
     command: sh -c "npx prisma migrate deploy && npm run dev"
     # 或者如果原Dockerfile已优化，也可用: command: npm start
 
+  judge0-server:
+    image: judge0/judge0:latest
+    privileged: true
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    ports:
+      - "2358:2358"
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    restart: unless-stopped
+
+  judge0-worker:
+    image: judge0/judge0:latest
+    command: ["./scripts/workers"]
+    privileged: true
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    depends_on:
+      - judge0-db
+      - judge0-redis
+    restart: unless-stopped
+
+  judge0-db:
+    image: postgres:16.2
+    env_file:
+      - ./judge0.conf
+    volumes:
+      - judge0_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  judge0-redis:
+    image: redis:7.2.4
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "judge0_redis_password",
+      ]
+    volumes:
+      - judge0_redis_data:/data
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  judge0_postgres_data:
+  judge0_redis_data:

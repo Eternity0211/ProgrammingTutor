@@ -8,6 +8,12 @@ import { ROUTES } from "@/config/route";
 
 let fetchRetryPatched = false;
 
+declare global {
+  // Keep the original fetch across hot reloads to avoid wrapper stacking in dev.
+  // eslint-disable-next-line no-var
+  var __gradeitOriginalFetch: typeof globalThis.fetch | undefined;
+}
+
 const FETCH_RETRYABLE_ERROR_CODES = new Set([
   "ECONNRESET",
   "ENOTFOUND",
@@ -30,10 +36,17 @@ const shouldRetryFetchError = (error: unknown) => {
     return true;
   }
 
+  const causeError =
+    (errnoError.cause as NodeJS.ErrnoException | undefined) ?? undefined;
+  if (causeError?.code && FETCH_RETRYABLE_ERROR_CODES.has(causeError.code)) {
+    return true;
+  }
+
   const lowerMessage = error.message?.toLowerCase() ?? "";
   return (
     lowerMessage.includes("connection reset") ||
-    lowerMessage.includes("timed out")
+    lowerMessage.includes("timed out") ||
+    lowerMessage.includes("fetch failed")
   );
 };
 
@@ -42,7 +55,11 @@ const patchGlobalFetchWithRetry = () => {
     return;
   }
 
-  const baseFetch = globalThis.fetch?.bind(globalThis);
+  if (!globalThis.__gradeitOriginalFetch && globalThis.fetch) {
+    globalThis.__gradeitOriginalFetch = globalThis.fetch.bind(globalThis);
+  }
+
+  const baseFetch = globalThis.__gradeitOriginalFetch;
   if (!baseFetch) {
     return;
   }

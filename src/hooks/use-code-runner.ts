@@ -37,8 +37,7 @@ export function useCodeRunner({
       return;
     }
     setIsRunning(true);
-    setCodeStatus("Running");
-    toast.success("Running your code...");
+    setCodeStatus("Running visible test cases...");
 
     try {
       const response = await fetch("/api/compile", {
@@ -48,25 +47,46 @@ export function useCodeRunner({
         },
         body: JSON.stringify({
           code,
-          input: input,
+          questionId,
+          customInput: input,
           language: language,
         }),
       });
       const data = await response.json();
-      const output = data?.output;
 
-      if (!response.ok || output?.status === "failed") {
-        throw new Error(output?.error || "Failed to run code");
+      const mappedResults = Array.isArray(data?.results)
+        ? data.results.map((result: CodeRunner & Record<string, unknown>) => ({
+            input: result.input as string,
+            status: result.status as string,
+            runtime: result.runtime as string,
+            memory: result.memory as string,
+            output: result.output as string,
+            error: result.error as string,
+            hidden: Boolean(result.hidden),
+            expectedOutput: (result.expectedOutput as string | null) ?? null,
+            caseLabel: (result.caseLabel as string) || "Test Case",
+            isCustom: Boolean(result.isCustom),
+          }))
+        : [];
+
+      if (!response.ok) {
+        setTestResults(mappedResults);
+        throw new Error(data?.error || "Failed to run code");
       }
 
-      setTestResults([output]);
-      toast.success("Your code ran successfully");
+      setTestResults(mappedResults);
+
+      if (data?.symbolicFailed) {
+        setCodeStatus(
+          "Symbolic check failed. Please fix syntax/critical issues.",
+        );
+        return;
+      }
+
+      setCodeStatus("Run complete.");
     } catch (error: any) {
       console.error("Error running code:", error);
-      setCodeStatus(`Error running code: ${error.message}`);
-      toast.error(
-        error.message || "An error occurred while submitting your solution",
-      );
+      setCodeStatus(`Run failed: ${error.message || "Unknown error"}`);
     } finally {
       setIsRunning(false);
     }

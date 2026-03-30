@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Play,
   FormInputIcon,
+  FileCode2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/app/_components/ui/textarea";
@@ -63,7 +64,10 @@ export function CombinedTesting({
             size="sm"
             variant="outline"
             className="bg-muted text-foreground hover:bg-muted/70 border-border"
-            onClick={onRunCode}
+            onClick={() => {
+              setIsCustomInputOpen(false);
+              onRunCode();
+            }}
             disabled={isRunning}
           >
             <Play className="h-4 w-4 mr-1" />
@@ -126,6 +130,7 @@ export function CombinedTesting({
                       "bg-status-pending text-status-pending-foreground",
                     result?.status === "partial" &&
                       "bg-status-partial text-status-partial-foreground",
+                    result?.status === "executed" && "bg-muted text-foreground",
                   )}
                 >
                   {result?.status === "passed" && (
@@ -138,12 +143,15 @@ export function CombinedTesting({
                   {result?.status === "partial" && (
                     <AlertCircle className="h-3.5 w-3.5" />
                   )}
+                  {result?.status === "executed" && (
+                    <FileCode2 className="h-3.5 w-3.5" />
+                  )}
                 </div>
                 <div>
                   <p className="text-sm text-foreground">
                     {result?.status === "running"
                       ? "Running code..."
-                      : `Test Case ${index + 1}`}
+                      : result?.caseLabel || `Test Case ${index + 1}`}
                   </p>
                   {result?.status !== "running" &&
                     result?.runtime &&
@@ -181,6 +189,19 @@ export function CombinedTesting({
                   </pre>
                 </div>
               )}
+
+              {result?.status !== "running" &&
+                !result?.isCustom &&
+                typeof result?.expectedOutput === "string" && (
+                  <div className="mt-3 rounded-md bg-muted p-3">
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">
+                      Expected Output:
+                    </p>
+                    <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap text-xs text-foreground font-mono">
+                      {result.expectedOutput}
+                    </pre>
+                  </div>
+                )}
 
               {/* Error Section */}
               {result?.status === "failed" && result?.error && (

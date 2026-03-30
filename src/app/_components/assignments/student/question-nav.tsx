@@ -9,12 +9,14 @@ interface QuestionNavProps {
   questions: Question[];
   currentIndex: number;
   onSelect: (index: number) => void;
+  completedQuestionIds?: string[];
 }
 
 export function QuestionNav({
   questions,
   currentIndex,
   onSelect,
+  completedQuestionIds = [],
 }: QuestionNavProps) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -32,7 +34,7 @@ export function QuestionNav({
             {index + 1}
           </span>
           <span className="hidden sm:inline">{question.title}</span>
-          {index === 0 ? (
+          {completedQuestionIds.includes(question.id) ? (
             <Check className="h-3.5 w-3.5 text-green-500" />
           ) : (
             <Clock className="h-3.5 w-3.5 text-muted-foreground" />

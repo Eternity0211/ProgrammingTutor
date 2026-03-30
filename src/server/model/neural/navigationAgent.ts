@@ -10,11 +10,24 @@ const __dirname = path.dirname(__filename);
 // 加载环境变量 (需要根目录下有 .env 文件，内容为 DASHSCOPE_API_KEY=你的key)
 dotenv.config();
 
-// 1. 初始化 OpenAI 客户端 (兼容阿里云百炼)
-const client = new OpenAI({
-  apiKey: process.env.DASHSCOPE_API_KEY,
-  baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-});
+// 1. 延迟初始化 OpenAI 客户端 (兼容阿里云百炼)
+let client: OpenAI | null = null;
+
+function getClient(): OpenAI {
+  if (!client) {
+    const apiKey = process.env.DASHSCOPE_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "Missing credentials: DASHSCOPE_API_KEY. Please set the environment variable.",
+      );
+    }
+    client = new OpenAI({
+      apiKey,
+      baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    });
+  }
+  return client;
+}
 
 // ================= 定义数据接口 (Interfaces) =================
 
@@ -150,10 +163,18 @@ export async function generateLearningNavigation(
   inputs: NavigatorInputs,
 ): Promise<LearningNavigationResult | null> {
   try {
+    const apiKey = process.env.DASHSCOPE_API_KEY;
+    if (!apiKey) {
+      console.warn(
+        "⚠️  DASHSCOPE_API_KEY not set, returning default learning navigation",
+      );
+      return getDefaultLearningNavigation();
+    }
+
     console.log("正在调用大模型生成学习路径，请稍候...");
     const messages = buildMessages(inputs);
 
-    const completion = await client.chat.completions.create({
+    const completion = await getClient().chat.completions.create({
       model: "deepseek-v3.2", // 根据百炼平台实际支持的模型名称调整
       messages: messages,
       // 强制要求 JSON 格式输出 (需模型支持，若不支持可在 prompt 中强调，deepseek在百炼平台支持的)
@@ -179,8 +200,35 @@ export async function generateLearningNavigation(
     return parsedData;
   } catch (error) {
     console.error(`❌ 分析失败：`, error);
-    return null;
+    return getDefaultLearningNavigation();
   }
+}
+
+/**
+ * 返回默认的学习导航结果（当 API 不可用时）
+ */
+function getDefaultLearningNavigation(): LearningNavigationResult {
+  return {
+    learning_navigation: {
+      weaknesses: ["代码质量分析待完善"],
+      learning_path: [
+        {
+          step: 1,
+          topic: "基础语法复习",
+          duration: "1-2 小时",
+          resources: ["官方文档", "基础教程"],
+        },
+      ],
+      recommended_exercises: [
+        {
+          id: "basic-001",
+          title: "基础练习题",
+          difficulty: "入门",
+          purpose: "巩固基础概念",
+        },
+      ],
+    },
+  };
 }
 
 // ================= 测试运行 =================

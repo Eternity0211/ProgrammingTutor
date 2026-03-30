@@ -47,7 +47,8 @@ export function AssignmentLayout({
   });
 
   const showFullscreenAlert = assignment.fullScreenEnforcement && !isFullscreen;
-  const recommendedExercises = navigation?.learning_navigation?.recommended_exercises || [];
+  const recommendedExercises =
+    navigation?.learning_navigation?.recommended_exercises || [];
 
   return (
     <>
@@ -141,9 +142,10 @@ export function AssignmentLayout({
               />
 
               <div className="border-t border-border grid grid-cols-2 h-[900px] overflow-hidden bg-background">
-
                 <div className="border-r border-border overflow-y-auto p-2">
-                  <h2 className="text-lg font-semibold mb-2">测试结果 / 符号规则报错</h2>
+                  <h2 className="text-lg font-semibold mb-2">
+                    测试结果 / 符号规则报错
+                  </h2>
                   <CombinedTesting
                     results={testResults}
                     customInput={customInput}
@@ -159,7 +161,9 @@ export function AssignmentLayout({
 
                   {recommendedExercises.length > 0 ? (
                     <div className="bg-white dark:bg-zinc-900 p-3 rounded-lg border">
-                      <p className="text-sm">根据本次提交的错误，系统为你推荐以下练习：</p>
+                      <p className="text-sm">
+                        根据本次提交的错误，系统为你推荐以下练习：
+                      </p>
                       <ul className="mt-2 list-disc list-inside text-sm space-y-1">
                         {recommendedExercises.map((item) => (
                           <li key={item.id}>{item.title}</li>
@@ -179,7 +183,7 @@ export function AssignmentLayout({
       </div>
 
       <div className="fixed bottom-6 right-6 z-50">
-        <Button 
+        <Button
           onClick={() => {
             window.location.href = `/classes/${classCode}/${assignment.id}/submissions`;
           }}
@@ -348,7 +352,7 @@ export function AssignmentLayout({
 //                 </div>
 
 //                 <div className="flex flex-col h-full overflow-y-auto bg-zinc-50/30 dark:bg-zinc-950/10 p-4">
-                  
+
 //                   {/* 上半部分：AI 动态推荐练习 */}
 //                   <div className="flex-1">
 //                     <h3 className="text-lg font-semibold mb-4">针对性练习推荐</h3>
@@ -390,7 +394,7 @@ export function AssignmentLayout({
 //         </AnimatePresence>
 //       </div>
 //       <div className="fixed bottom-6 right-6 z-50">
-//         <Button 
+//         <Button
 //           onClick={goToSubmissionDetail}
 //           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg"
 //         >
