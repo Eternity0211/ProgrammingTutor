@@ -82,8 +82,13 @@ export function QuestionForm({ question, onChange }: QuestionFormProps) {
               <SelectContent>
                 {Object.keys(LANGUAGE_ID_MAP).map((language) => (
                   <SelectItem key={language} value={language}>
-                    <LanguageIcon language={language as Language} />
-                  </SelectItem>
+                  <div className="flex items-center gap-2">
+                    <LanguageIcon language={language as Language} showText={false} />
+                    <span className={language === "cpp" ? "text-sky-400" : ""}>
+                      {language}
+                    </span>
+                  </div>
+                </SelectItem>
                 ))}
               </SelectContent>
             </Select>

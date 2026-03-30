@@ -98,6 +98,7 @@ export function CreateAssignmentForm({
       if (response.status === "success") {
         toast.success("Assignment created successfully!");
         router.push(`/classes/${classCode}`);
+        router.refresh();
       } else {
         console.error(response.message);
         toast.warning("Failed to create assignment");
