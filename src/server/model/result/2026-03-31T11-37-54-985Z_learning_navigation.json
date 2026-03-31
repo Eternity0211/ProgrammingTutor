@@ -1,0 +1,67 @@
+{
+  "learning_navigation": {
+    "weaknesses": [
+      "C++程序基本结构",
+      "C++基础语法规则",
+      "main函数的作用与编写"
+    ],
+    "learning_path": [
+      {
+        "step": 1,
+        "topic": "C++程序的基本结构与Hello World",
+        "duration": "1小时",
+        "resources": [
+          "菜鸟教程 - C++ 程序结构",
+          "《C++ Primer Plus》第2章 - 开始学习C++"
+        ]
+      },
+      {
+        "step": 2,
+        "topic": "C++基础语法：语句、分号、注释与代码块",
+        "duration": "2小时",
+        "resources": [
+          "菜鸟教程 - C++ 基本语法",
+          "《C++ Primer》第1.4节 - 控制流"
+        ]
+      },
+      {
+        "step": 3,
+        "topic": "main函数的深入理解：入口点与返回值",
+        "duration": "1小时",
+        "resources": [
+          "C++ Reference - main function",
+          "《C++ Primer Plus》第2章练习"
+        ]
+      },
+      {
+        "step": 4,
+        "topic": "使用编译器与理解编译错误信息",
+        "duration": "1小时",
+        "resources": [
+          "在本地安装GCC或Clang并编译简单程序",
+          "阅读编译器的错误输出并尝试修正"
+        ]
+      }
+    ],
+    "recommended_exercises": [
+      {
+        "id": "EX001",
+        "title": "编写正确的Hello World程序",
+        "difficulty": "入门",
+        "purpose": "掌握C++程序的基本框架，确保代码能成功编译并运行。"
+      },
+      {
+        "id": "EX002",
+        "title": "修复语法错误：补全缺失的分号与花括号",
+        "difficulty": "入门",
+        "purpose": "训练对C++基本语法符号的敏感性，理解其作用。"
+      },
+      {
+        "id": "EX003",
+        "title": "为一段无结构的代码添加main函数",
+        "difficulty": "入门",
+        "purpose": "强化main函数作为程序唯一入口的核心概念，理解代码的组织方式。"
+      }
+    ]
+  }
+}

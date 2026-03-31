@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Maximize2, Minimize2, FileText } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
@@ -12,12 +12,29 @@ import { FullscreenAlert } from "./fullscreen-alert";
 import { CombinedTesting } from "./combined-testing-component";
 import { useFullScreen } from "@/hooks/use-fullscreen";
 import { useCodeRunner } from "@/hooks/use-code-runner";
-import { useRouter } from "next/navigation";
+import { useDebounce } from "@uidotdev/usehooks";
 import { AIFeedbackPanel } from "./ai-feedback-panel";
 
 interface AssignmentLayoutProps {
   assignment: AssignmentById;
   classCode: string;
+}
+
+type DraftSyncState = "loading" | "saving" | "saved" | "error";
+
+type LocalDraftPayload = Record<
+  string,
+  {
+    code: string;
+    language: string;
+    updatedAt: string;
+  }
+>;
+
+const DRAFT_STORAGE_PREFIX = "assignment-drafts:";
+
+function getDraftStorageKey(assignmentId: string) {
+  return `${DRAFT_STORAGE_PREFIX}${assignmentId}`;
 }
 
 export function AssignmentLayout({
@@ -26,10 +43,22 @@ export function AssignmentLayout({
 }: AssignmentLayoutProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [code, setCode] = useState("");
+  const [codeByQuestion, setCodeByQuestion] = useState<Record<string, string>>(
+    {},
+  );
+  const [hasHydratedDrafts, setHasHydratedDrafts] = useState(false);
+  const [hasLoadedServerDrafts, setHasLoadedServerDrafts] = useState(false);
+  const [draftSyncState, setDraftSyncState] =
+    useState<DraftSyncState>("loading");
   const [customInput, setCustomInput] = useState("");
+  const [questionStatuses, setQuestionStatuses] = useState<
+    Record<string, "idle" | "tests-passed" | "full">
+  >(assignment.persistedQuestionStatuses || {});
   const { isFullscreen } = useFullScreen();
+  const lastSyncedCodeRef = useRef<Record<string, string>>({});
   const currentQuestion = assignment.questions[currentQuestionIndex];
+  const currentCode = codeByQuestion[currentQuestion.id] ?? "";
+  const debouncedCurrentCode = useDebounce(currentCode, 1200);
   const {
     isRunning,
     codeStatus,
@@ -37,18 +66,243 @@ export function AssignmentLayout({
     aiAnalysis,
     navigation,
     emotion,
+    lastSubmissionSummary,
     runCode,
     submitCode,
   } = useCodeRunner({
-    code,
+    code: currentCode,
     language: currentQuestion.language,
     questionId: currentQuestion.id,
     input: customInput,
   });
 
   const showFullscreenAlert = assignment.fullScreenEnforcement && !isFullscreen;
-  const recommendedExercises =
-    navigation?.learning_navigation?.recommended_exercises || [];
+
+  const draftStatusText =
+    draftSyncState === "loading"
+      ? "草稿加载中..."
+      : draftSyncState === "saving"
+        ? "草稿保存中..."
+        : draftSyncState === "error"
+          ? "草稿同步失败（仅本地已保存）"
+          : "草稿已保存";
+
+  useEffect(() => {
+    setCodeByQuestion((prev) => {
+      const next = { ...prev };
+      for (const question of assignment.questions) {
+        if (typeof next[question.id] !== "string") {
+          next[question.id] = "";
+        }
+      }
+      return next;
+    });
+  }, [assignment.questions]);
+
+  useEffect(() => {
+    setQuestionStatuses(assignment.persistedQuestionStatuses || {});
+  }, [assignment.id, assignment.persistedQuestionStatuses]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(getDraftStorageKey(assignment.id));
+      if (!raw) {
+        setHasHydratedDrafts(true);
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as LocalDraftPayload;
+      const validQuestionIds = new Set(assignment.questions.map((q) => q.id));
+
+      setCodeByQuestion((prev) => {
+        const next = { ...prev };
+        for (const [questionId, draft] of Object.entries(parsed || {})) {
+          if (!validQuestionIds.has(questionId)) continue;
+          next[questionId] = draft?.code || "";
+        }
+        return next;
+      });
+
+      Object.entries(parsed || {}).forEach(([questionId, draft]) => {
+        lastSyncedCodeRef.current[questionId] = draft?.code || "";
+      });
+    } catch (error) {
+      console.error("Failed to hydrate local drafts:", error);
+    } finally {
+      setHasHydratedDrafts(true);
+    }
+  }, [assignment.id, assignment.questions]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setHasLoadedServerDrafts(false);
+    setDraftSyncState("loading");
+
+    const loadServerDrafts = async () => {
+      try {
+        const response = await fetch(
+          `/api/drafts?assignmentId=${assignment.id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+        const drafts = Array.isArray(data?.drafts) ? data.drafts : [];
+        if (cancelled) return;
+
+        const validQuestionIds = new Set(assignment.questions.map((q) => q.id));
+
+        setCodeByQuestion((prev) => {
+          const next = { ...prev };
+          for (const draft of drafts) {
+            if (!validQuestionIds.has(draft.questionId)) continue;
+            next[draft.questionId] = String(draft.code || "");
+            lastSyncedCodeRef.current[draft.questionId] = String(
+              draft.code || "",
+            );
+          }
+          return next;
+        });
+      } catch (error) {
+        console.error("Failed to load server drafts:", error);
+        setDraftSyncState("error");
+      } finally {
+        if (!cancelled) {
+          setHasLoadedServerDrafts(true);
+        }
+      }
+    };
+
+    void loadServerDrafts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [assignment.id, assignment.questions]);
+
+  useEffect(() => {
+    if (!hasHydratedDrafts) return;
+
+    const payload: LocalDraftPayload = {};
+    for (const question of assignment.questions) {
+      payload[question.id] = {
+        code: codeByQuestion[question.id] || "",
+        language: question.language,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    localStorage.setItem(
+      getDraftStorageKey(assignment.id),
+      JSON.stringify(payload),
+    );
+  }, [assignment.id, assignment.questions, codeByQuestion, hasHydratedDrafts]);
+
+  useEffect(() => {
+    if (!hasHydratedDrafts || !hasLoadedServerDrafts) return;
+
+    const questionId = currentQuestion.id;
+    const latestCode = String(currentCode || "");
+    const syncedCode = String(lastSyncedCodeRef.current[questionId] || "");
+
+    if (latestCode !== syncedCode) {
+      setDraftSyncState("saving");
+      return;
+    }
+
+    setDraftSyncState("saved");
+  }, [
+    currentCode,
+    currentQuestion.id,
+    hasHydratedDrafts,
+    hasLoadedServerDrafts,
+  ]);
+
+  useEffect(() => {
+    if (!hasHydratedDrafts || !hasLoadedServerDrafts) return;
+
+    const questionId = currentQuestion.id;
+    const language = currentQuestion.language;
+    const latestCode = String(debouncedCurrentCode || "");
+
+    if (lastSyncedCodeRef.current[questionId] === latestCode) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const saveDraft = async () => {
+      try {
+        setDraftSyncState("saving");
+
+        const response = await fetch("/api/drafts", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            assignmentId: assignment.id,
+            questionId,
+            code: latestCode,
+            language,
+          }),
+        });
+
+        if (!response.ok || cancelled) {
+          if (!cancelled) {
+            setDraftSyncState("error");
+          }
+          return;
+        }
+
+        lastSyncedCodeRef.current[questionId] = latestCode;
+        setDraftSyncState("saved");
+      } catch (error) {
+        console.error("Failed to sync draft:", error);
+        if (!cancelled) {
+          setDraftSyncState("error");
+        }
+      }
+    };
+
+    void saveDraft();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    assignment.id,
+    currentQuestion.id,
+    currentQuestion.language,
+    debouncedCurrentCode,
+    hasHydratedDrafts,
+    hasLoadedServerDrafts,
+  ]);
+
+  useEffect(() => {
+    if (!lastSubmissionSummary) return;
+
+    const fullScore = lastSubmissionSummary.score >= 99.99;
+    const testsPassedButNotFull =
+      lastSubmissionSummary.testCaseScore >= 99.99 && !fullScore;
+
+    setQuestionStatuses((prev) => ({
+      ...prev,
+      [lastSubmissionSummary.questionId]: fullScore
+        ? "full"
+        : testsPassedButNotFull
+          ? "tests-passed"
+          : "idle",
+    }));
+  }, [lastSubmissionSummary]);
 
   return (
     <>
@@ -68,6 +322,7 @@ export function AssignmentLayout({
               questions={assignment.questions}
               currentIndex={currentQuestionIndex}
               onSelect={setCurrentQuestionIndex}
+              questionStatuses={questionStatuses}
             />
             <div className="flex items-center gap-2">
               <Button
@@ -132,13 +387,20 @@ export function AssignmentLayout({
               className="flex h-full flex-col bg-background"
             >
               <CodeEditor
-                code={code}
-                onChange={setCode}
+                code={currentCode}
+                onChange={(value) => {
+                  setCodeByQuestion((prev) => ({
+                    ...prev,
+                    [currentQuestion.id]: value,
+                  }));
+                }}
                 language={currentQuestion.language}
                 onRun={runCode}
                 onSubmit={submitCode}
                 isRunning={isRunning}
                 disableCopyPaste={assignment.copyPastePrevention}
+                draftStatusText={draftStatusText}
+                draftSyncState={draftSyncState}
               />
 
               <div className="border-t border-border grid grid-cols-2 h-[900px] overflow-hidden bg-background">
@@ -156,25 +418,13 @@ export function AssignmentLayout({
                   />
                 </div>
 
-                <div className="p-4 space-y-4">
-                  <h2 className="text-lg font-semibold">针对性练习推荐</h2>
-
-                  {recommendedExercises.length > 0 ? (
-                    <div className="bg-white dark:bg-zinc-900 p-3 rounded-lg border">
-                      <p className="text-sm">
-                        根据本次提交的错误，系统为你推荐以下练习：
-                      </p>
-                      <ul className="mt-2 list-disc list-inside text-sm space-y-1">
-                        {recommendedExercises.map((item) => (
-                          <li key={item.id}>{item.title}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : (
-                    <div className="bg-white dark:bg-zinc-900 p-3 rounded-lg border text-center text-gray-400 py-4">
-                      暂无推荐练习
-                    </div>
-                  )}
+                <div className="overflow-y-auto">
+                  <AIFeedbackPanel
+                    aiAnalysis={aiAnalysis}
+                    emotion={emotion}
+                    navigation={navigation}
+                    isRunning={isRunning}
+                  />
                 </div>
               </div>
             </motion.div>

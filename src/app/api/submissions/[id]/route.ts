@@ -3,6 +3,15 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { mapStatus } from "@/lib/utils";
 
+function buildBlockingErrorSummary(
+  symbolicErrors: { ruleId: string; message: string }[],
+) {
+  return symbolicErrors
+    .slice(0, 3)
+    .map((e) => `${e.ruleId}: ${e.message}`)
+    .join(" | ");
+}
+
 export async function GET(req: NextRequest, { params }: { params: any }) {
   try {
     const session = await auth();
@@ -23,14 +32,14 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
       },
       include: {
         submission: true,
-        testCaseResults: {
-          orderBy: {
-            createdAt: "asc",
-          },
-        },
+        testCaseResults: true,
         question: {
           include: {
-            testCases: true,
+            testCases: {
+              orderBy: {
+                id: "asc",
+              },
+            },
           },
         },
       },
@@ -48,8 +57,26 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
       testCaseMap.set(testCase.id, testCase);
     });
 
-    const results = submission.testCaseResults.map((result) => {
+    const testCaseOrderIndex = new Map<string, number>();
+    submission.question.testCases.forEach((testCase, index) => {
+      testCaseOrderIndex.set(testCase.id, index);
+    });
+
+    const orderedResults = [...submission.testCaseResults].sort((a, b) => {
+      const aIndex =
+        testCaseOrderIndex.get(a.testCaseId) ?? Number.MAX_SAFE_INTEGER;
+      const bIndex =
+        testCaseOrderIndex.get(b.testCaseId) ?? Number.MAX_SAFE_INTEGER;
+      return aIndex - bIndex;
+    });
+
+    let visibleCaseCounter = 0;
+    const results = orderedResults.map((result) => {
       const testCase = testCaseMap.get(result.testCaseId);
+      const hidden = testCase?.hidden || false;
+      const caseLabel = hidden
+        ? "Hidden Test Case"
+        : `Test Case ${++visibleCaseCounter}`;
 
       return {
         status: mapStatus(result.status),
@@ -59,7 +86,9 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
         error: result.errorMessage,
         input: testCase?.hidden ? null : testCase?.input,
         expectedOutput: testCase?.hidden ? null : testCase?.expectedOutput,
-        hidden: testCase?.hidden || false,
+        hidden,
+        caseLabel,
+        isCustom: false,
       };
     });
 
@@ -72,14 +101,39 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
       parsedFeedback = null;
     }
 
+    const isSymbolicBlockingBranch =
+      parsedFeedback?.evaluationTrace?.branch === "symbolic-error->code-agent";
+
+    const symbolicResults = isSymbolicBlockingBranch
+      ? [
+          {
+            caseLabel: "Symbolic Check",
+            isCustom: false,
+            input: "",
+            expectedOutput: null,
+            output: "",
+            error: buildBlockingErrorSummary(
+              parsedFeedback?.symbolic?.errors || [],
+            ),
+            status: "failed",
+            runtime: `${Math.round(parsedFeedback?.symbolic?.metadata?.parseTime || 0)}ms`,
+            memory: "N/A",
+            hidden: false,
+          },
+        ]
+      : results;
+
     return NextResponse.json({
       id: submission.id,
       status: submission.codeEvaluationStatus,
-      results,
+      results: symbolicResults,
       code: submission.code,
       language: submission.language,
       createdAt: submission.createdAt,
       questionId: submission.questionId,
+      score: submission.score,
+      testCaseScore: submission.testCaseScore,
+      metricScore: submission.metricScore,
       aiFeedback: parsedFeedback?.aiFeedback || null,
       navigation: parsedFeedback?.navigation || null,
       emotion: parsedFeedback?.emotion || null,

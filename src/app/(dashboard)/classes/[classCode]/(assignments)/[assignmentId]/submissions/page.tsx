@@ -47,9 +47,12 @@ export default async function SubmissionsPage({
 
   // Group submissions by question
   const submissionsByQuestion = assignment.questions.map((question) => {
-    const questionSubmissions = submissions.filter(
-      (s) => s.questionId === question.id,
-    );
+    const questionSubmissions = submissions
+      .filter((s) => s.questionId === question.id)
+      .sort(
+        (a, b) =>
+          new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime(),
+      );
     return {
       question,
       submissions: questionSubmissions,

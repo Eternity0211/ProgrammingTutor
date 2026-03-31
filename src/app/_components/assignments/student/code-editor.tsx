@@ -27,6 +27,8 @@ interface CodeEditorProps {
   onSubmit: () => void;
   isRunning: boolean;
   disableCopyPaste: boolean;
+  draftStatusText?: string;
+  draftSyncState?: "loading" | "saving" | "saved" | "error";
 }
 
 export function CodeEditor({
@@ -37,19 +39,40 @@ export function CodeEditor({
   onSubmit,
   isRunning,
   disableCopyPaste,
+  draftStatusText,
+  draftSyncState,
 }: CodeEditorProps) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const codeRef = useRef<string>(code);
+  const onChangeRef = useRef(onChange);
+  const syncingFromPropRef = useRef(true);
   const { theme } = useTheme();
   const [liveCode, setLiveCode] = useState(code);
 
   const debouncedCode = useDebounce(liveCode, 400);
 
   useEffect(() => {
-    if (debouncedCode !== code) {
-      onChange(debouncedCode);
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    syncingFromPropRef.current = true;
+    setLiveCode(code || "");
+    codeRef.current = code || "";
+  }, [code]);
+
+  useEffect(() => {
+    if (syncingFromPropRef.current) {
+      if (debouncedCode === code) {
+        syncingFromPropRef.current = false;
+      }
+      return;
     }
-  }, [debouncedCode, onChange]);
+
+    if (debouncedCode !== code) {
+      onChangeRef.current(debouncedCode);
+    }
+  }, [debouncedCode, code]);
 
   const handleEditorChange = (value: string | undefined) => {
     const updatedCode = value || "";
@@ -94,7 +117,20 @@ export function CodeEditor({
           </SelectContent>
         </Select>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          {draftStatusText ? (
+            <span
+              className={`text-xs ${
+                draftSyncState === "error"
+                  ? "text-red-500"
+                  : draftSyncState === "saved"
+                    ? "text-green-600"
+                    : "text-muted-foreground"
+              }`}
+            >
+              {draftStatusText}
+            </span>
+          ) : null}
           <Button
             variant="outline"
             onClick={onRun}

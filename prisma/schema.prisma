@@ -19,6 +19,7 @@ model User {
   role              Role               @default(STUDENT)
   classrooms        Classroom[]        @relation("FacultyClassrooms")
   evaluationMetrics EvaluationMetric[]
+  codeDrafts        CodeDraft[]
   submissions       Submission[]
   accounts          Account[]
   enrolledClasses   Classroom[]        @relation("StudentClasses")
@@ -75,6 +76,7 @@ model Assignment {
   testCaseWeight        Float              @default(60.0)
   classroom             Classroom          @relation(fields: [classroomId], references: [id], onDelete: Cascade)
   metrics               AssignmentMetric[]
+  codeDrafts            CodeDraft[]
   questions             Question[]
   submissions           Submission[]
 }
@@ -107,9 +109,28 @@ model Question {
   description    String
   language       String
   createdAt      DateTime         @default(now())
+  codeDrafts     CodeDraft[]
   codeSubmission CodeSubmission[]
   assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   testCases      TestCase[]
+}
+
+model CodeDraft {
+  id           String     @id @default(uuid())
+  studentId    String
+  assignmentId String
+  questionId   String
+  code         String
+  language     String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  student      User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  question     Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, assignmentId, questionId])
+  @@index([studentId, assignmentId])
+  @@index([questionId])
 }
 
 model TestCase {

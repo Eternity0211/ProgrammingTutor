@@ -1,15 +1,18 @@
 "use client";
 
-import { Check, Clock } from "lucide-react";
+import { AlertCircle, Check, Clock } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
 import { cn } from "@/lib/utils";
 import { Question } from "@/lib/types/assignment-tyes";
+
+type QuestionStatus = "idle" | "tests-passed" | "full";
 
 interface QuestionNavProps {
   questions: Question[];
   currentIndex: number;
   onSelect: (index: number) => void;
   completedQuestionIds?: string[];
+  questionStatuses?: Record<string, QuestionStatus>;
 }
 
 export function QuestionNav({
@@ -17,6 +20,7 @@ export function QuestionNav({
   currentIndex,
   onSelect,
   completedQuestionIds = [],
+  questionStatuses = {},
 }: QuestionNavProps) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -34,8 +38,11 @@ export function QuestionNav({
             {index + 1}
           </span>
           <span className="hidden sm:inline">{question.title}</span>
-          {completedQuestionIds.includes(question.id) ? (
+          {questionStatuses[question.id] === "full" ||
+          completedQuestionIds.includes(question.id) ? (
             <Check className="h-3.5 w-3.5 text-green-500" />
+          ) : questionStatuses[question.id] === "tests-passed" ? (
+            <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
           ) : (
             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
           )}

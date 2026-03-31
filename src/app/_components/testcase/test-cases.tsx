@@ -23,7 +23,7 @@ export function TestCases({ testCases, results }: TestCasesProps) {
   return (
     <div className="h-80 overflow-y-auto border-t border-border bg-background">
       <div className="sticky top-0 border-b border-border bg-background px-4 py-3">
-        <h3 className="text-sm font-medium text-white">Test Results</h3>
+        <h3 className="text-sm font-medium text-white">Results</h3>
       </div>
 
       <div className="divide-y divide-border">

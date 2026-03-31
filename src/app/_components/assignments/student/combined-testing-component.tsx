@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Check,
@@ -43,10 +43,16 @@ export function CombinedTesting({
   const [isCustomInputOpen, setIsCustomInputOpen] = useState(false);
   const filteredResults = results.filter((result) => !result.hidden);
 
+  useEffect(() => {
+    if (isRunning) {
+      setIsCustomInputOpen(false);
+    }
+  }, [isRunning]);
+
   return (
     <div className="h-80 overflow-y-auto border-t border-border bg-background">
       <div className="sticky top-0 border-b border-border bg-background px-4 py-3 flex justify-between items-center">
-        <h3 className="text-sm font-medium text-foreground">Test Results</h3>
+        <h3 className="text-sm font-medium text-foreground">Results</h3>
         <div className="flex space-x-2">
           <Button
             size="sm"
@@ -64,10 +70,7 @@ export function CombinedTesting({
             size="sm"
             variant="outline"
             className="bg-muted text-foreground hover:bg-muted/70 border-border"
-            onClick={() => {
-              setIsCustomInputOpen(false);
-              onRunCode();
-            }}
+            onClick={onRunCode}
             disabled={isRunning}
           >
             <Play className="h-4 w-4 mr-1" />

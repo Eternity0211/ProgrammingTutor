@@ -40,9 +40,13 @@ export interface SymbolicResult {
 }
 
 export interface AIFeedback {
-  causalAnalysis: string; // AI 因果分析反馈
-  suggestions: string[]; // 改进建议
-  confidence: number; // 置信度
+  branch?: string; // 评估分支：general-llm / code-review-agent
+  noCustomMetrics?: boolean; // 当前作业未配置自定义LLM评估指标
+  message?: string; // 无指标等场景下的提示信息
+  reviewSummary?: string; // 代码审查摘要
+  causalAnalysis?: string; // AI 因果分析反馈
+  suggestions?: string[]; // 改进建议
+  confidence?: number; // 置信度
 }
 
 export interface CodeSubmissionDetail {

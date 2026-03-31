@@ -1,0 +1,55 @@
+{
+  "learning_navigation": {
+    "weaknesses": ["基础语法与运算符", "代码规范与命名约定"],
+    "learning_path": [
+      {
+        "step": 1,
+        "topic": "C++基础语法与基本运算符",
+        "duration": "1-2小时",
+        "resources": [
+          "C++ Primer 第1章 开始",
+          "菜鸟教程 C++ 基本语法章节",
+          "W3Schools C++ Operators"
+        ]
+      },
+      {
+        "step": 2,
+        "topic": "C++输入输出（cout）与表达式",
+        "duration": "1小时",
+        "resources": [
+          "C++ Primer 第1.2节 初识输入输出",
+          "菜鸟教程 C++ 输入输出章节"
+        ]
+      },
+      {
+        "step": 3,
+        "topic": "代码规范与变量命名",
+        "duration": "30分钟",
+        "resources": [
+          "Google C++ Style Guide - Naming",
+          "C++ Core Guidelines NL.10: Use meaningful names"
+        ]
+      }
+    ],
+    "recommended_exercises": [
+      {
+        "id": "EX001",
+        "title": "修复语法错误与完成简单计算",
+        "difficulty": "入门",
+        "purpose": "巩固对基本运算符（+，-，*，/）的理解，练习正确书写输出语句，避免语法错误。"
+      },
+      {
+        "id": "EX002",
+        "title": "变量重命名与程序可读性改进",
+        "difficulty": "入门",
+        "purpose": "将使用单字母或无意义名称的变量（如a, b）改为具有描述性的名称，理解良好命名对代码可读性的重要性。"
+      },
+      {
+        "id": "EX003",
+        "title": "编写一个完整的简单计算器程序",
+        "difficulty": "初级",
+        "purpose": "综合运用正确的语法、运算符和具有描述性的变量名，实现一个能处理加、减、乘、除的用户交互程序。"
+      }
+    ]
+  }
+}
