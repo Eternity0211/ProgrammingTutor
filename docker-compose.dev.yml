@@ -41,7 +41,7 @@ services:
       judge0-server:
         condition: service_started
     # 开发容器启动时先应用 Prisma 迁移，避免 schema 与数据库不一致
-    command: sh -c "npx prisma migrate deploy && npm run dev"
+    command: sh -c "npx prisma generate && npx prisma migrate deploy && npm run dev"
     # 或者如果原Dockerfile已优化，也可用: command: npm start
 
   judge0-server:

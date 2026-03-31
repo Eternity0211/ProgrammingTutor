@@ -13,6 +13,42 @@ import {
 import { cookies } from "next/headers";
 import { judgeResult } from "@/lib/types/code-types";
 
+function getCodeSubmissionDisplayStatus(codeSubmission: {
+  codeEvaluationStatus: CodeEvaluationStatus;
+  testCaseResults: { status: TestCaseStatus }[];
+}): SubmissionStatus {
+  if (
+    codeSubmission.codeEvaluationStatus ===
+      CodeEvaluationStatus.TEST_CASES_EVALUATION_FAILED ||
+    codeSubmission.codeEvaluationStatus ===
+      CodeEvaluationStatus.LLM_EVALUATION_FAILED
+  ) {
+    return SubmissionStatus.FAILED;
+  }
+
+  if (
+    codeSubmission.codeEvaluationStatus !==
+    CodeEvaluationStatus.EVALUATION_COMPLETE
+  ) {
+    return SubmissionStatus.IN_PROGRESS;
+  }
+
+  const total = codeSubmission.testCaseResults.length;
+  const passed = codeSubmission.testCaseResults.filter(
+    (tc) => tc.status === TestCaseStatus.PASSED,
+  ).length;
+
+  if (total === 0 || passed === total) {
+    return SubmissionStatus.COMPLETED;
+  }
+
+  if (passed === 0) {
+    return SubmissionStatus.FAILED;
+  }
+
+  return SubmissionStatus.PARTIAL;
+}
+
 export async function processJudgeResultWebhook(
   testCaseId: string,
   codeSubmissionId: string,
@@ -230,7 +266,7 @@ export async function getSubmissions(assignmentId: string) {
         questionTitle: codeSubmission.question.title,
         code: codeSubmission.code,
         submittedAt: codeSubmission.createdAt,
-        status: submission.status,
+        status: getCodeSubmissionDisplayStatus(codeSubmission),
         score: codeSubmission.score,
         language: codeSubmission.question.language,
         testCaseResults: codeSubmission.testCaseResults,
@@ -288,6 +324,16 @@ export async function getSubmissionsById(codeSubmissionId: string) {
       parsedFeedback = null;
     }
 
+    const allTestCaseResults = codeSubmission.testCaseResults;
+    const totalTestCases = allTestCaseResults.length;
+    const passedTestCases = allTestCaseResults.filter(
+      (result) => result.status === "PASSED",
+    ).length;
+
+    const visibleTestCaseResults = allTestCaseResults.filter(
+      (result) => !result.testCase.hidden,
+    );
+
     const formattedSubmission = {
       id: codeSubmission.id,
       studentId: codeSubmission.submission.studentId,
@@ -295,10 +341,12 @@ export async function getSubmissionsById(codeSubmissionId: string) {
       questionTitle: codeSubmission.question.title,
       code: codeSubmission.code,
       submittedAt: codeSubmission.createdAt,
-      status: codeSubmission.submission.status,
+      status: getCodeSubmissionDisplayStatus(codeSubmission),
       score: codeSubmission.score,
       language: codeSubmission.question.language,
-      testCaseResults: codeSubmission.testCaseResults,
+      testCaseResults: visibleTestCaseResults,
+      totalTestCases,
+      passedTestCases,
       evaluationStatus:
         session.user.role === "FACULTY"
           ? codeSubmission.codeEvaluationStatus

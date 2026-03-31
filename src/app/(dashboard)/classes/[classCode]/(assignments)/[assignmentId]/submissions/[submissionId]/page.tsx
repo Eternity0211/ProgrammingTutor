@@ -97,10 +97,11 @@ import { SubmissionStatus, Prisma } from "@prisma/client";
 
 interface TestCaseResult {
   id: string;
-  status: "PASSED" | "FAILED" | "PENDING";
+  status: "PASSED" | "FAILED" | "PENDING" | "ERROR" | "TIMEOUT";
   testCase: {
     input: string;
     expectedOutput: string;
+    hidden?: boolean;
   };
   actualOutput: string | null;
   executionTime: number | null;
@@ -108,8 +109,13 @@ interface TestCaseResult {
 }
 
 interface AIFeedback {
-  causalAnalysis: string;
-  suggestions: string[];
+  branch?: string;
+  noCustomMetrics?: boolean;
+  message?: string;
+  reviewSummary?: string;
+  causalAnalysis?: string;
+  suggestions?: string[];
+  confidence?: number;
 }
 
 interface EmotionAnalysis {
@@ -135,6 +141,8 @@ interface FormattedSubmission {
   score: number;
   language: string;
   testCaseResults: TestCaseResult[];
+  totalTestCases?: number;
+  passedTestCases?: number;
   evaluationStatus?: string;
   aiFeedback: Prisma.JsonValue | null;
   emotion: Prisma.JsonValue | null;
@@ -157,6 +165,8 @@ interface Submission {
   score: number;
   language: Language;
   testCaseResults: TestCaseResult[];
+  totalTestCases: number;
+  passedTestCases: number;
   aiFeedback?: AIFeedback;
   emotion?: EmotionAnalysis;
   recommendedQuestions?: RecommendedQuestion[];
@@ -210,6 +220,15 @@ export default async function SubmissionDetailPage({
       // 转换语言字段到 Language 类型
       language: rawSubmission.language as Language,
       testCaseResults: rawSubmission.testCaseResults,
+      totalTestCases:
+        typeof rawSubmission.totalTestCases === "number"
+          ? rawSubmission.totalTestCases
+          : rawSubmission.testCaseResults.length,
+      passedTestCases:
+        typeof rawSubmission.passedTestCases === "number"
+          ? rawSubmission.passedTestCases
+          : rawSubmission.testCaseResults.filter((tc) => tc.status === "PASSED")
+              .length,
       // 关键：用 unknown 中转，解决 JsonValue 到自定义类型的转换报错
       aiFeedback: rawSubmission.aiFeedback
         ? (rawSubmission.aiFeedback as unknown as AIFeedback)
@@ -222,10 +241,8 @@ export default async function SubmissionDetailPage({
         : undefined,
     };
 
-    const totalTestCases = submission.testCaseResults.length;
-    const passedTestCases = submission.testCaseResults.filter(
-      (tc) => tc.status === "PASSED",
-    ).length;
+    const totalTestCases = submission.totalTestCases;
+    const passedTestCases = submission.passedTestCases;
     const passRate =
       totalTestCases > 0 ? (passedTestCases / totalTestCases) * 100 : 0;
 
@@ -273,11 +290,14 @@ export default async function SubmissionDetailPage({
 
             <Card className="mt-6 rounded-2xl border-border">
               <CardHeader>
-                <CardTitle>Test Results</CardTitle>
+                <CardTitle>Results</CardTitle>
                 <CardDescription>
                   {passedTestCases} of {totalTestCases} test cases passed (
                   {Math.round(passRate)}%)
                 </CardDescription>
+                <p className="text-xs text-muted-foreground">
+                  仅展示可见样例详情，隐藏样例不在此列表中。
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -295,6 +315,9 @@ export default async function SubmissionDetailPage({
                                 "bg-status-passed text-status-passed-foreground",
                               result.status === "FAILED" &&
                                 "bg-destructive/10 text-destructive",
+                              (result.status === "ERROR" ||
+                                result.status === "TIMEOUT") &&
+                                "bg-destructive/10 text-destructive",
                               result.status === "PENDING" &&
                                 "bg-status-pending text-status-pending-foreground",
                             )}
@@ -303,6 +326,10 @@ export default async function SubmissionDetailPage({
                               <CheckCircle2 className="h-4 w-4" />
                             )}
                             {result.status === "FAILED" && (
+                              <XCircle className="h-4 w-4" />
+                            )}
+                            {(result.status === "ERROR" ||
+                              result.status === "TIMEOUT") && (
                               <XCircle className="h-4 w-4" />
                             )}
                             {result.status === "PENDING" && (
@@ -318,6 +345,9 @@ export default async function SubmissionDetailPage({
                             result.status === "PASSED" &&
                               "bg-status-passed text-status-passed-foreground",
                             result.status === "FAILED" &&
+                              "bg-destructive hover:bg-destructive/90",
+                            (result.status === "ERROR" ||
+                              result.status === "TIMEOUT") &&
                               "bg-destructive hover:bg-destructive/90",
                             result.status === "PENDING" &&
                               "bg-status-pending text-status-pending-foreground",
@@ -502,15 +532,31 @@ export default async function SubmissionDetailPage({
                 {/* 神经符号标记 */}
                 {(submission as any).aiFeedback && (
                   <div className="pt-3 border-t">
-                    <div className="flex items-center gap-2 text-purple-600 mb-1">
-                      <BrainCircuit className="h-4 w-4" />
-                      <span className="text-xs font-bold">
-                        AI Analysis Completed
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      代码已通过神经符号引擎完成深度因果评估
-                    </p>
+                    {(submission as any).aiFeedback.noCustomMetrics ? (
+                      <>
+                        <div className="flex items-center gap-2 text-amber-600 mb-1">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span className="text-xs font-bold">
+                            AI Analysis Skipped
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          本题未配置自定义指标，已跳过深度分析。
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-2 text-purple-600 mb-1">
+                          <BrainCircuit className="h-4 w-4" />
+                          <span className="text-xs font-bold">
+                            AI Analysis Completed
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          代码已通过神经符号引擎完成深度因果评估
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
 

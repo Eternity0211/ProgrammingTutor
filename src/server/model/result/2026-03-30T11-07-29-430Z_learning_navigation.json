@@ -1,0 +1,51 @@
+{
+  "learning_navigation": {
+    "weaknesses": ["基础语法与运算符", "代码规范与命名约定"],
+    "learning_path": [
+      {
+        "step": 1,
+        "topic": "C++基础语法：变量、数据类型与基本运算符",
+        "duration": "2小时",
+        "resources": [
+          "C++ Primer 第2章：变量和基本类型",
+          "菜鸟教程 C++ 基本语法章节"
+        ]
+      },
+      {
+        "step": 2,
+        "topic": "C++表达式与运算符优先级",
+        "duration": "1.5小时",
+        "resources": ["C++ Primer 第4章：表达式", "菜鸟教程 C++ 运算符章节"]
+      },
+      {
+        "step": 3,
+        "topic": "C++代码规范与命名约定",
+        "duration": "1小时",
+        "resources": [
+          "Google C++ Style Guide - 命名约定部分",
+          "C++ Core Guidelines - NL章节"
+        ]
+      }
+    ],
+    "recommended_exercises": [
+      {
+        "id": "EX001",
+        "title": "基础运算符练习：修复缺失运算符的错误",
+        "difficulty": "入门",
+        "purpose": "训练识别和修复基础语法错误的能力，理解运算符在表达式中的作用"
+      },
+      {
+        "id": "EX002",
+        "title": "变量命名重构：将通用名称改为有意义的名称",
+        "difficulty": "入门",
+        "purpose": "培养良好的命名习惯，理解描述性变量名对代码可读性的重要性"
+      },
+      {
+        "id": "EX003",
+        "title": "综合练习：编写一个简单的两数运算程序",
+        "difficulty": "初级",
+        "purpose": "综合运用变量定义、运算符使用和规范命名，完成一个完整的小程序"
+      }
+    ]
+  }
+}

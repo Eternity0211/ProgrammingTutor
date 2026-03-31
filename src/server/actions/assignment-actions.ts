@@ -282,14 +282,33 @@ export const getAssignmentById = async (assignmentId: string) => {
   if (!session?.user) {
     throw new Error("Unauthorized");
   }
+  const userId = session.user.id;
   try {
     const assignment = await prisma.assignment.findUnique({
       where: { id: assignmentId },
       include: {
         questions: {
           include: {
-            testCases: true,
-            codeSubmission: true,
+            testCases: {
+              orderBy: {
+                id: "asc",
+              },
+            },
+            codeSubmission: {
+              where: {
+                submission: {
+                  studentId: userId,
+                },
+              },
+              orderBy: {
+                createdAt: "desc",
+              },
+              select: {
+                score: true,
+                testCaseScore: true,
+                codeEvaluationStatus: true,
+              },
+            },
           },
         },
         submissions: {
@@ -304,6 +323,36 @@ export const getAssignmentById = async (assignmentId: string) => {
       return { status: "error", message: "Assignment not found" };
     }
 
+    const persistedQuestionStatuses = assignment.questions.reduce<
+      Record<string, "idle" | "tests-passed" | "full">
+    >((acc, question) => {
+      const evaluatedSubmissions = question.codeSubmission.filter(
+        (submission) =>
+          submission.codeEvaluationStatus === "EVALUATION_COMPLETE",
+      );
+
+      const bestSubmission = evaluatedSubmissions.sort(
+        (a, b) => (b.score || 0) - (a.score || 0),
+      )[0];
+
+      if (!bestSubmission) {
+        acc[question.id] = "idle";
+        return acc;
+      }
+
+      const fullScore = Number(bestSubmission.score || 0) >= 99.99;
+      const testsPassedButNotFull =
+        Number(bestSubmission.testCaseScore || 0) >= 99.99 && !fullScore;
+
+      acc[question.id] = fullScore
+        ? "full"
+        : testsPassedButNotFull
+          ? "tests-passed"
+          : "idle";
+
+      return acc;
+    }, {});
+
     const formattedAssignment = {
       id: assignment.id,
       title: assignment.title,
@@ -316,6 +365,7 @@ export const getAssignmentById = async (assignmentId: string) => {
       ),
       createdAt: new Date(assignment.createdAt),
       questions: assignment.questions,
+      persistedQuestionStatuses,
       copyPastePrevention: assignment.copyPastePrevention,
       fullScreenEnforcement: assignment.fullScreenEnforcement,
     };

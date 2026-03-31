@@ -82,6 +82,15 @@ function buildEmotionInputText(parts: string[]): string {
   return parts.filter(Boolean).join("\n\n");
 }
 
+function buildBlockingErrorSummary(
+  symbolicErrors: { ruleId: string; message: string }[],
+) {
+  return symbolicErrors
+    .slice(0, 3)
+    .map((e) => `${e.ruleId}: ${e.message}`)
+    .join(" | ");
+}
+
 export async function evaluateSubmissionInsidePlatform(
   codeSubmissionId: string,
 ) {
@@ -118,32 +127,14 @@ export async function evaluateSubmissionInsidePlatform(
   const blocking = hasSymbolicBlockingIssues(symbolic.errors);
 
   const testErrorSummary = blocking
-    ? symbolic.errors
-        .slice(0, 3)
-        .map((e) => `${e.ruleId}: ${e.message}`)
-        .join(" | ")
+    ? buildBlockingErrorSummary(symbolic.errors)
     : null;
 
   let testCaseScore = 0;
   if (blocking) {
-    await Promise.all(
-      codeSubmission.question.testCases.map((testCase) =>
-        prisma.testCaseResult.update({
-          where: {
-            codeSubmissionId_testCaseId: {
-              codeSubmissionId,
-              testCaseId: testCase.id,
-            },
-          },
-          data: {
-            status: TestCaseStatus.FAILED,
-            actualOutput: null,
-            executionTime: Math.round(symbolic.metadata?.parseTime || 0),
-            errorMessage: testErrorSummary,
-          },
-        }),
-      ),
-    );
+    // Keep test case rows untouched for blocking syntax issues.
+    // Frontend will render a single symbolic failure result, same as Run.
+    testCaseScore = 0;
   } else {
     const mappedLanguageId =
       LANGUAGE_ID_MAP[codeSubmission.language as keyof typeof LANGUAGE_ID_MAP];
@@ -318,12 +309,9 @@ export async function evaluateSubmissionInsidePlatform(
     } else {
       aiFeedback = {
         branch: "general-llm",
-        causalAnalysis:
-          "Symbolic checks passed. No custom rubric metrics were configured for this assignment.",
-        suggestions: [
-          "Add assignment metrics for richer AI evaluation signals.",
-        ],
-        confidence: 0.7,
+        noCustomMetrics: true,
+        message:
+          "No custom rubric metrics were configured for this assignment.",
       };
       score = testCaseScore;
     }
@@ -342,7 +330,13 @@ export async function evaluateSubmissionInsidePlatform(
     const concepts = [...symbolic.errors, ...symbolic.warnings]
       .map((issue) => issue.knowledge_concept)
       .filter(Boolean);
-    const knowledgeContext = await getAggregatedKnowledgeContext(concepts);
+    let knowledgeContext: any = null;
+    try {
+      knowledgeContext = await getAggregatedKnowledgeContext(concepts);
+    } catch (error) {
+      console.error("Failed to get knowledge context:", error);
+      knowledgeContext = {};
+    }
 
     navigation = await generateLearningNavigation({
       codeReviewResult: `${codeReviewResult.reviewSummary}\n${codeReviewResult.causalAnalysis}`,

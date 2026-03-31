@@ -40,6 +40,7 @@ export interface Assignment {
 
 export interface AssignmentById extends Assignment {
   questions: Question[];
+  persistedQuestionStatuses?: Record<string, "idle" | "tests-passed" | "full">;
 }
 
 // Grading Table Header Types

@@ -11,6 +11,15 @@ interface useCodeRunnerParams {
   questionId: string;
   input?: string;
 }
+
+export type QuestionSubmitState = "idle" | "tests-passed" | "full";
+
+interface SubmissionSummary {
+  questionId: string;
+  score: number;
+  testCaseScore: number;
+}
+
 export function useCodeRunner({
   code,
   language,
@@ -26,6 +35,8 @@ export function useCodeRunner({
     null,
   );
   const [emotion, setEmotion] = useState<EmotionAnalysisResult | null>(null);
+  const [lastSubmissionSummary, setLastSubmissionSummary] =
+    useState<SubmissionSummary | null>(null);
 
   const runCode = async () => {
     if (isRunning) {
@@ -160,14 +171,17 @@ export function useCodeRunner({
         const submissionData = await response.json();
 
         const mappedResults = submissionData.results.map(
-          (result: CodeRunner) => ({
+          (result: CodeRunner & Record<string, unknown>) => ({
             input: result.input,
             status: result.status,
             runtime: result.runtime,
             memory: result.memory,
             output: result.output,
             error: result.error,
-            hidden: result.hidden,
+            hidden: Boolean(result.hidden),
+            expectedOutput: (result.expectedOutput as string | null) ?? null,
+            caseLabel: (result.caseLabel as string) || "Test Case",
+            isCustom: Boolean(result.isCustom),
           }),
         );
 
@@ -180,11 +194,23 @@ export function useCodeRunner({
         ) {
           completed = true;
 
-          if (submissionData.status === "EVALUATION_COMPLETE") {
-            setAiAnalysis(submissionData.aiFeedback);
-            setNavigation(submissionData.navigation);
-            setEmotion(submissionData.emotion);
+          // Check if all tests passed by examining test results
+          const hasFailedTests = mappedResults.some(
+            (result: any) => result.status !== "passed",
+          );
+          const allTestsPassed =
+            submissionData.status === "EVALUATION_COMPLETE" && !hasFailedTests;
 
+          setAiAnalysis(submissionData.aiFeedback);
+          setNavigation(submissionData.navigation);
+          setEmotion(submissionData.emotion);
+          setLastSubmissionSummary({
+            questionId: submissionData.questionId,
+            score: Number(submissionData.score || 0),
+            testCaseScore: Number(submissionData.testCaseScore || 0),
+          });
+
+          if (allTestsPassed) {
             setCodeStatus("All tests passed successfully!");
             toast.success("Your solution passed all test cases");
           } else {
@@ -217,6 +243,7 @@ export function useCodeRunner({
     aiAnalysis,
     navigation,
     emotion,
+    lastSubmissionSummary,
     runCode,
     submitCode,
   };

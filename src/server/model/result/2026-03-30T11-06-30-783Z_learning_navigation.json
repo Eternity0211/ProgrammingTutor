@@ -1,0 +1,48 @@
+{
+  "learning_navigation": {
+    "weaknesses": ["基础语法", "命名规范"],
+    "learning_path": [
+      {
+        "step": 1,
+        "topic": "C++基础语法与运算符",
+        "duration": "2小时",
+        "resources": ["C++ Primer 第1-4章", "菜鸟教程 C++ 基础语法"]
+      },
+      {
+        "step": 2,
+        "topic": "C++编译过程与常见编译错误",
+        "duration": "1小时",
+        "resources": ["《C++编程思想》第1章", "GCC/G++ 编译错误信息解读"]
+      },
+      {
+        "step": 3,
+        "topic": "代码规范与命名约定",
+        "duration": "1小时",
+        "resources": [
+          "Google C++ Style Guide (命名规范部分)",
+          "《代码整洁之道》第2章"
+        ]
+      }
+    ],
+    "recommended_exercises": [
+      {
+        "id": "EX001",
+        "title": "基础运算符使用练习",
+        "difficulty": "入门",
+        "purpose": "掌握基本运算符（+、-、*、/等）的正确使用，避免语法错误"
+      },
+      {
+        "id": "EX002",
+        "title": "变量声明与命名规范练习",
+        "difficulty": "入门",
+        "purpose": "练习使用有意义的变量名，培养良好的命名习惯"
+      },
+      {
+        "id": "EX003",
+        "title": "编译错误调试练习",
+        "difficulty": "初级",
+        "purpose": "根据编译错误信息定位并修复代码中的语法错误"
+      }
+    ]
+  }
+}

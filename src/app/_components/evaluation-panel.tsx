@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Activity, Lightbulb, MessageSquare } from "lucide-react";
+import { Activity, Lightbulb } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -10,27 +9,22 @@ import {
   CardDescription,
 } from "@/app/_components/ui/card";
 import { Badge } from "@/app/_components/ui/badge";
-import { Button } from "@/app/_components/ui/button";
+
+function formatConfidence(value: number | undefined) {
+  if (typeof value !== "number" || Number.isNaN(value)) return null;
+  return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`;
+}
 
 export function EvaluationPanel({ submission }: { submission: any }) {
-  const [followUpQuestion, setFollowUpQuestion] = useState("");
-  const [isAsking, setIsAsking] = useState(false);
-  const [followUpAnswer, setFollowUpAnswer] = useState<string | null>(null);
-
-  const handleFollowUpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!followUpQuestion.trim()) return;
-
-    setIsAsking(true);
-    // 模拟调用 codeAgent 接口
-    setTimeout(() => {
-      setFollowUpAnswer(
-        `针对你的问题「${followUpQuestion}」：${submission.aiFeedback?.causalAnalysis || "分析完成"}`,
-      );
-      setIsAsking(false);
-      setFollowUpQuestion("");
-    }, 1500);
-  };
+  const noCustomMetrics = Boolean(submission.aiFeedback?.noCustomMetrics);
+  const branch = submission.aiFeedback?.branch;
+  const branchLabel =
+    branch === "code-review-agent"
+      ? "深度审查模式（Code Review Agent）"
+      : "通用评估模式（General LLM）";
+  const confidenceText = noCustomMetrics
+    ? null
+    : formatConfidence(submission.aiFeedback?.confidence);
 
   return (
     <Card className="mt-6 rounded-2xl border-border border-purple-200">
@@ -44,41 +38,56 @@ export function EvaluationPanel({ submission }: { submission: any }) {
       <CardContent className="pt-4 space-y-4">
         {submission.aiFeedback ? (
           <>
+            <div className="rounded-lg border border-sky-200 bg-sky-50/70 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-sky-700">评估分支</p>
+                <Badge className="bg-sky-100 text-sky-800 border-none">
+                  {branchLabel}
+                </Badge>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <h4 className="text-sm font-semibold flex items-center gap-2">
                 <Lightbulb className="h-4 w-4 text-amber-500" /> 逻辑缺陷诊断
               </h4>
-              <p className="text-sm leading-relaxed p-3 bg-muted/50 rounded-lg">
-                {submission.aiFeedback.causalAnalysis ||
-                  "未检测到明显逻辑缺陷。"}
-              </p>
-            </div>
-
-            <div className="space-y-2 pt-3 border-t">
-              <h4 className="text-sm font-semibold flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-blue-500" />{" "}
-                对分析结果追问
-              </h4>
-              <form onSubmit={handleFollowUpSubmit} className="space-y-2">
-                <input
-                  type="text"
-                  value={followUpQuestion}
-                  onChange={(e) => setFollowUpQuestion(e.target.value)}
-                  placeholder="例如：为什么这个循环会越界？"
-                  className="w-full rounded-md border border-border bg-background p-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-400"
-                  disabled={isAsking}
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isAsking || !followUpQuestion.trim()}
-                >
-                  {isAsking ? "追问中..." : "提交追问"}
-                </Button>
-              </form>
-              {followUpAnswer && (
-                <div className="mt-2 p-3 bg-blue-50/30 rounded-lg text-sm border border-blue-100">
-                  <p className="text-blue-800">{followUpAnswer}</p>
+              {noCustomMetrics ? (
+                <p className="text-sm leading-relaxed p-3 bg-muted/50 rounded-lg text-muted-foreground">
+                  {submission.aiFeedback?.message ||
+                    "本题未配置自定义指标，暂不展示深度分析结果。"}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {submission.aiFeedback?.reviewSummary && (
+                    <p className="text-sm leading-relaxed p-3 bg-purple-50/50 rounded-lg border border-purple-100">
+                      {submission.aiFeedback.reviewSummary}
+                    </p>
+                  )}
+                  {submission.aiFeedback?.causalAnalysis && (
+                    <p className="text-sm leading-relaxed p-3 bg-muted/50 rounded-lg">
+                      {submission.aiFeedback.causalAnalysis}
+                    </p>
+                  )}
+                  {confidenceText && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        分析置信度
+                      </span>
+                      <Badge variant="secondary">{confidenceText}</Badge>
+                    </div>
+                  )}
+                  {Array.isArray(submission.aiFeedback?.suggestions) &&
+                    submission.aiFeedback.suggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {submission.aiFeedback.suggestions.map(
+                          (item: string, idx: number) => (
+                            <Badge key={idx} variant="secondary">
+                              # {item}
+                            </Badge>
+                          ),
+                        )}
+                      </div>
+                    )}
                 </div>
               )}
             </div>
