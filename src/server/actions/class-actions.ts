@@ -67,6 +67,7 @@ export const getUserClasses = async () => {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
+        id: true,
         classrooms:
           role === "FACULTY"
             ? {

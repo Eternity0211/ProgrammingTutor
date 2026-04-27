@@ -533,3 +533,36 @@ export async function getStudentFeedbackHistory() {
     };
   });
 }
+
+const skillTopicMap = {
+  "指针/引用": "pointer",
+  "内存管理": "memory",
+  "STL容器": "stl",
+  "面向对象": "oop",
+  "递归算法": "recursion",
+  "异常处理": "exception",
+} as const;
+
+export async function getWeakQuestionsFromDB(weakTopics: string[]) {
+  const targetTopics = weakTopics
+    .map((t) => skillTopicMap[t as keyof typeof skillTopicMap])
+    .filter(Boolean);
+
+  if (targetTopics.length === 0) return [];
+
+  const questions = await prisma.question.findMany({
+    where: {
+      skillTopic: { in: targetTopics },
+    },
+    take: 2,
+    select: {
+      id: true,
+      title: true,
+      difficulty: true,
+      classCode: true,
+      assignmentId: true,
+    },
+  });
+
+  return questions;
+}

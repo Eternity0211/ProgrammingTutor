@@ -1,6 +1,5 @@
 import { AssignmentMetric, EvaluationMetric } from "@prisma/client";
-import { groq } from "@ai-sdk/groq";
-import { generateText } from "ai";
+import OpenAI from "openai";
 
 interface CodeEvaluationRequest {
   code: string;
@@ -19,6 +18,20 @@ interface MetricEvaluationResult {
 
 interface CodeEvaluationResponse {
   evaluations: MetricEvaluationResult[];
+}
+
+/**
+ * 获取阿里云百炼客户端 (兼容 OpenAI 接口)
+ */
+function getDashScopeClient(): OpenAI {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  if (!apiKey) {
+    throw new Error("Missing DASHSCOPE_API_KEY. Please set the environment variable.");
+  }
+  return new OpenAI({
+    apiKey: apiKey.trim().replace(/^['\"]|['\"]$/g, ""),
+    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  });
 }
 
 export function buildCodeEvaluationPrompt(
@@ -56,13 +69,6 @@ ${metricsSection}
 4. Be objective and consistent in your evaluation
 5. Consider the programming language and context
 
-**SCORING GUIDELINES:**
-- 90-100: Excellent - Demonstrates best practices, clear logic, well-structured
-- 80-89: Good - Solid implementation with minor issues
-- 70-79: Satisfactory - Works but has noticeable problems
-- 60-69: Needs Improvement - Functional but significant issues
-- 0-59: Poor - Major problems or doesn't meet requirements
-
 **RESPONSE FORMAT:**
 Return ONLY a valid JSON object with this exact structure:
 {
@@ -76,15 +82,8 @@ Return ONLY a valid JSON object with this exact structure:
   ]
 }
 
-**IMPORTANT:** Use the exact metric ID values shown above (e.g., "uuid-123-456") - do not make up new IDs.
-
-**CRITICAL:**
-- Return ONLY the JSON object, no additional text
-- Ensure all scores are integers between 0-100
-- Keep feedback concise (1-2 sentences maximum)
-- Use proper JSON formatting with double quotes
-
-Evaluate the code now:`;
+**IMPORTANT:** Use the exact metric ID values shown above - do not make up new IDs.
+**CRITICAL:** Return ONLY the JSON object. Ensure all scores are integers between 0-100.`;
 }
 
 export async function evaluateCodeWithLLM(
@@ -102,10 +101,7 @@ export async function evaluateCodeWithLLM(
     );
   }
 
-  if (request.metrics.length === 0) {
-    throw new Error("No metrics provided for evaluation");
-  }
-
+  const client = getDashScopeClient();
   const maxRetries = 3;
   let lastError: Error | null = null;
 
@@ -113,21 +109,21 @@ export async function evaluateCodeWithLLM(
     try {
       const prompt = buildCodeEvaluationPrompt(request);
 
-      const { text } = await generateText({
-        model: groq("llama-3.3-70b-versatile"),
-        prompt: prompt,
+      const completion = await client.chat.completions.create({
+        model: "deepseek-v3.2", // 统一使用技术文档要求的模型
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" }, // 强制 JSON 输出
         temperature: 0.3,
       });
 
-      const cleanedText = text.trim();
-      const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
+      const answerContent = completion.choices[0]?.message?.content;
+      if (!answerContent) throw new Error("API returned empty content");
 
       let response;
       try {
-        response = JSON.parse(jsonText);
+        response = JSON.parse(answerContent);
       } catch (parseError) {
-        console.error("Failed to parse LLM response as JSON:", jsonText);
+        console.error("Failed to parse LLM response as JSON:", answerContent);
         throw new Error("LLM returned invalid JSON format");
       }
 
@@ -141,19 +137,16 @@ export async function evaluateCodeWithLLM(
       lastError = error as Error;
       console.error(`LLM evaluation attempt ${attempt} failed:`, error);
 
-      // Don't retry on validation errors (these won't be fixed by retrying)
       if (
         error instanceof Error &&
         (error.message.includes("Invalid evaluation response format") ||
-          error.message.includes("LLM returned invalid JSON format") ||
-          error.message.includes("Missing required fields"))
+          error.message.includes("LLM returned invalid JSON format"))
       ) {
         throw error;
       }
 
       if (attempt < maxRetries) {
-        // maybe also that feedback loop to llm so the llm can improve its response
-        const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
+        const delay = Math.pow(2, attempt) * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }

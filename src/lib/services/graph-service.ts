@@ -1,7 +1,17 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
-import { groq } from "@ai-sdk/groq";
-import { generateText } from "ai";
+import OpenAI from "openai";
 import { getNeo4jSession } from "@/lib/neo4j";
+
+function getDashScopeClient(): OpenAI {
+  const apiKey = process.env.DASHSCOPE_API_KEY; //
+  if (!apiKey) {
+    throw new Error("Missing DASHSCOPE_API_KEY environment variable.");
+  }
+  return new OpenAI({
+    apiKey: apiKey.trim().replace(/^['\"]|['\"]$/g, ""),
+    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", //
+  });
+}
 
 export function buildTestCaseGenerationPrompt(
   title: string,
@@ -138,21 +148,52 @@ export async function getAggregatedKnowledgeContext(
   return traces.filter((t): t is KnowledgeTrace => t !== null);
 }
 
+// export async function generateTestCases(prompt: string) {
+//   try {
+//     const { text } = await generateText({
+//       model: groq("llama-3.3-70b-versatile"),
+//       prompt: prompt,
+//       temperature: 0.3,
+//     });
+
+//     const cleanedText = text.trim();
+//     const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+//     const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
+//     const testCases: Omit<TestCase, "id">[] = JSON.parse(jsonText);
+//     return testCases;
+//   } catch (error) {
+//     console.error("Error calling LLM:", error);
+//     throw new Error("Failed to generate test cases");
+//   }
+// }
+
 export async function generateTestCases(prompt: string) {
   try {
-    const { text } = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
-      prompt: prompt,
+    const client = getDashScopeClient();
+
+    // 使用 DeepSeek-V3 模型并强制 JSON 输出
+    const completion = await client.chat.completions.create({
+      model: "deepseek-v3.2", //
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }, //
       temperature: 0.3,
     });
 
-    const cleanedText = text.trim();
-    const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
-    const testCases: Omit<TestCase, "id">[] = JSON.parse(jsonText);
+    const answerContent = completion.choices[0]?.message?.content;
+    if (!answerContent) {
+      throw new Error("API returned empty content");
+    }
+
+    const parsed = JSON.parse(answerContent);
+    
+    // 兼容数组或对象结构的返回
+    const testCases: Omit<TestCase, "id">[] = Array.isArray(parsed) 
+      ? parsed 
+      : (parsed.testCases || []);
+      
     return testCases;
   } catch (error) {
-    console.error("Error calling LLM:", error);
-    throw new Error("Failed to generate test cases");
+    console.error("❌ DashScope API Error:", error);
+    throw new Error("Failed to generate test cases via DashScope API");
   }
 }

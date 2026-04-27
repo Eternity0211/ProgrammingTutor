@@ -113,6 +113,9 @@ model Question {
   codeSubmission CodeSubmission[]
   assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   testCases      TestCase[]
+  classCode      String?
+  skillTopic     String?
+  difficulty     String?
 }
 
 model CodeDraft {
@@ -232,6 +235,17 @@ model TestCaseResult {
   testCase         TestCase       @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
 
   @@unique([codeSubmissionId, testCaseId])
+}
+
+model Challenge {
+  id          String   @id @default(uuid())
+  slug        String   @unique // 用于URL跳转，比如 "use-after-free-repair"
+  title       String
+  description String
+  purpose     String
+  difficulty  String // 入门/初级/中级/高级
+  topic       String // 对应维度：内存管理/STL容器...
+  createdAt   DateTime @default(now())
 }
 
 enum Role {

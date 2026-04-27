@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { createGroq } from "@ai-sdk/groq";
-import { generateText } from "ai";
+import OpenAI from "openai";
 import { SymbolicResult } from "@/lib/types/symbolic-types";
 
 export interface CodeReviewAgentInput {
@@ -22,17 +21,28 @@ export interface CodeReviewAgentResult {
   reviewSummary: string;
 }
 
-function getGroqApiKey(): string {
-  const rawApiKey = process.env.GROQ_API_KEY ?? process.env.AI_GROQ_API_KEY;
-  const apiKey = rawApiKey?.trim().replace(/^['\"]|['\"]$/g, "");
+// function getGroqApiKey(): string {
+//   const rawApiKey = process.env.GROQ_API_KEY ?? process.env.AI_GROQ_API_KEY;
+//   const apiKey = rawApiKey?.trim().replace(/^['\"]|['\"]$/g, "");
 
-  if (!apiKey || apiKey === "your-groq-api-key") {
-    throw new Error(
-      "AI service is not configured. Please set a valid GROQ_API_KEY.",
-    );
+//   if (!apiKey || apiKey === "your-groq-api-key") {
+//     throw new Error(
+//       "AI service is not configured. Please set a valid GROQ_API_KEY.",
+//     );
+//   }
+
+//   return apiKey;
+// }
+
+function getDashScopeClient(): OpenAI {
+  const apiKey = process.env.DASHSCOPE_API_KEY; //
+  if (!apiKey) {
+    throw new Error("Missing DASHSCOPE_API_KEY. Please set the environment variable.");
   }
-
-  return apiKey;
+  return new OpenAI({
+    apiKey: apiKey.trim().replace(/^['\"]|['\"]$/g, ""),
+    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", //
+  });
 }
 
 function loadNeuralMetadataContext(): string {
@@ -98,48 +108,84 @@ Rules:
 - emphasize time complexity when loops or nested loops appear`;
 }
 
+// export async function runCodeReviewAgent(
+//   input: CodeReviewAgentInput,
+// ): Promise<CodeReviewAgentResult> {
+//   const groq = createGroq({ apiKey: getGroqApiKey() });
+//   const prompt = buildCodeReviewPrompt(input);
+
+//   const { text } = await generateText({
+//     model: groq("llama-3.3-70b-versatile"),
+//     prompt,
+//     temperature: 0.2,
+//   });
+
+//   const cleanedText = text.trim();
+//   const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+//   const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
+
+//   let parsed: Partial<CodeReviewAgentResult> = {};
+//   try {
+//     parsed = JSON.parse(jsonText);
+//   } catch {
+//     parsed = {
+//       reviewSummary: "Code review generated in fallback mode.",
+//       causalAnalysis: cleanedText,
+//       suggestions: [
+//         "Address symbolic critical/high issues first.",
+//         "Refactor deeply nested logic and review time complexity.",
+//       ],
+//       confidence: 0.55,
+//     };
+//   }
+
+//   return {
+//     reviewSummary: parsed.reviewSummary || "Code review completed.",
+//     causalAnalysis:
+//       parsed.causalAnalysis || "No causal analysis was generated.",
+//     suggestions:
+//       parsed.suggestions && parsed.suggestions.length > 0
+//         ? parsed.suggestions
+//         : ["No specific suggestions returned by model."],
+//     confidence:
+//       typeof parsed.confidence === "number"
+//         ? Math.max(0, Math.min(1, parsed.confidence))
+//         : 0.5,
+//   };
+// }
+
 export async function runCodeReviewAgent(
   input: CodeReviewAgentInput,
 ): Promise<CodeReviewAgentResult> {
-  const groq = createGroq({ apiKey: getGroqApiKey() });
-  const prompt = buildCodeReviewPrompt(input);
-
-  const { text } = await generateText({
-    model: groq("llama-3.3-70b-versatile"),
-    prompt,
-    temperature: 0.2,
-  });
-
-  const cleanedText = text.trim();
-  const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
-
-  let parsed: Partial<CodeReviewAgentResult> = {};
   try {
-    parsed = JSON.parse(jsonText);
-  } catch {
-    parsed = {
-      reviewSummary: "Code review generated in fallback mode.",
-      causalAnalysis: cleanedText,
-      suggestions: [
-        "Address symbolic critical/high issues first.",
-        "Refactor deeply nested logic and review time complexity.",
-      ],
-      confidence: 0.55,
+    const client = getDashScopeClient();
+    const prompt = buildCodeReviewPrompt(input);
+
+    const completion = await client.chat.completions.create({
+      model: "deepseek-v3.2", //
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }, //
+      temperature: 0.2,
+    });
+
+    const answerContent = completion.choices[0]?.message?.content;
+    if (!answerContent) throw new Error("API returned empty content");
+
+    const parsed = JSON.parse(answerContent);
+
+    return {
+      reviewSummary: parsed.reviewSummary || "Analysis completed.",
+      causalAnalysis: parsed.causalAnalysis || "No causal analysis.",
+      suggestions: parsed.suggestions || [],
+      confidence: parsed.confidence ?? 0.8,
+    };
+  } catch (error) {
+    console.error("❌ CodeReviewAgent Error:", error);
+    return {
+      reviewSummary: "Fallback mode activated.",
+      causalAnalysis: "An error occurred during AI analysis.",
+      suggestions: ["Check symbolic errors manually."],
+      confidence: 0.5,
     };
   }
-
-  return {
-    reviewSummary: parsed.reviewSummary || "Code review completed.",
-    causalAnalysis:
-      parsed.causalAnalysis || "No causal analysis was generated.",
-    suggestions:
-      parsed.suggestions && parsed.suggestions.length > 0
-        ? parsed.suggestions
-        : ["No specific suggestions returned by model."],
-    confidence:
-      typeof parsed.confidence === "number"
-        ? Math.max(0, Math.min(1, parsed.confidence))
-        : 0.5,
-  };
 }

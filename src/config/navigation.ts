@@ -7,6 +7,11 @@ export const getNavigationConfig = async (): Promise<{
   navGroups: NavGroupInterface[];
 }> => {
   try {
+    if (process.env.NODE_ENV === "development") {
+      return {
+        navGroups: [],
+      };
+    }
     const response = await getUserClasses();
     const classes: UserClassroom[] = response.classes || [];
     const iconMap: Record<string, string> = {};

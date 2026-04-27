@@ -1,24 +1,42 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
-import { createGroq } from "@ai-sdk/groq";
-import { generateText } from "ai";
+import OpenAI from "openai";
 
-function getGroqApiKey(): string {
-  const rawApiKey = process.env.GROQ_API_KEY ?? process.env.AI_GROQ_API_KEY;
-  const apiKey = rawApiKey?.trim().replace(/^['\"]|['\"]$/g, "");
+// function getGroqApiKey(): string {
+//   const rawApiKey = process.env.GROQ_API_KEY ?? process.env.AI_GROQ_API_KEY;
+//   const apiKey = rawApiKey?.trim().replace(/^['\"]|['\"]$/g, "");
 
-  if (!apiKey || apiKey === "your-groq-api-key") {
+//   if (!apiKey || apiKey === "your-groq-api-key") {
+//     throw new Error(
+//       "AI service is not configured. Please set a valid GROQ_API_KEY.",
+//     );
+//   }
+
+//   if (!apiKey.startsWith("gsk_")) {
+//     throw new Error(
+//       "GROQ_API_KEY format looks invalid. Expected a key starting with gsk_.",
+//     );
+//   }
+
+//   return apiKey;
+// }
+
+function getDashScopeApiKey(): string {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+
+  if (!apiKey || apiKey === "your-dashscope-api-key") {
     throw new Error(
-      "AI service is not configured. Please set a valid GROQ_API_KEY.",
+      "Missing credentials: DASHSCOPE_API_KEY. Please set the environment variable.",
     );
   }
 
-  if (!apiKey.startsWith("gsk_")) {
-    throw new Error(
-      "GROQ_API_KEY format looks invalid. Expected a key starting with gsk_.",
-    );
-  }
+  return apiKey.trim().replace(/^['\"]|['\"]$/g, "");
+}
 
-  return apiKey;
+function getClient(): OpenAI {
+  return new OpenAI({
+    apiKey: getDashScopeApiKey(),
+    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", //
+  });
 }
 
 export function buildTestCaseGenerationPrompt(
@@ -71,30 +89,72 @@ ${sampleOutput ? `- Sample Output: ${sampleOutput}` : ""}
 Generate the test cases now:`;
 }
 
+// export async function generateTestCases(prompt: string) {
+//   try {
+//     const groqApiKey = getGroqApiKey();
+//     const groq = createGroq({ apiKey: groqApiKey });
+
+//     const { text } = await generateText({
+//       model: groq("llama-3.3-70b-versatile"),
+//       prompt: prompt,
+//       temperature: 0.3,
+//     });
+
+//     const cleanedText = text.trim();
+//     const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+//     const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
+//     const testCases: Omit<TestCase, "id">[] = JSON.parse(jsonText);
+//     return testCases;
+//   } catch (error: unknown) {
+//     console.error("Error calling LLM:", error);
+//     const message =
+//       error instanceof Error ? error.message : "Failed to generate test cases";
+
+//     if (/invalid api key|401/i.test(message)) {
+//       throw new Error(
+//         "Groq API key is invalid. Please update GROQ_API_KEY in your environment.",
+//       );
+//     }
+
+//     throw new Error(message || "Failed to generate test cases");
+//   }
+// }
+
 export async function generateTestCases(prompt: string) {
   try {
-    const groqApiKey = getGroqApiKey();
-    const groq = createGroq({ apiKey: groqApiKey });
+    const client = getClient();
 
-    const { text } = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
-      prompt: prompt,
+    // 调用 DeepSeek 模型
+    const completion = await client.chat.completions.create({
+      model: "deepseek-v3.2", //
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }, // 强制 JSON 格式输出
       temperature: 0.3,
     });
 
-    const cleanedText = text.trim();
-    const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
-    const testCases: Omit<TestCase, "id">[] = JSON.parse(jsonText);
+    const answerContent = completion.choices[0]?.message?.content;
+
+    if (!answerContent) {
+      throw new Error("API 返回内容为空");
+    }
+
+    // 解析结果
+    const parsedData = JSON.parse(answerContent);
+    
+    // 兼容原有的返回数组逻辑
+    const testCases: Omit<TestCase, "id">[] = Array.isArray(parsedData) 
+      ? parsedData 
+      : (parsedData.testCases || []);
+
     return testCases;
   } catch (error: unknown) {
-    console.error("Error calling LLM:", error);
+    console.error("❌ Error calling DashScope API:", error);
     const message =
       error instanceof Error ? error.message : "Failed to generate test cases";
 
     if (/invalid api key|401/i.test(message)) {
       throw new Error(
-        "Groq API key is invalid. Please update GROQ_API_KEY in your environment.",
+        "DASHSCOPE_API_KEY is invalid. Please update your environment.",
       );
     }
 

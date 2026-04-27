@@ -1,6 +1,15 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
-import { groq } from "@ai-sdk/groq";
-import { generateText } from "ai";
+import OpenAI from "openai";
+
+function getDashScopeClient(): OpenAI {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  if (!apiKey) throw new Error("Missing DASHSCOPE_API_KEY.");
+  
+  return new OpenAI({
+    apiKey: apiKey.trim().replace(/^['\"]|['\"]$/g, ""),
+    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  });
+}
 
 export function buildTestCaseGenerationPrompt(
   title: string,
@@ -52,21 +61,46 @@ ${sampleOutput ? `- Sample Output: ${sampleOutput}` : ""}
 Generate the test cases now:`;
 }
 
+// export async function generateTestCases(prompt: string) {
+//   try {
+//     const { text } = await generateText({
+//       model: groq("llama-3.3-70b-versatile"),
+//       prompt: prompt,
+//       temperature: 0.3,
+//     });
+
+//     const cleanedText = text.trim();
+//     const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+//     const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
+//     const testCases: Omit<TestCase, "id">[] = JSON.parse(jsonText);
+//     return testCases;
+//   } catch (error) {
+//     console.error("Error calling LLM:", error);
+//     throw new Error("Failed to generate test cases");
+//   }
+// }
+
 export async function generateTestCases(prompt: string) {
   try {
-    const { text } = await generateText({
-      model: groq("llama-3.3-70b-versatile"),
-      prompt: prompt,
+    const client = getDashScopeClient();
+
+    const completion = await client.chat.completions.create({
+      model: "deepseek-v3.2", //
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" }, //
       temperature: 0.3,
     });
 
-    const cleanedText = text.trim();
-    const jsonMatch = cleanedText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    const jsonText = jsonMatch ? jsonMatch[1] : cleanedText;
-    const testCases: Omit<TestCase, "id">[] = JSON.parse(jsonText);
-    return testCases;
+    const content = completion.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty response");
+
+    const parsedData = JSON.parse(content);
+    // 确保返回数组格式
+    const cases: Omit<TestCase, "id">[] = parsedData.testCases || (Array.isArray(parsedData) ? parsedData : []);
+    
+    return cases;
   } catch (error) {
-    console.error("Error calling LLM:", error);
-    throw new Error("Failed to generate test cases");
+    console.error("❌ TestCase Generation Error:", error);
+    throw new Error("Failed to generate test cases via DashScope");
   }
 }

@@ -13,6 +13,8 @@ import {
   Lock,
   Zap,
   BusIcon,
+  Heart,
+  Compass,
 } from "lucide-react";
 import { title } from "process";
 
@@ -22,6 +24,18 @@ export const featureCards = [
     title: "Monaco Code Editor",
     description:
       "基于 VSCode 核心引擎，深度支持 C++ 11/17 标准，提供语法高亮、IntelliSense 智能补全及实时错误诊断。",
+  },
+  {
+    icon: Compass,
+    title: "Learning Navigation Agent",
+    description:
+      "基于代码审查结果与知识图谱，动态生成个性化学习路径，精准定位薄弱知识点并推荐针对性练习。",
+  },
+  {
+    icon: Heart,
+    title: "Emotion Support Agent",
+    description:
+      "实时感知学习压力与挫败感，提供温暖、共情且可执行的心理支持与步骤引导，维护积极学习心态。",
   },
   {
     icon: CheckCircle,
@@ -187,15 +201,15 @@ export const technicalHighlights = [
   },
   {
     icon: Brain,
-    title: "Groq AI Integration",
+    title: "DeepSeek AI Integration",
     description:
-      "Llama 3.3 70B model for intelligent test generation and code evaluation",
+      "DeepSeek-V3 models via Alibaba DashScope for sophisticated learning navigation and emotional analysis",
   },
   {
     icon: Zap,
-    title: "Webhook Architecture",
+    title: "Agentic Architecture",
     description:
-      "Asynchronous processing for scalable code execution and grading",
+      "Multi-agent system (Navigation, Emotion, Review) providing comprehensive student support",
   },
   {
     icon: Shield,
