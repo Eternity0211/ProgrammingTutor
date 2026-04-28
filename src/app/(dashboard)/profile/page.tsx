@@ -15,12 +15,14 @@ import {
   Lightbulb,
   ArrowRight,
   ArrowLeft,
+  BookOpen,
 } from "lucide-react";
 import { Badge } from "@/app/_components/ui/badge";
 import { getStudentFeedbackHistory } from "@/server/actions/submission-actions";
 import { SkillRadar } from "./_components/skill-radar";
 import Link from "next/link";
-import { getWeakQuestionsFromDB } from "@/server/actions/submission-actions";
+import { getRecommendedExercisesByWeaknesses, generateLearningNavigation } from "@/server/model/neural/navigationAgent";
+import type { LearningPathStep, LearningNavigationResult } from "@/server/model/neural/navigationAgent";
 
 export default async function ProfilePage() {
   const feedbackHistory = await getStudentFeedbackHistory();
@@ -87,7 +89,14 @@ export default async function ProfilePage() {
   .slice(0, 2)
   .map(item => item.subject);
 
-  const latestRecommendations = await getWeakQuestionsFromDB(weakTopics);
+  const fullNavigation = await generateLearningNavigation({
+    codeReviewResult: `学生薄弱点：${weakTopics.join("、")}`,
+    knowledgeGraph: `C++ 6大维度知识图谱：指针/引用、内存管理、STL容器、面向对象、递归算法、异常处理`,
+  });
+
+  const learningPath = fullNavigation?.learning_navigation.learning_path || [];
+  const latestRecommendations = fullNavigation?.learning_navigation.recommended_exercises || [];
+  const weaknesses = fullNavigation?.learning_navigation.weaknesses || weakTopics;
 
   return (
     <div className="flex flex-col gap-8 p-6 py-0 pb-10">
@@ -160,8 +169,35 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <div className="lg:col-span-1">
-          <Card className="sticky top-6">
+        <div className="lg:col-span-1 space-y-6 sticky top-6 max-h-[calc(100vh-24px)] overflow-y-auto pr-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-blue-500" /> AI 学习路径推荐
+              </CardTitle>
+              <CardDescription>针对你的薄弱点：{weaknesses.join("、")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+              {learningPath.length > 0 ? (
+                learningPath.map((step: LearningPathStep) => (
+                  <div key={step.step} className="p-3 border rounded-md border-l-4 border-l-blue-500">
+                    <div className="flex justify-between items-center">
+                      <p className="font-medium text-sm">第 {step.step} 步：{step.topic}</p>
+                      <Badge variant="outline" className="text-xs">{step.duration}</Badge>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {step.resources.map((res, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">{res}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-2">暂无学习路径</p>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-orange-500" /> 今日弱点强化

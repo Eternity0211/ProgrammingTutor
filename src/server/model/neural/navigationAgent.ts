@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
+import { runCodeReviewAgent, CodeReviewAgentInput } from "@/server/model/neural/codeAgent";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,6 +63,20 @@ export interface LearningNavigationResult {
 }
 
 // ================= 核心业务逻辑 =================
+
+function loadKnowledgeGraph(): string {
+  try {
+    const metadataPath = path.resolve(process.cwd(), "data/neural/metadata.json");
+    if (!fs.existsSync(metadataPath)) return "C++ 核心知识图谱";
+
+    const raw = fs.readFileSync(metadataPath, "utf8");
+    const parsed = JSON.parse(raw);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return "C++ 核心知识图谱：指针/引用、内存管理、STL容器、面向对象、递归算法、异常处理";
+  }
+}
+
 
 /**
  * 生成 System 和 User Prompt
@@ -202,6 +217,45 @@ export async function generateLearningNavigation(
     console.error(`❌ 分析失败：`, error);
     return getDefaultLearningNavigation();
   }
+}
+
+export async function generateNavigationFromCode(codeInput: CodeReviewAgentInput) {
+  // 1. 调用 codeAgent 做真实代码审查
+  const review = await runCodeReviewAgent(codeInput);
+
+  // 2. 拼接成导航智能体需要的文本
+  const codeReviewResult = `
+【审查总结】${review.reviewSummary}
+【根因分析】${review.causalAnalysis}
+【改进建议】${review.suggestions.join("；")}
+【置信度】${review.confidence}
+  `;
+
+  // 3. 读取真实知识图谱
+  const knowledgeGraph = loadKnowledgeGraph();
+
+  // 4. 生成最终学习导航
+  return await generateLearningNavigation({
+    codeReviewResult,
+    knowledgeGraph,
+  });
+}
+
+export async function getRecommendedExercisesByWeaknesses(weakTopics: string[]) {
+  const knowledgeGraph = loadKnowledgeGraph();
+
+  const codeReviewResult = `
+学生能力雷达图显示以下知识点掌握薄弱：
+${weakTopics.map(t => `- ${t}`).join("\n")}
+请针对性生成学习路径与练习题。
+  `;
+
+  const nav = await generateLearningNavigation({
+    codeReviewResult,
+    knowledgeGraph,
+  });
+
+  return nav?.learning_navigation.recommended_exercises || [];
 }
 
 /**
