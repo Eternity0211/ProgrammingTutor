@@ -21,8 +21,9 @@ import { Badge } from "@/app/_components/ui/badge";
 import { getStudentFeedbackHistory } from "@/server/actions/submission-actions";
 import { SkillRadar } from "./_components/skill-radar";
 import Link from "next/link";
-import { getRecommendedExercisesByWeaknesses, generateLearningNavigation } from "@/server/model/neural/navigationAgent";
-import type { LearningPathStep, LearningNavigationResult } from "@/server/model/neural/navigationAgent";
+import { generateLearningNavigation } from "@/server/model/neural/navigationAgent";
+import type { LearningPathStep, RecommendedExercise } from "@/server/model/neural/navigationAgent";
+import { generateRealAbilityScore } from "@/server/model/neural/navigationAgent";
 
 export default async function ProfilePage() {
   const feedbackHistory = await getStudentFeedbackHistory();
@@ -33,57 +34,77 @@ export default async function ProfilePage() {
   // ------------------
 
   const generateSkillDataFromHistory = () => {
-    // 定义标准的顺序，确保和 SVG 绘制顺序一致
     const SKILL_SUBJECTS = ["指针/引用", "内存管理", "STL容器", "面向对象", "递归算法", "异常处理"];
 
-    // 优先级 1: 如果开启了测试模式，直接返回满分数据，用于验证对齐
-    if (DEBUG_MODE) {
-      return [
-        { subject: "指针/引用", A: 85, fullMark: 100 },
-        { subject: "内存管理", A: 40, fullMark: 100 },
-        { subject: "STL容器", A: 90, fullMark: 100 },
-        { subject: "面向对象", A: 60, fullMark: 100 },
-        { subject: "递归算法", A: 30, fullMark: 100 },
-        { subject: "异常处理", A: 55, fullMark: 100 },
-      ];
-    }
+    // 初始满分100
+    const skillMap: Record<string, number> = {
+      "指针/引用": 100,
+      "内存管理": 100,
+      "STL容器": 100,
+      "面向对象": 100,
+      "递归算法": 100,
+      "异常处理": 100,
+    };
 
-    // 优先级 2: 如果没有历史记录，返回空数据
+    // 无提交记录，返回初始值
     if (feedbackHistory.length === 0) {
-      return SKILL_SUBJECTS.map(subject => ({
+      return SKILL_SUBJECTS.map((subject) => ({
         subject,
-        A: 0,
-        fullMark: 100
+        A: 100,
+        fullMark: 100,
       }));
     }
-  
-    // 优先级 3: 处理真实历史数据
-    const skillMap: Record<string, number> = {};
-    SKILL_SUBJECTS.forEach(s => skillMap[s] = 0);
-  
-    let count = 0;
+
+    // 关键词映射：根据反馈文本判断错误属于哪个知识点
+    const keywordMap: Record<string, keyof typeof skillMap> = {
+      "pointer": "指针/引用",
+      "const_cast": "指针/引用",
+      "reinterpret_cast": "指针/引用",
+      "内存": "内存管理",
+      "leak": "内存管理",
+      "delete": "内存管理",
+      "new": "内存管理",
+      "stl": "STL容器",
+      "vector": "STL容器",
+      "list": "STL容器",
+      "map": "STL容器",
+      "class": "面向对象",
+      "对象": "面向对象",
+      "继承": "面向对象",
+      "recursion": "递归算法",
+      "递归": "递归算法",
+      "base case": "递归算法",
+      "边界条件": "递归算法",
+      "try": "异常处理",
+      "catch": "异常处理",
+      "throw": "异常处理",
+      "异常": "异常处理",
+    };
+
+    // 遍历每一条提交记录，根据反馈文本精准扣分
     feedbackHistory.forEach((log) => {
-      if (log.score) {
-        // 模拟各维度的掌握度分布
-        skillMap["指针/引用"] += log.score;
-        skillMap["内存管理"] += (log.score * 0.8);
-        skillMap["STL容器"] += (log.score * 0.95);
-        skillMap["面向对象"] += (log.score * 0.85);
-        skillMap["递归算法"] += (log.score * 0.6);
-        skillMap["异常处理"] += (log.score * 0.7);
-        count++;
+      const feedbackText = `${log.emotionFeedback} ${log.navigatorTips}`.toLowerCase();
+      const score = log.score ?? 0;
+      const baseDeduct = Math.min(20, (100 - score) / 5);
+
+      // 匹配关键词，对应知识点扣分
+      for (const [keyword, subject] of Object.entries(keywordMap)) {
+        if (feedbackText.includes(keyword.toLowerCase())) {
+          skillMap[subject] = Math.max(20, skillMap[subject] - baseDeduct);
+        }
       }
     });
-  
-    // 按标准顺序输出，确保雷达图不偏转
-    return SKILL_SUBJECTS.map(key => ({
+
+    // 按固定顺序返回，保证雷达图绘制正确
+    return SKILL_SUBJECTS.map((key) => ({
       subject: key,
-      A: Math.max(10, Math.min(100, Math.round(skillMap[key] / (count || 1)))),
-      fullMark: 100
+      A: Math.round(skillMap[key]),
+      fullMark: 100,
     }));
   };
 
-  const skillData = generateSkillDataFromHistory();
+
+  const skillData = await generateSkillDataFromHistory();
   const weakTopics = [...skillData]
   .sort((a, b) => a.A - b.A)
   .slice(0, 2)
@@ -202,24 +223,27 @@ export default async function ProfilePage() {
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-orange-500" /> 今日弱点强化
               </CardTitle>
-              <CardDescription>根据你的薄弱点智能推荐</CardDescription>
+              <CardDescription>AI 推荐真实 LeetCode 练习题</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {latestRecommendations.length > 0 ? (
-                latestRecommendations.map((item: any) => (
-                  <div key={item.id} className="p-4 border rounded-lg hover:bg-accent cursor-pointer">
+                latestRecommendations.map((item: RecommendedExercise) => (
+                  <div key={item.id} className="p-4 border rounded-lg hover:bg-accent">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-medium">{item.title}</h4>
                       <Badge variant="secondary">{item.difficulty}</Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">{item.purpose}</p>
-                    <Link href={`/challenge/${item.id}`} className="block">
-                      <Button variant="ghost" size="sm" className="w-full justify-between">前往挑战 <ArrowRight className="w-4 h-4" /></Button>
-                    </Link>
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="block">
+                      <Button variant="ghost" size="sm" className="w-full justify-between">
+                        前往 LeetCode 挑战
+                        <ArrowRight className="w-4 h-4" />
+                      </Button>
+                    </a>
                   </div>
                 ))
               ) : (
-                <div className="text-sm text-muted-foreground text-center py-10 border-dashed border-2 rounded-xl">暂无推荐题目</div>
+                <div className="text-sm text-muted-foreground text-center py-10 border-dashed border-2 rounded-xl">暂无推荐</div>
               )}
             </CardContent>
           </Card>

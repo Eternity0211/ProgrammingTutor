@@ -45,6 +45,7 @@ export interface RecommendedExercise {
   title: string;
   difficulty: "入门" | "初级" | "中级" | "高级";
   purpose: string;
+  url: string;
 }
 
 export interface LearningPathStep {
@@ -63,6 +64,15 @@ export interface LearningNavigationResult {
 }
 
 // ================= 核心业务逻辑 =================
+function loadLeetCodeQuestions() {
+  try {
+    const p = path.resolve(process.cwd(), "public/leetcode-questions.json");
+    const raw = fs.readFileSync(p, "utf8");
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
 
 function loadKnowledgeGraph(): string {
   try {
@@ -84,6 +94,7 @@ function loadKnowledgeGraph(): string {
 function buildMessages(
   inputs: NavigatorInputs,
 ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
+  const leetCodeQuestions = loadLeetCodeQuestions();
   const systemPrompt = `
 【角色定义】
 你是精准、科学、循序渐进的编程学习导航智能体。根据代码审查中发现的问题，结合知识图谱，为学生规划个性化的学习路径和推荐针对性的练习题目，帮助学生填补知识 gaps，培养良好的编程习惯和工程规范。
@@ -96,7 +107,7 @@ function buildMessages(
 【核心任务】
 - 能力诊断：从代码审查 issues 归纳薄弱点；结合知识图谱判断缺失；评估水平。
 - 学习路径规划：循序渐进（先基础后提升）；明确每个步骤（主题、时长、资源）；拆解目标。
-- 练习题推荐：难度匹配；说明训练目的；覆盖多维度。
+- 练习题推荐：难度匹配；说明训练目的；覆盖多维度,必须从提供的 LeetCode 题库中选择，不能编造。
 
 【行为约束】
 - 学习路径不跳跃、不超前、不堆砌。
@@ -118,6 +129,9 @@ ${inputs.knowledgeGraph}
 【学生历史记录】
 ${inputs.studentHistory || "无"}
 
+【可推荐题库】
+${JSON.stringify(leetCodeQuestions, null, 2)}
+
 【输出格式】
 严格遵循以下 JSON 结构，不要输出任何额外的 Markdown 标记（如 \`\`\`json）或解释性文字：
 {
@@ -137,6 +151,7 @@ ${inputs.studentHistory || "无"}
         "title": "题目名称",
         "difficulty": "入门/初级/中级/高级",
         "purpose": "训练目标和预期收获"
+        "url": "LeetCode 链接"
       }
     ]
   }
@@ -219,6 +234,47 @@ export async function generateLearningNavigation(
   }
 }
 
+export async function generateRealAbilityScore(
+  codeReviews: Array<{
+    conceptIds: string[];
+    errorCount: number;
+  }>
+) {
+  const scoreMap: Record<string, number> = {
+    "指针/引用": 100,
+    "内存管理": 100,
+    "STL容器": 100,
+    "面向对象": 100,
+    "递归算法": 100,
+    "异常处理": 100,
+  };
+
+  const errorToTopic: Record<string, keyof typeof scoreMap> = {
+    pointer: "指针/引用",
+    memory: "内存管理",
+    stl: "STL容器",
+    object: "面向对象",
+    recursion: "递归算法",
+    exception: "异常处理",
+  };
+
+  for (const review of codeReviews) {
+    for (const id of review.conceptIds) {
+      const key = Object.keys(errorToTopic).find((k) => id.includes(k));
+      if (key) {
+        const topic = errorToTopic[key];
+        scoreMap[topic] = Math.max(20, scoreMap[topic] - (15 + review.errorCount * 2));
+      }
+    }
+  }
+
+  return Object.entries(scoreMap).map(([subject, A]) => ({
+    subject,
+    A,
+    fullMark: 100,
+  }));
+}
+
 export async function generateNavigationFromCode(codeInput: CodeReviewAgentInput) {
   // 1. 调用 codeAgent 做真实代码审查
   const review = await runCodeReviewAgent(codeInput);
@@ -266,19 +322,15 @@ function getDefaultLearningNavigation(): LearningNavigationResult {
     learning_navigation: {
       weaknesses: ["代码质量分析待完善"],
       learning_path: [
-        {
-          step: 1,
-          topic: "基础语法复习",
-          duration: "1-2 小时",
-          resources: ["官方文档", "基础教程"],
-        },
+        { step: 1, topic: "基础语法复习", duration: "1-2 小时", resources: ["C++ 官方文档"] },
       ],
       recommended_exercises: [
         {
-          id: "basic-001",
-          title: "基础练习题",
+          id: "lc509",
+          title: "斐波那契数",
           difficulty: "入门",
-          purpose: "巩固基础概念",
+          purpose: "练习递归边界条件与基本递归思想",
+          url: "https://leetcode.cn/problems/fibonacci-number",
         },
       ],
     },
