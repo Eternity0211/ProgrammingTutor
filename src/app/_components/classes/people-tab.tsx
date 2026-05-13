@@ -84,10 +84,15 @@ export function PeopleTab({
         </div>
         <div className="divide-y divide-border">
           {filteredTeachers.length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground">No teachers found</div>
+            <div className="p-6 text-center text-muted-foreground">
+              No teachers found
+            </div>
           ) : (
             filteredTeachers.map((teacher) => (
-              <div key={teacher.id} className="flex items-center justify-between p-4 hover:bg-muted/50">
+              <div
+                key={teacher.id}
+                className="flex items-center justify-between p-4 hover:bg-muted/50"
+              >
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10 border">
                     <AvatarImage src={teacher.image || ""} />
@@ -95,11 +100,17 @@ export function PeopleTab({
                   </Avatar>
                   <div>
                     <p className="font-medium">{teacher.name}</p>
-                    <p className="text-sm text-muted-foreground">{teacher.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {teacher.email}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                  >
                     <Mail className="h-4 w-4" />
                   </Button>
                 </div>
@@ -113,14 +124,21 @@ export function PeopleTab({
       <div className="rounded-2xl border border-border bg-card overflow-hidden">
         <div className="p-6 border-b border-border">
           <h3 className="text-lg font-medium">Students</h3>
-          <p className="text-sm text-muted-foreground">{students.length} students</p>
+          <p className="text-sm text-muted-foreground">
+            {students.length} students
+          </p>
         </div>
         <div className="divide-y divide-border">
           {filteredStudents.length === 0 ? (
-            <div className="p-6 text-center text-muted-foreground">No students found</div>
+            <div className="p-6 text-center text-muted-foreground">
+              No students found
+            </div>
           ) : (
             filteredStudents.map((student) => (
-              <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/50">
+              <div
+                key={student.id}
+                className="flex items-center justify-between p-4 hover:bg-muted/50"
+              >
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10 border">
                     <AvatarImage src={student.image || ""} />
@@ -128,12 +146,18 @@ export function PeopleTab({
                   </Avatar>
                   <div>
                     <p className="font-medium">{student.name}</p>
-                    <p className="text-sm text-muted-foreground">{student.email}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {student.email}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* MAIL */}
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full"
+                  >
                     <Mail className="h-4 w-4" />
                   </Button>
 

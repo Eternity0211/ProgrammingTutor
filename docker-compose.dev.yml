@@ -24,9 +24,9 @@ services:
       # 确保使用开发环境变量，如指向本地db
       DATABASE_URL: postgresql://gradeitDB:mypassword@db:5432/gradeit?sslmode=disable
       NODE_ENV: development # 设为开发模式
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      AI_GROQ_API_KEY: ${AI_GROQ_API_KEY:-}
-      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:-}
+      LOCAL_LLM_BASE_URL: http://local-llm:8000/v1
+      LOCAL_LLM_MODEL: ${LOCAL_LLM_MODEL:-qwen2.5-7b-instruct-lora}
+      LOCAL_LLM_API_KEY: ${LOCAL_LLM_API_KEY:-local-dev-key}
       JUDGE0_API_URL: http://judge0-server:2358
       JUDGE0_API_KEY: ""
       JUDGE0_API_HOST: ""
@@ -40,9 +40,27 @@ services:
         condition: service_healthy
       judge0-server:
         condition: service_started
+      local-llm:
+        condition: service_started
     # 开发容器启动时先应用 Prisma 迁移，避免 schema 与数据库不一致
     command: sh -c "npx prisma generate && npx prisma migrate deploy && npm run dev"
     # 或者如果原Dockerfile已优化，也可用: command: npm start
+
+  local-llm:
+    image: vllm/vllm-openai:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../models/qwen2.5-7b-instruct:/models/qwen2.5-7b-instruct:ro
+      - ../final:/adapters/final:ro
+    command: >
+      --model /models/qwen2.5-7b-instruct
+      --served-model-name qwen2.5-7b-instruct-lora
+      --enable-lora
+      --lora-modules tutor-lora=/adapters/final
+      --max-model-len 8192
+    ipc: host
+    restart: unless-stopped
 
   judge0-server:
     image: judge0/judge0:latest

@@ -11,11 +11,13 @@ npm install -D typescript @types/node
 
 ### 测试运行API流程
 
-1. 访问阿里云百炼平台，获取自己的API-Key并配置在系统环境中
+1. 启动本地 OpenAI 兼容推理服务（如 vLLM/Ollama）并确保可访问
 2. 在model/neural下创建.env文件中，写入
 
 ```text
-DASHSCOPE_API_KEY修改为自己的API-Key
+LOCAL_LLM_BASE_URL=http://localhost:8000/v1
+LOCAL_LLM_MODEL=qwen2.5-7b-instruct-lora
+LOCAL_LLM_API_KEY=local-dev-key
 ```
 
 3. 运行一下命令行完成测试（代码中已预留自测板块）
@@ -28,7 +30,7 @@ npx ts-node navigationAgent.ts
 
 ### 注意事项
 
-1. **环境变量**：运行前确保注入了 `DASHSCOPE_API_KEY`，并在代码中确认 `baseURL` 对应你使用的服务商。
+1. **环境变量**：运行前确保注入 `LOCAL_LLM_BASE_URL`、`LOCAL_LLM_MODEL`、`LOCAL_LLM_API_KEY`。
 2. **JSON 解析异常处理**：由于使用的是 LLM 直接生成结果，存在极低概率的 JSON 格式破损。代码中已包含基础的 `JSON.parse` 错误捕获 (`catch`)。
 3. **响应格式**：已通过 `response_format: { type: "json_object" }` 强制要求模型返回 JSON。使用此特性时，Prompt 中必须明确包含要求输出 JSON 的指令。
 
@@ -38,7 +40,7 @@ npx ts-node navigationAgent.ts
 
 ### a. 接口概述
 
-本接口封装了 OpenAI 兼容的 LLM API（如阿里云百炼 deepseek 模型）。通过输入学生的代码审查结果（Code Review）、知识图谱以及历史学习记录，智能体将自动进行能力诊断，并输出一段结构化的 JSON 学习导航（包含薄弱点、学习路径和推荐练习）。
+本接口封装了 OpenAI 兼容的本地 LoRA 模型 API。通过输入学生的代码审查结果（Code Review）、知识图谱以及历史学习记录，智能体将自动进行能力诊断，并输出一段结构化的 JSON 学习导航（包含薄弱点、学习路径和推荐练习）。
 
 ### b. 核心函数
 
@@ -141,7 +143,7 @@ npx ts-node navigationAgent.ts
 
 ### a. 接口概述
 
-本接口封装了 OpenAI 兼容的 LLM API（如阿里云百炼 deepseek 模型）。通过输入代码审查结果（Code Review），智能体将自动进行情绪识别，并输出一段结构化的 JSON 情绪分析（包含情绪类型、强度、原因和支持性指导语），旨在为学生提供共情、温暖、可执行的心理支持，帮助其保持积极的学习心态。
+本接口封装了 OpenAI 兼容的本地 LoRA 模型 API。通过输入代码审查结果（Code Review），智能体将自动进行情绪识别，并输出一段结构化的 JSON 情绪分析（包含情绪类型、强度、原因和支持性指导语），旨在为学生提供共情、温暖、可执行的心理支持，帮助其保持积极的学习心态。
 
 ### b. 核心函数
 

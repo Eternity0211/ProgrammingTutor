@@ -45,7 +45,7 @@
 #### 2. **Intelligent Test Case System**
 
 - **Visible & Hidden Test Cases**: Public test cases for practice, hidden cases for assessment
-- **AI-Powered Generation**: Automatic test case creation using Groq LLM (Llama 3.3 70B)
+- **AI-Powered Generation**: Automatic test case creation using local LoRA-tuned LLM (OpenAI-compatible endpoint)
 - **Comprehensive Coverage**: Edge cases, boundary conditions, and corner cases automatically generated
 - **Custom Test Runs**: Students can test with custom inputs before submission
 
@@ -60,7 +60,7 @@
   - Best Practices Adherence
   - Algorithm Efficiency
 - **Weighted Scoring**: Configurable weight distribution between test cases and metrics
-- **LLM-Powered Analysis**: Intelligent code review using Groq's Llama model for qualitative assessment
+- **LLM-Powered Analysis**: Intelligent code review using local LoRA-tuned model for qualitative assessment
 
 ### 👩‍🏫 Faculty Features
 
@@ -222,7 +222,7 @@ src/
 | Package                | Purpose                         |
 | ---------------------- | ------------------------------- |
 | `@monaco-editor/react` | Code editor integration         |
-| `@ai-sdk/groq`         | LLM integration for AI features |
+| `openai`               | OpenAI-compatible local LLM API |
 | `framer-motion`        | Animation library               |
 | `zod`                  | Runtime type validation         |
 | `react-hook-form`      | Form management                 |
@@ -232,11 +232,11 @@ src/
 
 ### External Services
 
-| Service          | Purpose                 | Configuration         |
-| ---------------- | ----------------------- | --------------------- |
-| **Judge0 CE**    | Code execution engine   | RapidAPI integration  |
-| **Groq Cloud**   | LLM API for AI features | Llama 3.3 70B model   |
-| **Google OAuth** | Authentication provider | OAuth 2.0 credentials |
+| Service          | Purpose                 | Configuration          |
+| ---------------- | ----------------------- | ---------------------- |
+| **Judge0 CE**    | Code execution engine   | RapidAPI integration   |
+| **Local LLM**    | LoRA model inference    | vLLM/Ollama compatible |
+| **Google OAuth** | Authentication provider | OAuth 2.0 credentials  |
 
 ## API Reference
 
@@ -405,7 +405,9 @@ CodeSubmission → SubmissionMetricResult (One-to-Many)
 1. **Prerequisites**:
    - Vercel account
    - PostgreSQL database (Supabase/Neon recommended)
-   - API keys (Judge0, Groq, Google OAuth)
+
+- API keys (Judge0, Google OAuth)
+- Accessible local/private LLM endpoint (or self-hosted GPU server)
 
 2. **Deployment Steps**:
 
@@ -424,8 +426,11 @@ CodeSubmission → SubmissionMetricResult (One-to-Many)
    - `AUTH_GOOGLE_SECRET` - Google OAuth secret
    - `JUDGE0_API_KEY` - RapidAPI key for Judge0
    - `JUDGE0_API_HOST` - Judge0 host URL
-   - `GROQ_API_KEY` - Groq AI API key
-   - `APP_URL` - Production URL for webhooks
+
+- `LOCAL_LLM_BASE_URL` - OpenAI-compatible inference URL
+- `LOCAL_LLM_MODEL` - Served LoRA model name
+- `LOCAL_LLM_API_KEY` - API key for local inference gateway
+- `APP_URL` - Production URL for webhooks
 
 ### Docker Deployment
 

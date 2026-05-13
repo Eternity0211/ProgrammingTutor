@@ -1,16 +1,12 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
-import OpenAI from "openai";
 import { getNeo4jSession } from "@/lib/neo4j";
+import {
+  getLocalLoraClient,
+  getLocalLoraModelName,
+} from "@/lib/services/local-lora-llm";
 
-function getDashScopeClient(): OpenAI {
-  const apiKey = process.env.DASHSCOPE_API_KEY; //
-  if (!apiKey) {
-    throw new Error("Missing DASHSCOPE_API_KEY environment variable.");
-  }
-  return new OpenAI({
-    apiKey: apiKey.trim().replace(/^['\"]|['\"]$/g, ""),
-    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", //
-  });
+function getClient() {
+  return getLocalLoraClient();
 }
 
 export function buildTestCaseGenerationPrompt(
@@ -169,11 +165,11 @@ export async function getAggregatedKnowledgeContext(
 
 export async function generateTestCases(prompt: string) {
   try {
-    const client = getDashScopeClient();
+    const client = getClient();
 
-    // 使用 DeepSeek-V3 模型并强制 JSON 输出
+    // 使用本地 LoRA 模型并强制 JSON 输出
     const completion = await client.chat.completions.create({
-      model: "deepseek-v3.2", //
+      model: getLocalLoraModelName(),
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" }, //
       temperature: 0.3,
@@ -185,15 +181,15 @@ export async function generateTestCases(prompt: string) {
     }
 
     const parsed = JSON.parse(answerContent);
-    
+
     // 兼容数组或对象结构的返回
-    const testCases: Omit<TestCase, "id">[] = Array.isArray(parsed) 
-      ? parsed 
-      : (parsed.testCases || []);
-      
+    const testCases: Omit<TestCase, "id">[] = Array.isArray(parsed)
+      ? parsed
+      : parsed.testCases || [];
+
     return testCases;
   } catch (error) {
-    console.error("❌ DashScope API Error:", error);
-    throw new Error("Failed to generate test cases via DashScope API");
+    console.error("❌ Local LoRA model API Error:", error);
+    throw new Error("Failed to generate test cases via local LoRA model API");
   }
 }

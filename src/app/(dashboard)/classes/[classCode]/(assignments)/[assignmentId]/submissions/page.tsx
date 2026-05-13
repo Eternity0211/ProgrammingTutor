@@ -136,24 +136,34 @@ export default async function SubmissionsPage({
                         </div> */}
                         {(() => {
                           const total = submission.testCaseResults.length;
-                          const passed = submission.testCaseResults.filter(tc => tc.status === "PASSED").length;
+                          const passed = submission.testCaseResults.filter(
+                            (tc) => tc.status === "PASSED",
+                          ).length;
 
                           let icon = <AlertTriangle className="h-5 w-5" />;
-                          let bg = "bg-status-partial text-status-partial-foreground";
+                          let bg =
+                            "bg-status-partial text-status-partial-foreground";
 
                           if (submission.status === "IN_PROGRESS") {
                             icon = <Clock className="h-5 w-5" />;
-                            bg = "bg-status-pending text-status-pending-foreground";
+                            bg =
+                              "bg-status-pending text-status-pending-foreground";
                           } else if (passed === total) {
                             icon = <CheckCircle2 className="h-5 w-5" />;
-                            bg = "bg-status-passed text-status-passed-foreground";
+                            bg =
+                              "bg-status-passed text-status-passed-foreground";
                           } else if (passed === 0) {
                             icon = <XCircle className="h-5 w-5" />;
                             bg = "bg-destructive/10 text-destructive";
                           }
 
                           return (
-                            <div className={cn("flex h-10 w-10 items-center justify-center rounded-full", bg)}>
+                            <div
+                              className={cn(
+                                "flex h-10 w-10 items-center justify-center rounded-full",
+                                bg,
+                              )}
+                            >
                               {icon}
                             </div>
                           );

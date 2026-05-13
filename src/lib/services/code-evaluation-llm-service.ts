@@ -1,5 +1,8 @@
 import { AssignmentMetric, EvaluationMetric } from "@prisma/client";
-import OpenAI from "openai";
+import {
+  getLocalLoraClient,
+  getLocalLoraModelName,
+} from "@/lib/services/local-lora-llm";
 
 interface CodeEvaluationRequest {
   code: string;
@@ -20,18 +23,8 @@ interface CodeEvaluationResponse {
   evaluations: MetricEvaluationResult[];
 }
 
-/**
- * 获取阿里云百炼客户端 (兼容 OpenAI 接口)
- */
-function getDashScopeClient(): OpenAI {
-  const apiKey = process.env.DASHSCOPE_API_KEY;
-  if (!apiKey) {
-    throw new Error("Missing DASHSCOPE_API_KEY. Please set the environment variable.");
-  }
-  return new OpenAI({
-    apiKey: apiKey.trim().replace(/^['\"]|['\"]$/g, ""),
-    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-  });
+function getClient() {
+  return getLocalLoraClient();
 }
 
 export function buildCodeEvaluationPrompt(
@@ -101,7 +94,7 @@ export async function evaluateCodeWithLLM(
     );
   }
 
-  const client = getDashScopeClient();
+  const client = getClient();
   const maxRetries = 3;
   let lastError: Error | null = null;
 
@@ -110,7 +103,7 @@ export async function evaluateCodeWithLLM(
       const prompt = buildCodeEvaluationPrompt(request);
 
       const completion = await client.chat.completions.create({
-        model: "deepseek-v3.2", // 统一使用技术文档要求的模型
+        model: getLocalLoraModelName(),
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" }, // 强制 JSON 输出
         temperature: 0.3,

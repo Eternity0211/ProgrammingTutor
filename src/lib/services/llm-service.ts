@@ -1,5 +1,8 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
-import OpenAI from "openai";
+import {
+  getLocalLoraClient,
+  getLocalLoraModelName,
+} from "@/lib/services/local-lora-llm";
 
 // function getGroqApiKey(): string {
 //   const rawApiKey = process.env.GROQ_API_KEY ?? process.env.AI_GROQ_API_KEY;
@@ -20,23 +23,8 @@ import OpenAI from "openai";
 //   return apiKey;
 // }
 
-function getDashScopeApiKey(): string {
-  const apiKey = process.env.DASHSCOPE_API_KEY;
-
-  if (!apiKey || apiKey === "your-dashscope-api-key") {
-    throw new Error(
-      "Missing credentials: DASHSCOPE_API_KEY. Please set the environment variable.",
-    );
-  }
-
-  return apiKey.trim().replace(/^['\"]|['\"]$/g, "");
-}
-
-function getClient(): OpenAI {
-  return new OpenAI({
-    apiKey: getDashScopeApiKey(),
-    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", //
-  });
+function getClient() {
+  return getLocalLoraClient();
 }
 
 export function buildTestCaseGenerationPrompt(
@@ -124,9 +112,9 @@ export async function generateTestCases(prompt: string) {
   try {
     const client = getClient();
 
-    // 调用 DeepSeek 模型
+    // 调用本地 LoRA 模型
     const completion = await client.chat.completions.create({
-      model: "deepseek-v3.2", //
+      model: getLocalLoraModelName(),
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" }, // 强制 JSON 格式输出
       temperature: 0.3,
@@ -140,21 +128,21 @@ export async function generateTestCases(prompt: string) {
 
     // 解析结果
     const parsedData = JSON.parse(answerContent);
-    
+
     // 兼容原有的返回数组逻辑
-    const testCases: Omit<TestCase, "id">[] = Array.isArray(parsedData) 
-      ? parsedData 
-      : (parsedData.testCases || []);
+    const testCases: Omit<TestCase, "id">[] = Array.isArray(parsedData)
+      ? parsedData
+      : parsedData.testCases || [];
 
     return testCases;
   } catch (error: unknown) {
-    console.error("❌ Error calling DashScope API:", error);
+    console.error("❌ Error calling local LoRA model API:", error);
     const message =
       error instanceof Error ? error.message : "Failed to generate test cases";
 
     if (/invalid api key|401/i.test(message)) {
       throw new Error(
-        "DASHSCOPE_API_KEY is invalid. Please update your environment.",
+        "LOCAL_LLM_API_KEY is invalid. Please update your environment.",
       );
     }
 

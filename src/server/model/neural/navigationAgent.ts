@@ -3,29 +3,27 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
-import { runCodeReviewAgent, CodeReviewAgentInput } from "@/server/model/neural/codeAgent";
+import {
+  runCodeReviewAgent,
+  CodeReviewAgentInput,
+} from "@/server/model/neural/codeAgent";
+import {
+  getLocalLoraClient,
+  getLocalLoraModelName,
+} from "@/lib/services/local-lora-llm";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 加载环境变量 (需要根目录下有 .env 文件，内容为 DASHSCOPE_API_KEY=你的key)
+// 加载环境变量 (需要根目录下有 .env 文件，内容为 LOCAL_LLM_BASE_URL/LOCAL_LLM_MODEL)
 dotenv.config();
 
-// 1. 延迟初始化 OpenAI 客户端 (兼容阿里云百炼)
-let client: OpenAI | null = null;
+// 1. 延迟初始化 OpenAI 兼容客户端 (本地 LoRA 推理服务)
+let client: ReturnType<typeof getLocalLoraClient> | null = null;
 
-function getClient(): OpenAI {
+function getClient() {
   if (!client) {
-    const apiKey = process.env.DASHSCOPE_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "Missing credentials: DASHSCOPE_API_KEY. Please set the environment variable.",
-      );
-    }
-    client = new OpenAI({
-      apiKey,
-      baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    });
+    client = getLocalLoraClient();
   }
   return client;
 }
@@ -76,7 +74,10 @@ function loadLeetCodeQuestions() {
 
 function loadKnowledgeGraph(): string {
   try {
-    const metadataPath = path.resolve(process.cwd(), "data/neural/metadata.json");
+    const metadataPath = path.resolve(
+      process.cwd(),
+      "data/neural/metadata.json",
+    );
     if (!fs.existsSync(metadataPath)) return "C++ 核心知识图谱";
 
     const raw = fs.readFileSync(metadataPath, "utf8");
@@ -86,7 +87,6 @@ function loadKnowledgeGraph(): string {
     return "C++ 核心知识图谱：指针/引用、内存管理、STL容器、面向对象、递归算法、异常处理";
   }
 }
-
 
 /**
  * 生成 System 和 User Prompt
@@ -193,10 +193,9 @@ export async function generateLearningNavigation(
   inputs: NavigatorInputs,
 ): Promise<LearningNavigationResult | null> {
   try {
-    const apiKey = process.env.DASHSCOPE_API_KEY;
-    if (!apiKey) {
+    if (!process.env.LOCAL_LLM_BASE_URL) {
       console.warn(
-        "⚠️  DASHSCOPE_API_KEY not set, returning default learning navigation",
+        "⚠️  LOCAL_LLM_BASE_URL not set, returning default learning navigation",
       );
       return getDefaultLearningNavigation();
     }
@@ -205,9 +204,9 @@ export async function generateLearningNavigation(
     const messages = buildMessages(inputs);
 
     const completion = await getClient().chat.completions.create({
-      model: "deepseek-v3.2", // 根据百炼平台实际支持的模型名称调整
+      model: getLocalLoraModelName(),
       messages: messages,
-      // 强制要求 JSON 格式输出 (需模型支持，若不支持可在 prompt 中强调，deepseek在百炼平台支持的)
+      // 强制要求 JSON 格式输出 (需模型支持，若不支持可在 prompt 中强调)
       response_format: { type: "json_object" },
       temperature: 0.3, // 降低随机性，保证 JSON 结构和专业度
     });
@@ -238,15 +237,15 @@ export async function generateRealAbilityScore(
   codeReviews: Array<{
     conceptIds: string[];
     errorCount: number;
-  }>
+  }>,
 ) {
   const scoreMap: Record<string, number> = {
     "指针/引用": 100,
-    "内存管理": 100,
-    "STL容器": 100,
-    "面向对象": 100,
-    "递归算法": 100,
-    "异常处理": 100,
+    内存管理: 100,
+    STL容器: 100,
+    面向对象: 100,
+    递归算法: 100,
+    异常处理: 100,
   };
 
   const errorToTopic: Record<string, keyof typeof scoreMap> = {
@@ -263,7 +262,10 @@ export async function generateRealAbilityScore(
       const key = Object.keys(errorToTopic).find((k) => id.includes(k));
       if (key) {
         const topic = errorToTopic[key];
-        scoreMap[topic] = Math.max(20, scoreMap[topic] - (15 + review.errorCount * 2));
+        scoreMap[topic] = Math.max(
+          20,
+          scoreMap[topic] - (15 + review.errorCount * 2),
+        );
       }
     }
   }
@@ -275,7 +277,9 @@ export async function generateRealAbilityScore(
   }));
 }
 
-export async function generateNavigationFromCode(codeInput: CodeReviewAgentInput) {
+export async function generateNavigationFromCode(
+  codeInput: CodeReviewAgentInput,
+) {
   // 1. 调用 codeAgent 做真实代码审查
   const review = await runCodeReviewAgent(codeInput);
 
@@ -297,12 +301,14 @@ export async function generateNavigationFromCode(codeInput: CodeReviewAgentInput
   });
 }
 
-export async function getRecommendedExercisesByWeaknesses(weakTopics: string[]) {
+export async function getRecommendedExercisesByWeaknesses(
+  weakTopics: string[],
+) {
   const knowledgeGraph = loadKnowledgeGraph();
 
   const codeReviewResult = `
 学生能力雷达图显示以下知识点掌握薄弱：
-${weakTopics.map(t => `- ${t}`).join("\n")}
+${weakTopics.map((t) => `- ${t}`).join("\n")}
 请针对性生成学习路径与练习题。
   `;
 
@@ -322,7 +328,12 @@ function getDefaultLearningNavigation(): LearningNavigationResult {
     learning_navigation: {
       weaknesses: ["代码质量分析待完善"],
       learning_path: [
-        { step: 1, topic: "基础语法复习", duration: "1-2 小时", resources: ["C++ 官方文档"] },
+        {
+          step: 1,
+          topic: "基础语法复习",
+          duration: "1-2 小时",
+          resources: ["C++ 官方文档"],
+        },
       ],
       recommended_exercises: [
         {

@@ -3,28 +3,23 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
+import {
+  getLocalLoraClient,
+  getLocalLoraModelName,
+} from "@/lib/services/local-lora-llm";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 加载环境变量 (需要根目录下有 .env 文件，内容为 DASHSCOPE_API_KEY=你的key)
+// 加载环境变量 (需要根目录下有 .env 文件，内容为 LOCAL_LLM_BASE_URL/LOCAL_LLM_MODEL)
 dotenv.config();
 
-// 1. 延迟初始化 OpenAI 客户端 (兼容阿里云百炼)
-let client: OpenAI | null = null;
+// 1. 延迟初始化 OpenAI 兼容客户端 (本地 LoRA 推理服务)
+let client: ReturnType<typeof getLocalLoraClient> | null = null;
 
-function getClient(): OpenAI {
+function getClient() {
   if (!client) {
-    const apiKey = process.env.DASHSCOPE_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "Missing credentials: DASHSCOPE_API_KEY. Please set the environment variable.",
-      );
-    }
-    client = new OpenAI({
-      apiKey,
-      baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    });
+    client = getLocalLoraClient();
   }
   return client;
 }
@@ -135,10 +130,9 @@ export async function generateEmotionalSupport(
   inputs: EmotionInputs,
 ): Promise<EmotionAnalysisResult | null> {
   try {
-    const apiKey = process.env.DASHSCOPE_API_KEY;
-    if (!apiKey) {
+    if (!process.env.LOCAL_LLM_BASE_URL) {
       console.warn(
-        "⚠️  DASHSCOPE_API_KEY not set, returning default emotion analysis",
+        "⚠️  LOCAL_LLM_BASE_URL not set, returning default emotion analysis",
       );
       return getDefaultEmotionalSupport();
     }
@@ -147,7 +141,7 @@ export async function generateEmotionalSupport(
     const messages = buildMessages(inputs);
 
     const completion = await getClient().chat.completions.create({
-      model: "deepseek-v3.2", // 根据实际模型名称调整
+      model: getLocalLoraModelName(),
       messages: messages,
       response_format: { type: "json_object" },
       temperature: 0.8, // 适度温度，保持语言自然但稳定

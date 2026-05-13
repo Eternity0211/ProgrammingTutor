@@ -201,9 +201,9 @@ export const technicalHighlights = [
   },
   {
     icon: Brain,
-    title: "DeepSeek AI Integration",
+    title: "Local LoRA AI Integration",
     description:
-      "DeepSeek-V3 models via Alibaba DashScope for sophisticated learning navigation and emotional analysis",
+      "LoRA-tuned local models via OpenAI-compatible inference for learning navigation and emotional analysis",
   },
   {
     icon: Zap,

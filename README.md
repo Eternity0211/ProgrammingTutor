@@ -116,6 +116,11 @@ To set up your environment variables:
   2.  Sign up or log in.
   3.  Subscribe to the Judge0 API (even the free tier will give you an API key).
   4.  On the API details page, you'll find your `X-RapidAPI-Key` (which is your `JUDGE0_API_KEY`) and `X-RapidAPI-Host` (which is your `JUDGE0_API_HOST`).
+- **Local LoRA LLM (`LOCAL_LLM_BASE_URL`, `LOCAL_LLM_MODEL`, `LOCAL_LLM_API_KEY`)**:
+  1.  Start an OpenAI-compatible local inference server (vLLM/Ollama).
+  2.  Set `LOCAL_LLM_BASE_URL` (example: `http://localhost:8000/v1`).
+  3.  Set `LOCAL_LLM_MODEL` to the served LoRA model name.
+  4.  Set `LOCAL_LLM_API_KEY` to any non-empty value required by your server.
 
 #### 3.3 Database Setup
 
@@ -141,15 +146,39 @@ npm run dev
 
 Your application should now be running at `http://localhost:3000`.
 
+#### 3.6 LoRA Training Environment (Python + uv, recommended)
+
+The web app now calls a local LoRA model via OpenAI-compatible API. Model fine-tuning remains in Python.
+
+```sh
+cd ..
+uv venv .venv-lora
+.\.venv-lora\Scripts\activate
+uv pip install unsloth torch transformers datasets peft accelerate
+python .\train_testmodel.py\train_testmodel.py
+```
+
+After training, export/update adapter files under `../final/` and ensure your local inference service loads that adapter.
+
 ---
 
-### **3️⃣ Option B: Docker Compose Setup (Recommended)**
+### **3️⃣ Option B: Docker Compose Setup (Recommended for daily use)**
 
 This method simplifies setup by running the application and its database inside Docker containers.
 
 #### 3.1 Prerequisites for Docker Compose
 
 Ensure you have **Docker Desktop** installed and running on your machine. You can download it from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/).
+If you want to run the local LLM service, this repository expects an NVIDIA GPU machine with the NVIDIA driver and Docker GPU support enabled.
+
+Recommended GPU machine specs for the `local-llm` service:
+
+- **GPU:** NVIDIA GPU with at least **24 GB VRAM**; **32 GB VRAM or more** is recommended for smoother startup and longer context usage.
+- **System memory:** **32 GB RAM** or more recommended.
+- **Driver / runtime:** Recent NVIDIA driver and Docker GPU support enabled.
+- **Model files:** The Qwen 2.5 7B Instruct base model must be available locally at `../models/qwen2.5-7b-instruct` (or another path mounted into the `local-llm` container). If you do not already have the model files, download them before starting Docker Compose.
+
+If your machine has less VRAM, the app may still start, but the `local-llm` container can run out of memory or become unstable when loading the Qwen 2.5 7B model with LoRA adapters.
 
 #### 3.2 Set Up Environment Variables
 
@@ -164,9 +193,10 @@ Follow the same steps as in Option A for creating and populating your **`.env`**
     docker-compose up --build
     ```
 
-    This command will:
+    This is the primary startup path for this repository. It will:
     - Build the application Docker image based on the `Dockerfile`.
     - Start a PostgreSQL database container.
+    - Start a GPU-accelerated local OpenAI-compatible LoRA inference container (`local-llm`).
     - Start the application container.
     - Automatically apply database migrations (as defined in `docker-compose.yml`).
 

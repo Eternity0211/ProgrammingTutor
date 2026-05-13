@@ -17,26 +17,28 @@ interface SkillData {
 }
 
 export function SkillRadar({ data }: { data?: SkillData[] }) {
-  const subjects = ["指针/引用", "内存管理", "STL容器", "面向对象", "递归算法", "异常处理"];
-  const defaultData = subjects.map((subject) => ({ subject, A: 0, fullMark: 100 }));
+  const subjects = [
+    "指针/引用",
+    "内存管理",
+    "STL容器",
+    "面向对象",
+    "递归算法",
+    "异常处理",
+  ];
+  const defaultData = subjects.map((subject) => ({
+    subject,
+    A: 0,
+    fullMark: 100,
+  }));
   const renderData = data ?? defaultData;
   const isEmpty = renderData.every((item) => item.A === 0);
 
   return (
     <div style={{ width: "100%", height: "400px" }}>
       <ResponsiveContainer width="100%" height="100%">
-        <RadarChart
-          cx="50%"
-          cy="50%"
-          outerRadius="80%"
-          data={renderData}
-        >
+        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={renderData}>
           {/* 关键：用 PolarGrid 自带的网格，和雷达完全对齐 */}
-          <PolarGrid
-            stroke="#ffffff"
-            strokeOpacity={0.25}
-            strokeWidth={1}
-          />
+          <PolarGrid stroke="#ffffff" strokeOpacity={0.25} strokeWidth={1} />
 
           <PolarAngleAxis
             dataKey="subject"

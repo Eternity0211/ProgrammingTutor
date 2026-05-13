@@ -536,11 +536,11 @@ export async function getStudentFeedbackHistory() {
 
 const skillTopicMap = {
   "指针/引用": "pointer",
-  "内存管理": "memory",
-  "STL容器": "stl",
-  "面向对象": "oop",
-  "递归算法": "recursion",
-  "异常处理": "exception",
+  内存管理: "memory",
+  STL容器: "stl",
+  面向对象: "oop",
+  递归算法: "recursion",
+  异常处理: "exception",
 } as const;
 
 export async function getWeakQuestionsFromDB(weakTopics: string[]) {
