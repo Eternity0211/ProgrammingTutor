@@ -1,0 +1,30 @@
+# Cursor Rules for My Project
+
+## General Guidelines
+- Follow the project's existing design language and color scheme.
+- Use **CSS variables** (defined in the global stylesheet or Tailwind config) for all colors — **never** hardcode colors.
+- Match spacing, typography, and component styling with existing components in the project.
+
+## UI Components
+- Always use the existing shared UI components (e.g., `Button`, `Card`, `Input`, etc.) before creating new ones.
+- When creating new components, place them in the `/components` directory and ensure they are reusable and modular.
+- Avoid inline styles unless absolutely necessary; prefer utility classes or Tailwind.
+
+## Code Style
+- Follow the project's ESLint & Prettier configuration.
+- Keep components small and focused; if a component exceeds ~100 lines, consider splitting it.
+- Avoid deeply nested JSX; extract into subcomponents where possible.
+
+## Feature Implementation
+- For new features, follow these steps:
+    1. Create/update necessary database models in Prisma.
+    2. Create API routes in `/app/api` or `/pages/api` following REST or RPC style consistent with the project.
+    3. Build UI components that consume these APIs.
+    4. Ensure all text, labels, and UI strings are consistent with the tone of existing app copy.
+
+## Judge0 Integration
+- Never hardcode Judge0 API URLs or keys; load them from environment variables.
+
+## Testing
+- Test new UI with realistic data using mock API responses before connecting to the backend.
+- Ensure all Prisma schema changes are migrated and tested locally before committing.

@@ -1,0 +1,70 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "边界条件处理"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "理解边界条件的概念与重要性",
+                "duration": "1小时",
+                "resources": [
+                    "学习编程中常见的边界条件类型（如空输入、极值、循环终止条件等）"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "学习如何系统地识别和测试边界条件",
+                "duration": "2小时",
+                "resources": [
+                    "练习为简单函数（如求和、查找）设计覆盖边界条件的测试用例"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "应用边界条件处理解决实际问题",
+                "duration": "3小时",
+                "resources": [
+                    "通过解决包含典型边界条件的编程问题来巩固理解"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "训练对空树（空节点）这一边界条件的处理，理解递归的基线条件。",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc111",
+                "title": "二叉树的最小深度",
+                "difficulty": "入门",
+                "purpose": "强化对边界条件的识别，特别是当节点只有一个子树的特殊情况处理。",
+                "url": "https://leetcode.cn/problems/minimum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "练习处理字符串为空、长度为奇数以及栈操作完成后的非空检查等边界条件。",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+            },
+            {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "学习处理链表为空或只有一个节点等边界情况，并熟练运用快慢指针。",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+            },
+            {
+                "id": "lc150",
+                "title": "逆波兰表达式求值",
+                "difficulty": "中级",
+                "purpose": "综合训练边界条件处理，包括输入有效性检查、除法运算除数为零的异常处理。",
+                "url": "https://leetcode.cn/problems/evaluate-reverse-polish-notation"
+            }
+        ]
+    }
+}

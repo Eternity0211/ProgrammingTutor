@@ -1,0 +1,70 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "边界条件处理"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "基础边界条件概念与常见类型",
+                "duration": "1-2小时",
+                "resources": [
+                    "学习编程中常见的边界条件，如：空输入、零值、单元素、最大值、最小值、循环的起始与结束条件、递归的终止条件等。"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "代码审查与测试用例设计",
+                "duration": "2-3小时",
+                "resources": [
+                    "学习如何针对代码功能设计有效的测试用例，特别关注边界情况。可以阅读关于单元测试和测试驱动开发（TDD）的基础资料。"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "通过针对性练习巩固",
+                "duration": "3-5小时",
+                "resources": [
+                    "完成推荐的练习题，在解题过程中有意识地思考并处理边界条件。"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "训练对输入字符串的边界条件处理，如空字符串、单字符、不匹配的括号序列。",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+            },
+            {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "训练递归终止条件的判断，处理空树（根节点为nullptr）的边界情况。",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc111",
+                "title": "二叉树的最小深度",
+                "difficulty": "入门",
+                "purpose": "比最大深度更复杂，需要仔细处理单子树（只有左子树或只有右子树）的边界条件，避免错误地将非叶子节点判断为终点。",
+                "url": "https://leetcode.cn/problems/minimum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "训练链表操作中的边界条件，如空链表、单节点链表（无环）的判断。",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+            },
+            {
+                "id": "lc83",
+                "title": "删除排序链表中的重复元素",
+                "difficulty": "初级",
+                "purpose": "训练在遍历链表中处理头节点、尾节点以及连续重复元素的边界情况。",
+                "url": "https://leetcode.cn/problems/remove-duplicates-from-sorted-list"
+            }
+        ]
+    }
+}

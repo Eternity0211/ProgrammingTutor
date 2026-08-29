@@ -1,0 +1,83 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "通用编程逻辑",
+            "基础算法理解"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "编程逻辑与基础算法入门",
+                "duration": "2周",
+                "resources": [
+                    "《算法图解》第1-4章",
+                    "LeetCode 探索 - 初级算法"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "数据结构基础（数组、字符串、链表）",
+                "duration": "3周",
+                "resources": [
+                    "《数据结构与算法分析：C语言描述》第3章",
+                    "LeetCode 探索 - 数组与字符串"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "递归与树结构基础",
+                "duration": "3周",
+                "resources": [
+                    "《算法（第4版）》第1章",
+                    "LeetCode 探索 - 树"
+                ]
+            },
+            {
+                "step": 4,
+                "topic": "栈、队列与哈希表应用",
+                "duration": "2周",
+                "resources": [
+                    "《C++ Primer》第9、11章（容器部分）",
+                    "LeetCode 探索 - 栈与队列"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc1",
+                "title": "两数之和",
+                "difficulty": "入门",
+                "purpose": "训练使用哈希表（unordered_map）进行快速查找，理解基础算法逻辑。",
+                "url": "https://leetcode.cn/problems/two-sum"
+            },
+            {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "掌握栈（stack）的基本操作，理解括号匹配的逻辑验证。",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+            },
+            {
+                "id": "lc509",
+                "title": "斐波那契数",
+                "difficulty": "入门",
+                "purpose": "理解递归的基本思想与实现，以及简单的动态规划入门。",
+                "url": "https://leetcode.cn/problems/fibonacci-number"
+            },
+            {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "掌握二叉树递归遍历的基本框架，理解深度优先搜索（DFS）。",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc206",
+                "title": "反转链表",
+                "difficulty": "初级",
+                "purpose": "巩固指针/引用操作，理解链表结构的基础修改。",
+                "url": "https://leetcode.cn/problems/reverse-linked-list"
+            }
+        ]
+    }
+}

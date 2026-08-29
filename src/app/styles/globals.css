@@ -1,0 +1,280 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  :root {
+    --status-passed: 145 80% 55%;
+    --status-passed-foreground: 0 0% 100%;
+
+    --status-pending: 210 100% 95%;
+    --status-pending-foreground: 220 100% 50%;
+
+    --status-partial: 48 96% 89%;
+    --status-partial-foreground: 48 100% 45%;
+
+    --status-not-started: 240 4.8% 95.9%;
+    --status-not-started-foreground: 240 5.9% 10%;
+
+    --status-in-progress: 217 91% 95%;
+    --status-in-progress-foreground: 217 91% 60%;
+
+    --status-late: 48 96% 89%;
+    --status-late-foreground: 48 100% 45%;
+
+    --status-completed: 145 80% 55%;
+    --status-completed-foreground: 0 0% 100%;
+
+    --status-failed: 0 84% 95%;
+    --status-failed-foreground: 0 84% 60%;
+
+    --score-excellent: 145 80% 55%;
+    --score-excellent-foreground: 0 0% 100%;
+
+    --score-good: 217 91% 60%;
+    --score-good-foreground: 0 0% 100%;
+
+    --score-fair: 48 96% 53%;
+    --score-fair-foreground: 48 100% 25%;
+
+    --score-poor: 25 95% 53%;
+    --score-poor-foreground: 25 95% 25%;
+
+    --score-fail: 0 84% 60%;
+    --score-fail-foreground: 0 0% 100%;
+
+    --primary-button: var(--marine-600);
+    --primary-button-foreground: var(--marine-100);
+    --primary-button-hover: var(--marine-700);
+
+    --secondary-button: var(--marine-200);
+    --secondary-button-foreground: var(--marine-900);
+    --secondary-button-hover: var(--marine-100);
+
+    --destructive-button: 0 84.2% 60.2%;
+    --destructive-button-foreground: 0 0% 98%;
+
+    --marine-900: 210 100% 15%;
+    --marine-800: 210 100% 30%;
+    --marine-700: 202 100% 38%;
+    --marine-600: 202 100% 45%;
+    --marine-500: 210 45% 60%;
+    --marine-300: 210 60% 85%;
+    --marine-200: 210 100% 88%;
+    --marine-100: 210 100% 92%;
+
+    --shadow-color: 0, 0, 0;
+
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --border: 240 5.9% 90%;
+    --border-secondary: 226 60% 60%;
+    --input: 240 5.9% 90%;
+
+    --neutral: 222.2 47.4% 11.2%;
+    --neutral-foreground: 0 0% 98%;
+
+    --primary: 202 100% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --ring: 240 10% 3.9%;
+
+    --radius: 0.5rem;
+
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 10% 25%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 217 14% 47%;
+    --sidebar-secondary: 226 60% 60%;
+    --sidebar-secondary-foreground: 0 0% 98%;
+    --sidebar-accent: 214 100% 98%;
+    --sidebar-accent-foreground: 217 14% 47%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --font-inter: "Inter", sans-serif;
+  }
+
+  .dark {
+    --status-passed: 145 80% 30%;
+    --status-passed-foreground: 0 0% 100%;
+
+    --status-pending: 220 100% 20%;
+    --status-pending-foreground: 210 100% 90%;
+
+    --status-partial: 48 100% 20%;
+    --status-partial-foreground: 48 100% 85%;
+
+    --status-not-started: 240 3.7% 15.9%;
+    --status-not-started-foreground: 240 5% 64.9%;
+
+    --status-in-progress: 217 91% 20%;
+    --status-in-progress-foreground: 217 91% 80%;
+
+    --status-late: 48 100% 20%;
+    --status-late-foreground: 48 100% 85%;
+
+    --status-completed: 145 80% 30%;
+    --status-completed-foreground: 145 80% 90%;
+
+    --status-failed: 0 62% 20%;
+    --status-failed-foreground: 0 84% 80%;
+
+    --score-excellent: 145 80% 30%;
+    --score-excellent-foreground: 145 80% 90%;
+
+    --score-good: 217 91% 40%;
+    --score-good-foreground: 217 91% 90%;
+
+    --score-fair: 48 96% 30%;
+    --score-fair-foreground: 48 100% 85%;
+
+    --score-poor: 25 95% 30%;
+    --score-poor-foreground: 25 95% 85%;
+
+    --score-fail: 0 62% 30%;
+    --score-fail-foreground: 0 84% 90%;
+
+    --primary-button: var(--marine-600);
+    --primary-button-foreground: var(--marine-100);
+    --primary-button-hover: var(--marine-700);
+
+    --secondary-button: var(--marine-200);
+    --secondary-button-foreground: var(--marine-900);
+    --secondary-button-hover: var(--marine-100);
+
+    --destructive-button: 0 62.8% 30.6%;
+    --destructive-button-foreground: 0 0% 98%;
+
+    --marine-900: 210 100% 95%;
+    --marine-800: 210 100% 85%;
+    --marine-700: 202 100% 70%;
+    --marine-600: 202 100% 60%;
+    --marine-500: 210 45% 40%;
+    --marine-300: 210 60% 25%;
+    --marine-200: 210 100% 15%;
+    --marine-100: 210 100% 10%;
+
+    --shadow-color: 0, 0, 0;
+
+    --background: 0 0% 7%;
+    --foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --border-secondary: 226 60% 60%;
+    --input: 240 3.7% 15.9%;
+
+    --neutral: 0 0% 98%;
+    --neutral-foreground: 217 14% 47%;
+
+    --primary: 202 100% 60%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --ring: 240 4.9% 83.9%;
+
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 10% 3.9%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 240 5% 96%;
+    --sidebar-primary-foreground: 0 0% 70%;
+    --sidebar-secondary: 226 60% 60%;
+    --sidebar-secondary-foreground: 0 0% 98%;
+    --sidebar-accent: 219 29% 18%;
+    --sidebar-accent-foreground: 216 24% 96%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    --landingpage-background: #060c14;
+
+    --font-inter: "Inter", sans-serif;
+  }
+}
+
+.sidebar-gradient {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.96) 100%
+  );
+  backdrop-filter: blur(8px);
+}
+
+.dark .sidebar-gradient {
+  background: linear-gradient(
+    180deg,
+    rgba(24, 24, 27, 0.98) 0%,
+    rgba(24, 24, 27, 0.96) 100%
+  );
+  backdrop-filter: blur(8px);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+  background-clip: content-box;
+}

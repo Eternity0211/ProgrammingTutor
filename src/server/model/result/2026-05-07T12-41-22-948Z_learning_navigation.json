@@ -1,0 +1,79 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "指针/引用",
+            "内存管理"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "指针基础与引用",
+                "duration": "2-3天",
+                "resources": [
+                    "《C++ Primer》第2章 变量和基本类型，第6.2节 指针"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "动态内存管理（new/delete）",
+                "duration": "2-3天",
+                "resources": [
+                    "《C++ Primer》第12章 动态内存"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "链表数据结构与指针操作",
+                "duration": "3-4天",
+                "resources": [
+                    "《数据结构与算法分析（C++描述）》第3章 表、栈和队列"
+                ]
+            },
+            {
+                "step": 4,
+                "topic": "智能指针（unique_ptr, shared_ptr）",
+                "duration": "2-3天",
+                "resources": [
+                    "《C++ Primer》第12.1节 动态内存与智能指针"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "训练基础的链表遍历和指针移动，理解指针如何访问节点。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+            },
+            {
+                "id": "lc206",
+                "title": "反转链表",
+                "difficulty": "初级",
+                "purpose": "掌握通过指针操作改变链表节点指向的核心技巧，是理解指针操作的关键。",
+                "url": "https://leetcode.cn/problems/reverse-linked-list"
+            },
+            {
+                "id": "lc21",
+                "title": "合并两个有序链表",
+                "difficulty": "初级",
+                "purpose": "练习在操作多个链表时，如何正确地移动和更新指针，避免逻辑错误。",
+                "url": "https://leetcode.cn/problems/merge-two-sorted-lists"
+            },
+            {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "理解指针的追赶问题，是检测循环和内存管理不当（如未正确释放）的经典场景。",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+            },
+            {
+                "id": "lc707",
+                "title": "设计链表",
+                "difficulty": "中级",
+                "purpose": "综合训练链表的增删改查，并需要手动管理节点内存（new/delete），巩固内存管理知识。",
+                "url": "https://leetcode.cn/problems/design-linked-list"
+            }
+        ]
+    }
+}

@@ -1,0 +1,280 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String             @id @default(cuid())
+  name              String
+  email             String?            @unique
+  emailVerified     DateTime?          @map("email_verified")
+  image             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  onboarded         Boolean            @default(false)
+  role              Role               @default(STUDENT)
+  classrooms        Classroom[]        @relation("FacultyClassrooms")
+  evaluationMetrics EvaluationMetric[]
+  codeDrafts        CodeDraft[]
+  submissions       Submission[]
+  accounts          Account[]
+  enrolledClasses   Classroom[]        @relation("StudentClasses")
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Classroom {
+  id          String       @id @default(uuid())
+  name        String
+  code        String       @unique
+  facultyId   String
+  createdAt   DateTime     @default(now())
+  inviteLink  String       @unique
+  section     String
+  facultyName String
+  assignments Assignment[]
+  faculty     User         @relation("FacultyClassrooms", fields: [facultyId], references: [id], onDelete: Cascade)
+  students    User[]       @relation("StudentClasses")
+}
+
+model Assignment {
+  id                    String             @id @default(uuid())
+  title                 String
+  description           String?
+  classroomId           String
+  createdAt             DateTime           @default(now())
+  DueDate               DateTime?
+  copyPastePrevention   Boolean            @default(false)
+  fullScreenEnforcement Boolean            @default(false)
+  allowAutoEvaluation   Boolean            @default(true)
+  allowLateSubmission   Boolean            @default(true)
+  startDate             DateTime?
+  metricsWeight         Float              @default(40.0)
+  testCaseWeight        Float              @default(60.0)
+  classroom             Classroom          @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  metrics               AssignmentMetric[]
+  codeDrafts            CodeDraft[]
+  questions             Question[]
+  submissions           Submission[]
+}
+
+model AssignmentMetric {
+  id           String           @id @default(uuid())
+  assignmentId String
+  metricId     String
+  weight       Float
+  createdAt    DateTime         @default(now())
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  metric       EvaluationMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+}
+
+model EvaluationMetric {
+  id          String                   @id @default(uuid())
+  name        String
+  description String?
+  userId      String
+  createdAt   DateTime                 @default(now())
+  assignments AssignmentMetric[]
+  user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results     SubmissionMetricResult[]
+}
+
+model Question {
+  id             String           @id @default(uuid())
+  assignmentId   String
+  title          String
+  description    String
+  language       String
+  createdAt      DateTime         @default(now())
+  codeDrafts     CodeDraft[]
+  codeSubmission CodeSubmission[]
+  assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  testCases      TestCase[]
+  classCode      String?
+  skillTopic     String?
+  difficulty     String?
+}
+
+model CodeDraft {
+  id           String     @id @default(uuid())
+  studentId    String
+  assignmentId String
+  questionId   String
+  code         String
+  language     String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  student      User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  question     Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, assignmentId, questionId])
+  @@index([studentId, assignmentId])
+  @@index([questionId])
+}
+
+model TestCase {
+  id              String           @id @default(uuid())
+  questionId      String
+  input           String
+  expectedOutput  String
+  hidden          Boolean          @default(false)
+  description     String?
+  question        Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  testCaseResults TestCaseResult[]
+}
+
+model Submission {
+  id             String           @id @default(uuid())
+  studentId      String
+  createdAt      DateTime         @default(now())
+  assignmentId   String
+  finalScore     Float?           @default(0)
+  updatedAt      DateTime         @updatedAt
+  status         SubmissionStatus @default(NOT_STARTED)
+  symbolicOutput Json?            @default("{}")
+  codeSubmission CodeSubmission[]
+  assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student        User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  aiFeedback          Json? // 存储 AI 分析的 JSON 数据
+  emotion             Json? // 存储情绪反馈的 JSON 数据
+  recommendedQuestions Json? // 存储推荐练习的 JSON 数据
+  
+  @@unique([studentId, assignmentId])
+}
+
+model CodeSubmission {
+  id                   String                   @id @default(uuid())
+  submissionId         String
+  questionId           String
+  code                 String
+  language             String
+  score                Float                    @default(0)
+  testCaseScore        Float                    @default(0)
+  metricScore          Float                    @default(0)
+  feedback             String?
+  codeEvaluationStatus CodeEvaluationStatus     @default(PENDING)
+  createdAt            DateTime                 @default(now())
+  question             Question                 @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  submission           Submission               @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  metricResults        SubmissionMetricResult[]
+  testCaseResults      TestCaseResult[]
+  evaluationRuns       EvaluationRun[]
+}
+
+model EvaluationRun {
+  id                 String         @id @default(uuid())
+  codeSubmissionId   String
+  submissionId       String
+  questionId         String
+  language           String
+  branch             String
+  symbolicErrorCount Int            @default(0)
+  symbolicWarningCount Int          @default(0)
+  score              Float          @default(0)
+  metricScore        Float          @default(0)
+  hasNavigation      Boolean        @default(false)
+  hasEmotion         Boolean        @default(false)
+  payload            Json?
+  createdAt          DateTime       @default(now())
+  codeSubmission     CodeSubmission @relation(fields: [codeSubmissionId], references: [id], onDelete: Cascade)
+
+  @@index([codeSubmissionId])
+  @@index([submissionId])
+  @@index([questionId])
+}
+
+model SubmissionMetricResult {
+  id               String           @id @default(uuid())
+  codeSubmissionId String
+  metricId         String
+  score            Float
+  feedback         String?
+  createdAt        DateTime         @default(now())
+  codeSubmission   CodeSubmission   @relation(fields: [codeSubmissionId], references: [id], onDelete: Cascade)
+  metric           EvaluationMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  @@unique([codeSubmissionId, metricId])
+}
+
+model TestCaseResult {
+  id               String         @id @default(uuid())
+  testCaseId       String
+  status           TestCaseStatus @default(PENDING)
+  actualOutput     String?
+  executionTime    Int?
+  errorMessage     String?
+  createdAt        DateTime       @default(now())
+  judge0Token      String?
+  codeSubmissionId String
+  codeSubmission   CodeSubmission @relation(fields: [codeSubmissionId], references: [id], onDelete: Cascade)
+  testCase         TestCase       @relation(fields: [testCaseId], references: [id], onDelete: Cascade)
+
+  @@unique([codeSubmissionId, testCaseId])
+}
+
+model Challenge {
+  id          String   @id @default(uuid())
+  slug        String   @unique // 用于URL跳转，比如 "use-after-free-repair"
+  title       String
+  description String
+  purpose     String
+  difficulty  String // 入门/初级/中级/高级
+  topic       String // 对应维度：内存管理/STL容器...
+  createdAt   DateTime @default(now())
+}
+
+enum Role {
+  FACULTY
+  STUDENT
+}
+
+enum SubmissionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  LATE_SUBMISSION
+  COMPLETED
+  PARTIAL
+  FAILED
+}
+
+enum TestCaseStatus {
+  PASSED
+  FAILED
+  ERROR
+  TIMEOUT
+  PENDING
+}
+
+enum CodeEvaluationStatus {
+  PENDING
+  TEST_CASES_EVALUATION_FAILED
+  TEST_CASES_EVALUATION_COMPLETE
+  LLM_EVALUATION_IN_PROGRESS
+  LLM_EVALUATION_FAILED
+  EVALUATION_COMPLETE
+}

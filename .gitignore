@@ -1,0 +1,67 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env
+.env.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Neuro-Symbolic Project Additions ---
+
+# 排除 LoRA 权重 (防止上传几百 MB 的二进制文件)
+data/neural/LoRA/*.bin
+data/neural/LoRA/*.safetensors
+data/neural/LoRA/*.pt
+
+# 排除数据库本地实例
+prisma/*.db
+prisma/*.db-journal
+
+# 排除实验量化指标 (只保留目录，不保留生成的报表)
+data/evaluation/metrics/*.csv
+data/evaluation/metrics/*.xlsx
+
+# 排除 OS 临时文件
+.DS_Store
+Thumbs.db
+
+# 排除 VS Code 特有配置
+.vscode/
+
+.history/
+.env

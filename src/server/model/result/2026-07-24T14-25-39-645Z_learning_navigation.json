@@ -1,0 +1,70 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "边界条件处理"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "理解边界条件的概念",
+                "duration": "1小时",
+                "resources": [
+                    "阅读关于边界条件（如空输入、极值、循环终止条件）的编程基础文章"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "学习测试用例设计方法",
+                "duration": "2小时",
+                "resources": [
+                    "学习如何设计覆盖正常、边界和异常情况的测试用例"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "实践简单数据结构的边界处理",
+                "duration": "3小时",
+                "resources": [
+                    "通过链表和二叉树相关题目，练习在递归和迭代中处理空节点、单节点等边界情况"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "训练在递归中处理空树（根节点为空）的边界条件",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc111",
+                "title": "二叉树的最小深度",
+                "difficulty": "入门",
+                "purpose": "强化边界条件思维，注意单子树情况下的深度计算",
+                "url": "https://leetcode.cn/problems/minimum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "练习在链表遍历中处理快慢指针的边界条件（如链表节点数为偶数时）",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+            },
+            {
+                "id": "lc83",
+                "title": "删除排序链表中的重复元素",
+                "difficulty": "初级",
+                "purpose": "训练在链表操作中处理尾部边界和连续重复元素的场景",
+                "url": "https://leetcode.cn/problems/remove-duplicates-from-sorted-list"
+            },
+            {
+                "id": "lc110",
+                "title": "平衡二叉树",
+                "difficulty": "初级",
+                "purpose": "综合练习递归中的深度计算和提前终止条件，巩固边界处理能力",
+                "url": "https://leetcode.cn/problems/balanced-binary-tree"
+            }
+        ]
+    }
+}

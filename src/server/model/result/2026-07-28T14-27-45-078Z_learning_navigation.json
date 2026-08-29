@@ -1,0 +1,132 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "递归算法",
+            "指针/引用"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "递归算法基础概念与简单应用",
+                "duration": "2-3天",
+                "resources": [
+                    "学习递归三要素（终止条件、递归调用、返回值处理）",
+                    "理解递归调用栈与函数调用过程",
+                    "通过简单的数学数列（如阶乘、斐波那契数列）理解递归"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "指针/引用基础与链表入门",
+                "duration": "3-4天",
+                "resources": [
+                    "理解指针与引用的区别、内存地址概念",
+                    "学习链表节点的定义与基本操作（创建、遍历）",
+                    "练习使用指针操作链表节点"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "递归在数据结构（二叉树）中的应用",
+                "duration": "3-4天",
+                "resources": [
+                    "学习二叉树的基本概念（节点、深度、遍历）",
+                    "掌握二叉树前序、中序、后序遍历的递归实现",
+                    "理解递归在二叉树问题中的分治思想"
+                ]
+            },
+            {
+                "step": 4,
+                "topic": "指针/引用在链表操作中的进阶应用",
+                "duration": "3-4天",
+                "resources": [
+                    "学习链表反转、合并、检测环等经典操作",
+                    "掌握双指针（快慢指针）技巧在链表中的应用",
+                    "练习处理链表操作中的边界条件（如空链表、单个节点）"
+                ]
+            },
+            {
+                "step": 5,
+                "topic": "递归与指针/引用的综合应用",
+                "duration": "4-5天",
+                "resources": [
+                    "学习使用递归解决链表问题（如反转链表递归版）",
+                    "理解递归回溯思想在排列组合问题中的应用",
+                    "综合运用递归和指针操作解决中等难度问题"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc509",
+                "title": "斐波那契数",
+                "difficulty": "入门",
+                "purpose": "训练递归基础，理解递归终止条件和简单递归调用。",
+                "url": "https://leetcode.cn/problems/fibonacci-number"
+            },
+            {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "训练二叉树递归遍历，理解递归返回值处理。",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "训练指针操作链表，引入快慢指针基础概念。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+            },
+            {
+                "id": "lc206",
+                "title": "反转链表",
+                "difficulty": "初级",
+                "purpose": "训练指针操作链表的经典问题，掌握迭代和递归两种解法。",
+                "url": "https://leetcode.cn/problems/reverse-linked-list"
+            },
+            {
+                "id": "lc21",
+                "title": "合并两个有序链表",
+                "difficulty": "初级",
+                "purpose": "训练指针操作链表，学习处理两个链表的合并逻辑。",
+                "url": "https://leetcode.cn/problems/merge-two-sorted-lists"
+            },
+            {
+                "id": "lc226",
+                "title": "翻转二叉树",
+                "difficulty": "入门",
+                "purpose": "巩固二叉树递归遍历，并应用简单的节点操作。",
+                "url": "https://leetcode.cn/problems/invert-binary-tree"
+            },
+            {
+                "id": "lc83",
+                "title": "删除排序链表中的重复元素",
+                "difficulty": "初级",
+                "purpose": "训练指针操作链表，学习处理链表节点的删除。",
+                "url": "https://leetcode.cn/problems/remove-duplicates-from-sorted-list"
+            },
+            {
+                "id": "lc110",
+                "title": "平衡二叉树",
+                "difficulty": "初级",
+                "purpose": "训练递归在二叉树中同时返回多个信息（高度和平衡状态）。",
+                "url": "https://leetcode.cn/problems/balanced-binary-tree"
+            },
+            {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "训练指针操作链表，深入应用快慢指针技巧。",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+            },
+            {
+                "id": "lc543",
+                "title": "二叉树的直径",
+                "difficulty": "初级",
+                "purpose": "综合训练二叉树递归，理解后序遍历和全局变量的使用。",
+                "url": "https://leetcode.cn/problems/diameter-of-binary-tree"
+            }
+        ]
+    }
+}

@@ -1,0 +1,67 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "边界条件处理",
+            "测试用例覆盖"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "理解边界条件与常见错误",
+                "duration": "1-2小时",
+                "resources": [
+                    "《代码大全》边界条件相关章节",
+                    "常见编程错误案例解析"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "学习系统化测试用例设计方法",
+                "duration": "2-3小时",
+                "resources": [
+                    "软件测试基础教程",
+                    "等价类划分与边界值分析法"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "通过针对性练习巩固边界处理能力",
+                "duration": "3-4小时",
+                "resources": [
+                    "LeetCode 入门与初级题目练习",
+                    "重点练习涉及数组、链表、字符串边界处理的题目"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "训练对输入字符串边界（空字符串、单字符、不匹配括号）的判断和处理能力。",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+            },
+            {
+                "id": "lc111",
+                "title": "二叉树的最小深度",
+                "difficulty": "入门",
+                "purpose": "理解二叉树遍历中的边界情况，特别是处理只有单个子树的节点，避免将非叶子节点误判为叶子节点。",
+                "url": "https://leetcode.cn/problems/minimum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc83",
+                "title": "删除排序链表中的重复元素",
+                "difficulty": "初级",
+                "purpose": "练习处理链表的边界条件，如空链表、单节点链表、以及连续重复元素的正确删除。",
+                "url": "https://leetcode.cn/problems/remove-duplicates-from-sorted-list"
+            },
+            {
+                "id": "lc232",
+                "title": "用栈实现队列",
+                "difficulty": "初级",
+                "purpose": "在实现数据结构时，考虑操作（如 pop, peek）在空队列或特定状态下的边界行为。",
+                "url": "https://leetcode.cn/problems/implement-queue-using-stacks"
+            }
+        ]
+    }
+}

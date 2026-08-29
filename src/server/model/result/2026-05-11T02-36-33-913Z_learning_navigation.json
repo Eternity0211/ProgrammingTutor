@@ -1,0 +1,99 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "指针/引用",
+            "内存管理"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "指针基础与内存地址",
+                "duration": "2-3天",
+                "resources": [
+                    "《C++ Primer》第2章 变量和基本类型、第3.5.2节 指针",
+                    "菜鸟教程 C++ 指针章节"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "引用与指针的区别及应用场景",
+                "duration": "1-2天",
+                "resources": [
+                    "《C++ Primer》第2.5.1节 引用",
+                    "StackOverflow 相关讨论：指针 vs 引用"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "动态内存分配基础（new/delete）",
+                "duration": "2-3天",
+                "resources": [
+                    "《C++ Primer》第12.1.2节 动态内存与智能指针（基础部分）",
+                    "GeeksforGeeks: new and delete in C++"
+                ]
+            },
+            {
+                "step": 4,
+                "topic": "常见内存问题与调试（内存泄漏、野指针）",
+                "duration": "2天",
+                "resources": [
+                    "Valgrind 或 AddressSanitizer 工具入门教程",
+                    "博客文章：C++ 内存错误排查指南"
+                ]
+            },
+            {
+                "step": 5,
+                "topic": "智能指针初步（unique_ptr, shared_ptr）",
+                "duration": "3-4天",
+                "resources": [
+                    "《C++ Primer》第12.1节 智能指针",
+                    "cppreference.com: std::unique_ptr, std::shared_ptr"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "巩固指针遍历链表的基础操作，理解快慢指针思想。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+            },
+            {
+                "id": "lc206",
+                "title": "反转链表",
+                "difficulty": "初级",
+                "purpose": "训练指针操作，理解如何通过修改指针指向来改变链表结构。",
+                "url": "https://leetcode.cn/problems/reverse-linked-list"
+            },
+            {
+                "id": "lc21",
+                "title": "合并两个有序链表",
+                "difficulty": "初级",
+                "purpose": "练习使用指针（或引用）操作多个链表，管理节点间的连接关系。",
+                "url": "https://leetcode.cn/problems/merge-two-sorted-lists"
+            },
+            {
+                "id": "lc83",
+                "title": "删除排序链表中的重复元素",
+                "difficulty": "初级",
+                "purpose": "训练在链表中安全地删除节点，注意内存释放（如果是手动管理）。",
+                "url": "https://leetcode.cn/problems/remove-duplicates-from-sorted-list"
+            },
+            {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "深入理解指针和内存地址关系，运用快慢指针判断链表结构。",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+            },
+            {
+                "id": "lc707",
+                "title": "设计链表",
+                "difficulty": "中级",
+                "purpose": "综合练习链表的增删查改，涉及动态节点创建与释放，是内存管理的实战。",
+                "url": "https://leetcode.cn/problems/design-linked-list"
+            }
+        ]
+    }
+}

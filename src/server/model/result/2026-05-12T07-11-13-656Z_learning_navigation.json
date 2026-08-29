@@ -1,0 +1,179 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "递归算法",
+            "指针/引用"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "指针/引用基础概念",
+                "duration": "2-3天",
+                "resources": [
+                    "C++ Primer 第2章：变量和基本类型",
+                    "C++ Primer 第3.5.2节：指针",
+                    "菜鸟教程：C++ 指针"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "链表基础与指针操作",
+                "duration": "3-4天",
+                "resources": [
+                    "《数据结构与算法分析：C++描述》链表章节",
+                    "LeetCode 探索卡片：链表"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "递归基础与数学归纳法",
+                "duration": "2-3天",
+                "resources": [
+                    "《算法图解》第3章：递归",
+                    "《C++程序设计语言》第12.1节：函数"
+                ]
+            },
+            {
+                "step": 4,
+                "topic": "树与递归遍历",
+                "duration": "4-5天",
+                "resources": [
+                    "《数据结构与算法分析：C++描述》树章节",
+                    "LeetCode 探索卡片：二叉树"
+                ]
+            },
+            {
+                "step": 5,
+                "topic": "指针/引用进阶与复杂链表操作",
+                "duration": "4-5天",
+                "resources": [
+                    "《C++ Primer》第6.2.4节：函数返回类型与引用",
+                    "《剑指Offer》链表相关面试题解析"
+                ]
+            },
+            {
+                "step": 6,
+                "topic": "递归算法进阶与回溯",
+                "duration": "4-5天",
+                "resources": [
+                    "《算法导论》第4章：分治策略",
+                    "LeetCode 探索卡片：递归 I & II"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc206",
+                "title": "反转链表",
+                "difficulty": "初级",
+                "purpose": "掌握指针操作，理解链表节点间的指向关系，为后续复杂链表题打基础。",
+                "url": "https://leetcode.cn/problems/reverse-linked-list"
+            },
+            {
+                "id": "lc21",
+                "title": "合并两个有序链表",
+                "difficulty": "初级",
+                "purpose": "训练双指针在链表中的应用，以及虚拟头节点的技巧。",
+                "url": "https://leetcode.cn/problems/merge-two-sorted-lists"
+            },
+            {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "理解快慢指针（双指针）技巧，判断链表结构。",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+            },
+            {
+                "id": "lc509",
+                "title": "斐波那契数",
+                "difficulty": "入门",
+                "purpose": "理解递归最基本的形式、递归三要素（定义、出口、递推关系）以及递归的重复计算问题。",
+                "url": "https://leetcode.cn/problems/fibonacci-number"
+            },
+            {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "将递归应用于树结构，理解“深度”的递归定义（左右子树最大深度+1）。",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc226",
+                "title": "翻转二叉树",
+                "difficulty": "入门",
+                "purpose": "经典的树递归问题，理解如何递归地交换左右子树。",
+                "url": "https://leetcode.cn/problems/invert-binary-tree"
+            },
+            {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "巩固快慢指针技巧，应用于寻找链表中点。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+            },
+            {
+                "id": "lc83",
+                "title": "删除排序链表中的重复元素",
+                "difficulty": "初级",
+                "purpose": "训练在遍历链表中操作指针（跳过重复节点）的能力。",
+                "url": "https://leetcode.cn/problems/remove-duplicates-from-sorted-list"
+            },
+            {
+                "id": "lc110",
+                "title": "平衡二叉树",
+                "difficulty": "初级",
+                "purpose": "练习在递归过程中同时返回多个信息（高度和平衡状态），加深对递归返回值设计的理解。",
+                "url": "https://leetcode.cn/problems/balanced-binary-tree"
+            },
+            {
+                "id": "lc543",
+                "title": "二叉树的直径",
+                "difficulty": "初级",
+                "purpose": "类似平衡二叉树，练习在递归遍历中计算并更新全局最优值，理解递归的副作用。",
+                "url": "https://leetcode.cn/problems/diameter-of-binary-tree"
+            },
+            {
+                "id": "lc19",
+                "title": "删除链表的倒数第 N 个结点",
+                "difficulty": "中级",
+                "purpose": "综合运用虚拟头节点和快慢指针技巧，解决链表定位和删除问题。",
+                "url": "https://leetcode.cn/problems/remove-nth-node-from-end-of-list"
+            },
+            {
+                "id": "lc2",
+                "title": "两数相加",
+                "difficulty": "中级",
+                "purpose": "综合训练链表遍历、指针操作、进位处理以及虚拟头节点的使用。",
+                "url": "https://leetcode.cn/problems/add-two-numbers"
+            },
+            {
+                "id": "lc24",
+                "title": "两两交换链表中的节点",
+                "difficulty": "中级",
+                "purpose": "训练对链表节点进行分组和指针重定向的复杂操作，巩固递归或迭代解法。",
+                "url": "https://leetcode.cn/problems/swap-nodes-in-pairs"
+            },
+            {
+                "id": "lc144",
+                "title": "二叉树的前序遍历",
+                "difficulty": "初级",
+                "purpose": "掌握二叉树递归遍历的经典实现，理解遍历顺序。",
+                "url": "https://leetcode.cn/problems/binary-tree-preorder-traversal"
+            },
+            {
+                "id": "lc94",
+                "title": "二叉树的中序遍历",
+                "difficulty": "初级",
+                "purpose": "掌握二叉树递归遍历的经典实现，理解遍历顺序。",
+                "url": "https://leetcode.cn/problems/binary-tree-inorder-traversal"
+            },
+            {
+                "id": "lc145",
+                "title": "二叉树的后序遍历",
+                "difficulty": "初级",
+                "purpose": "掌握二叉树递归遍历的经典实现，理解遍历顺序。",
+                "url": "https://leetcode.cn/problems/binary-tree-postorder-traversal"
+            }
+        ]
+    }
+}

@@ -1,0 +1,23 @@
+{
+  "project_name": "ProgrammingTutor",
+  "dataset_version": "1.0.0",
+  "last_updated": "2026-01-27",
+  "statistics": {
+    "total_samples": 1500,
+    "language_distribution": {
+      "cpp": 900,
+      "python": 600
+    },
+    "error_categories": {
+      "ArrayOutOfBounds": 500,
+      "MemoryLeak": 300,
+      "InfiniteRecursion": 400,
+      "LogicError": 300
+    }
+  },
+  "data_schema": {
+    "instruction": "Prompt template for code review",
+    "input": "Combined student code and symbolic diagnostic tags",
+    "output": "Causal feedback explanation"
+  }
+}

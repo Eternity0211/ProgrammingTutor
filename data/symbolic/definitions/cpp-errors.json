@@ -1,0 +1,583 @@
+{
+  "definitions": {
+    "CPP_SYNTAX_ERROR": {
+      "severity": "High",
+      "display_name": "Syntax Error",
+      "message": "Compilation failed. Check for missing expressions, semicolons, or mismatched braces.",
+      "pedagogical_label": "Compilation",
+      "knowledge_concept": "Syntax",
+      "remediation": "Ensure all statements end with a semicolon and all braces are properly matched."
+    },
+
+    "CPP_ASSIGNMENT_IN_IF": {
+      "severity": "High",
+      "display_name": "Assignment in If Condition",
+      "message": "You used '=' inside an if condition. Did you mean '==' for comparison?",
+      "pedagogical_label": "Logic Error",
+      "knowledge_concept": "Conditional Statements",
+      "remediation": "Replace '=' with '==' if you intended comparison."
+    },
+
+    "CPP_ARRAY_OOB_LITERAL": {
+      "severity": "High",
+      "display_name": "Array Index Out of Bounds Literal",
+      "message": "Index {use_index} is outside the valid range [0 ~ {def_size}) for array '{def_name}'.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Array Indexing",
+      "remediation": "Ensure the index stays within the declared array size."
+    },
+
+    "CPP_NEGATIVE_INDEX_ACCESS": {
+      "severity": "High",
+      "display_name": "Negative Array Index",
+      "message": "Array index {index} is negative, which accesses memory before the array begins.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Array Indexing",
+      "remediation": "Ensure the index is greater than or equal to 0 before use."
+    },
+
+    "CPP_INVALID_ARRAY_SIZE": {
+      "severity": "High",
+      "display_name": "Invalid Array Size",
+      "message": "Array size must be a positive integer. You provided: {size}.",
+      "pedagogical_label": "Array Declaration",
+      "knowledge_concept": "Arrays",
+      "remediation": "Use a positive constant integer when declaring fixed-size arrays."
+    },
+
+    "CPP_DIVISION_BY_ZERO_LITERAL": {
+      "severity": "High",
+      "display_name": "Division by Zero Literal",
+      "message": "Divisor may be zero, which causes undefined behavior.",
+      "pedagogical_label": "Arithmetic Safety",
+      "knowledge_concept": "Arithmetic Operations",
+      "remediation": "Add a condition to ensure divisor != 0 before division."
+    },
+
+    "CPP_NULL_POINTER_DEREF": {
+      "severity": "High",
+      "display_name": "Possible Null Pointer Dereference",
+      "message": "Pointer may be nullptr and is dereferenced without a null check.",
+      "pedagogical_label": "Pointer Safety",
+      "knowledge_concept": "Pointers",
+      "remediation": "Check if (ptr != nullptr) before dereferencing the pointer."
+    },
+
+    "CPP_UNINIT_VAR_USAGE": {
+      "severity": "Medium",
+      "display_name": "Use of Uninitialized Variable",
+      "message": "Variable is used before being assigned a definite value.",
+      "pedagogical_label": "Variable Initialization",
+      "knowledge_concept": "Variable Basics",
+      "remediation": "Initialize variables at declaration, e.g. int x = 0;"
+    },
+
+    "CPP_UNINIT_MEMBER": {
+      "severity": "Medium",
+      "display_name": "Uninitialized Member Variable",
+      "message": "Class member may not be initialized in the constructor.",
+      "pedagogical_label": "Object Construction",
+      "knowledge_concept": "Constructors",
+      "remediation": "Initialize all member variables in the constructor initializer list."
+    },
+
+    "CPP_IMPLICIT_NARROWING": {
+      "severity": "Low",
+      "display_name": "Implicit Narrowing Conversion",
+      "message": "Implicit conversion may lose precision or range.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type Conversion",
+      "remediation": "Use static_cast to make the conversion explicit or use a wider type."
+    },
+
+    "CPP_UNSAFE_CAST": {
+      "severity": "High",
+      "display_name": "Unsafe Type Cast",
+      "message": "C-style cast or reinterpret_cast may cause undefined behavior.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type Conversion",
+      "remediation": "Prefer static_cast or dynamic_cast where appropriate."
+    },
+
+    "CPP_VOID_POINTER_USE": {
+      "severity": "High",
+      "display_name": "Void Pointer Dereference",
+      "message": "void* is used without casting to a concrete type.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Pointer Types",
+      "remediation": "Cast void* to the correct pointer type before dereferencing."
+    },
+
+    "CPP_MISSING_BREAK": {
+      "severity": "Low",
+      "display_name": "Missing Break in Switch",
+      "message": "Switch case may fall through without a break statement.",
+      "pedagogical_label": "Control Flow",
+      "knowledge_concept": "Switch Statements",
+      "remediation": "Add break, return, or [[fallthrough]] to clarify intent."
+    },
+
+    "CPP_NON_VOID_NO_RETURN": {
+      "severity": "High",
+      "display_name": "Non-Void Function Missing Return",
+      "message": "Function has a return type but not all control paths return a value.",
+      "pedagogical_label": "Function Contracts",
+      "knowledge_concept": "Function Return Values",
+      "remediation": "Ensure every control path returns a value consistent with the function type."
+    },
+
+    "CPP_RESERVED_IDENTIFIER": {
+      "severity": "Low",
+      "display_name": "Reserved Identifier Usage",
+      "message": "Identifier uses reserved naming pattern (leading underscore or double underscore).",
+      "pedagogical_label": "Naming Rules",
+      "knowledge_concept": "Identifiers",
+      "remediation": "Avoid identifiers starting with '_' or containing '__'."
+    },
+
+    "CPP_FUNCTION_RETURN_LOCAL_REF": {
+      "severity": "High",
+      "display_name": "Return Reference to Local Variable",
+      "message": "Function returns a reference to a local variable, which will be destroyed after the function returns.",
+      "pedagogical_label": "Function Return Rules",
+      "knowledge_concept": "Reference_Return_Fundamentals",
+      "remediation": "Return by value or return a reference to an object with a longer lifetime, such as a parameter or class member."
+    },
+
+    "CPP_FUNCTION_RETURN_LOCAL_PTR": {
+      "severity": "High",
+      "display_name": "Return Pointer to Local Variable",
+      "message": "Function returns a pointer to a local variable, which will dangle after the function returns.",
+      "pedagogical_label": "Function Return Rules",
+      "knowledge_concept": "Pointer_Return_Fundamentals",
+      "remediation": "Avoid returning the address of local variables; instead return by value or point to dynamically allocated or longer-lived objects."
+    },
+
+    "CPP_ARRAY_SIZE_NON_CONSTANT": {
+      "severity": "Medium",
+      "display_name": "Non-Constant Array Size",
+      "message": "Array size should be a compile-time constant, but here it depends on a non-constant expression.",
+      "pedagogical_label": "Array Definition Rules",
+      "knowledge_concept": "Array_Size_Basics",
+      "remediation": "Use a constant expression for the array size or replace the built-in array with std::vector or std::array."
+    },
+
+    "CPP_ALLOC_ZERO_SIZE_ARRAY": {
+      "severity": "High",
+      "display_name": "Allocate Zero-Size Array",
+      "message": "Allocating array with new[] and size 0 leads to undefined behavior.",
+      "pedagogical_label": "Dynamic Memory Allocation",
+      "knowledge_concept": "Dynamic_Array_Basics",
+      "remediation": "Ensure array size is positive before calling new[]."
+    },
+
+    "CPP_VIRTUAL_CALL_FROM_CONSTRUCTOR": {
+      "severity": "High",
+      "display_name": "Virtual Function Call in Constructor",
+      "message": "Calling virtual function from constructor; derived class is not fully constructed yet.",
+      "pedagogical_label": "Object Construction",
+      "knowledge_concept": "Virtual_Function_Basics",
+      "remediation": "Avoid virtual calls in constructors; use non-virtual or pass state via parameters."
+    },
+
+    "CPP_DESTRUCTOR_EXCEPTION_UNHANDLED": {
+      "severity": "High",
+      "display_name": "Exception Thrown in Destructor",
+      "message": "Destructor may throw an exception, which can cause program termination.",
+      "pedagogical_label": "Destructor Rules",
+      "knowledge_concept": "Destructor_Basics",
+      "remediation": "Destructors should not throw; catch and handle exceptions inside the destructor."
+    },
+
+    "CPP_REINTERPRET_CAST_UNSAFE": {
+      "severity": "High",
+      "display_name": "Unsafe reinterpret_cast",
+      "message": "reinterpret_cast between incompatible types may cause undefined behavior.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Reinterpret_Cast_Fundamentals",
+      "remediation": "Prefer static_cast or dynamic_cast; use reinterpret_cast only when necessary and document the rationale."
+    },
+
+    "CPP_CONST_CAST_ABUSE": {
+      "severity": "High",
+      "display_name": "Abuse of const_cast",
+      "message": "Using const_cast to modify a const object leads to undefined behavior.",
+      "pedagogical_label": "Const Correctness",
+      "knowledge_concept": "Const_Cast_Fundamentals",
+      "remediation": "Avoid const_cast; redesign interfaces to avoid stripping const."
+    },
+
+    "CPP_DYNAMIC_CAST_NULL": {
+      "severity": "High",
+      "display_name": "dynamic_cast Result Not Checked for nullptr",
+      "message": "dynamic_cast may return nullptr; dereferencing without a null check causes undefined behavior.",
+      "pedagogical_label": "RTTI Safety",
+      "knowledge_concept": "Dynamic_Cast_Fundamentals",
+      "remediation": "Always check the result of dynamic_cast before dereferencing."
+    },
+
+    "CPP_CLASS_CONSTRUCTOR_EXPLICIT_MISSING": {
+      "severity": "Medium",
+      "display_name": "Single-Parameter Constructor Missing explicit",
+      "message": "Single-parameter constructor allows implicit conversion; consider adding explicit.",
+      "pedagogical_label": "Constructor Rules",
+      "knowledge_concept": "Explicit_Constructor_Basics",
+      "remediation": "Add explicit to prevent unintended implicit conversions."
+    },
+
+    "CPP_VIRTUAL_DESTRUCTOR_MISSING": {
+      "severity": "High",
+      "display_name": "Base Class Destructor Not Virtual",
+      "message": "Base class with virtual functions should have a virtual destructor.",
+      "pedagogical_label": "Inheritance",
+      "knowledge_concept": "Destructor_Basics",
+      "remediation": "Declare the base class destructor as virtual."
+    },
+
+    "CPP_FLOAT_COMPARISON_DIRECT": {
+      "severity": "Medium",
+      "display_name": "Direct Float Equality Comparison",
+      "message": "Comparing floats with == or != is unreliable due to precision; use epsilon comparison.",
+      "pedagogical_label": "Floating-Point",
+      "knowledge_concept": "Floating_Point_Comparison",
+      "remediation": "Use std::abs(a - b) < epsilon instead of a == b."
+    },
+
+    "CPP_FUNCTION_PARAMETER_DEFAULT_VALUE_NOT_LAST": {
+      "severity": "High",
+      "display_name": "Default Parameter Not Last",
+      "message": "Default parameters must appear after all non-default parameters.",
+      "pedagogical_label": "Function Parameters",
+      "knowledge_concept": "Default_Parameter_Basics",
+      "remediation": "Reorder parameters so all parameters with defaults come last."
+    },
+
+    "CPP_LOGIC_WRONG_CONDITION_OPERATOR": {
+      "severity": "Medium",
+      "display_name": "Wrong Operator in Condition (Bitwise vs Logical)",
+      "message": "Using & or | instead of && or || in a condition may cause unexpected short-circuit behavior.",
+      "pedagogical_label": "Conditional Logic",
+      "knowledge_concept": "Conditional_Expression_Basics",
+      "remediation": "Use && for logical AND and || for logical OR in conditions."
+    },
+
+    "CPP_ASSIGNMENT_OPERATOR_SELF_ASSIGN": {
+      "severity": "High",
+      "display_name": "Assignment Operator Missing Self-Assignment Check",
+      "message": "Assignment operator should check for self-assignment to avoid resource corruption.",
+      "pedagogical_label": "Assignment Operator",
+      "knowledge_concept": "Assignment_Operator_Basics",
+      "remediation": "Add if (this == &other) return *this; at the start of operator=."
+    },
+
+    "CPP_VOID_POINTER_ARITHMETIC": {
+      "severity": "High",
+      "display_name": "Pointer Arithmetic on void*",
+      "message": "Pointer arithmetic on void* is invalid; void has no size.",
+      "pedagogical_label": "Pointer Safety",
+      "knowledge_concept": "Pointer_Arithmetic",
+      "remediation": "Cast void* to a concrete pointer type before arithmetic."
+    },
+
+    "CPP_C_STYLE_CAST": {
+      "severity": "Medium",
+      "display_name": "C-Style Cast Detected",
+      "message": "C-style cast (type)expr can hide errors; prefer C++ casts.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type_Casting_Safety",
+      "remediation": "Use static_cast, dynamic_cast, const_cast, or reinterpret_cast as appropriate."
+    },
+
+    "CPP_DYNAMIC_ARRAY_OOB_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Array Index Out of Bounds",
+      "message": "Access to array '{arrayName}' is definitely out of bounds. The maximum valid index is {maxValidIndex}, but the dynamically inferred index strictly falls within {indexInterval}.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Array Indexing",
+      "remediation": "Check the array size declaration and the index calculation logic. Ensure the index is never negative and never exceeds the array length minus one."
+    },
+
+    "CPP_DYNAMIC_ARRAY_OOB_SUSPECTED": {
+      "severity": "Medium",
+      "display_name": "Potential Array Out of Bounds Risk",
+      "message": "Potential out-of-bounds risk for array '{arrayName}'. The maximum valid index is {maxValidIndex}, but under certain control flow paths or loop extremes, the index may reach the interval {indexInterval}.",
+      "pedagogical_label": "Boundary Condition",
+      "knowledge_concept": "Array Indexing",
+      "remediation": "Consider adding a bounds check (e.g., `if (i >= 0 && i <= {maxValidIndex})`) before accessing the array, or review loop termination conditions to prevent off-by-one errors."
+    },
+
+    "CPP_DYNAMIC_DIV_BY_ZERO_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Division by Zero",
+      "message": "Variable '{varName}' is definitely zero at this point, causing undefined behavior during division.",
+      "pedagogical_label": "Arithmetic Safety",
+      "knowledge_concept": "Division_by_Zero_Fundamentals",
+      "remediation": "Ensure the divisor is non-zero before performing division. Add a condition check such as `if (divisor != 0)` before the operation."
+    },
+
+    "CPP_DYNAMIC_DIV_BY_ZERO_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Possible Division by Zero",
+      "message": "Variable '{varName}' may be zero under certain execution paths, potentially causing undefined behavior.",
+      "pedagogical_label": "Arithmetic Safety",
+      "knowledge_concept": "Division_by_Zero_Fundamentals",
+      "remediation": "Add a runtime check to ensure the divisor is non-zero. Consider adding `if (divisor != 0)` before division or use input validation."
+    },
+
+    "CPP_DYNAMIC_NULL_DEREF_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Null Pointer Dereference",
+      "message": "Pointer '{ptrName}' is definitely nullptr and is being dereferenced.",
+      "pedagogical_label": "Pointer Safety",
+      "knowledge_concept": "Null_Pointer_Dereference_Fundamentals",
+      "remediation": "Ensure the pointer is initialized and non-null before dereferencing. Add null checks: `if (ptr != nullptr) { /* use ptr */ }`."
+    },
+
+    "CPP_DYNAMIC_NULL_DEREF_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Possible Null Pointer Dereference",
+      "message": "Pointer '{ptrName}' may be nullptr under certain control flow paths and could be dereferenced.",
+      "pedagogical_label": "Pointer Safety",
+      "knowledge_concept": "Null_Pointer_Dereference_Fundamentals",
+      "remediation": "Always verify pointers are non-null before use. Guard dereferences with: `if (ptr != nullptr) { /* safe to use */ }`."
+    },
+
+    "CPP_DYNAMIC_USE_AFTER_FREE_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Use After Free",
+      "message": "Memory pointed to by '{ptrName}' has definitely been freed before this access.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Use_After_Free_Fundamentals",
+      "remediation": "Avoid using pointers after freeing them. Set pointer to nullptr after `free()` or `delete`: `delete ptr; ptr = nullptr;` and check before use."
+    },
+
+    "CPP_DYNAMIC_USE_AFTER_FREE_SUSPECTED": {
+      "severity": "Critical",
+      "display_name": "Potential Use After Free",
+      "message": "Under certain execution paths, memory pointed to by '{ptrName}' may have been freed before this access.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Use_After_Free_Fundamentals",
+      "remediation": "Track memory lifetime carefully. Use unique_ptr or shared_ptr to manage memory automatically, or ensure pointer validity checks before all dereferences."
+    },
+
+    "CPP_DYNAMIC_UNINIT_VAR_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Use of Uninitialized Variable",
+      "message": "Variable '{varName}' is definitely used without being initialized.",
+      "pedagogical_label": "Variable Initialization",
+      "knowledge_concept": "Variable_Initialization_Fundamentals",
+      "remediation": "Initialize all variables at declaration: `int x = 0;` or `int x; x = some_value;` before any use."
+    },
+
+    "CPP_DYNAMIC_UNINIT_VAR_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Potential Use of Uninitialized Variable",
+      "message": "Under certain control flow paths, variable '{varName}' may be used without initialization.",
+      "pedagogical_label": "Variable Initialization",
+      "knowledge_concept": "Variable_Initialization_Fundamentals",
+      "remediation": "Always initialize variables before use, especially in branching code. Use member initializer lists for class members."
+    },
+
+    "CPP_DYNAMIC_ARITH_OVERFLOW_DEFINITE": {
+      "severity": "High",
+      "display_name": "Definite Arithmetic Overflow",
+      "message": "Arithmetic operation on variable '{varName}' will definitely overflow the type range {typeRange}.",
+      "pedagogical_label": "Arithmetic Safety",
+      "knowledge_concept": "Integer_Overflow_Fundamentals",
+      "remediation": "Use a wider integer type or add overflow checks before arithmetic: `if (a > INT_MAX - b) { /* handle overflow */ } else { result = a + b; }`."
+    },
+
+    "CPP_DYNAMIC_ARITH_OVERFLOW_SUSPECTED": {
+      "severity": "Medium",
+      "display_name": "Potential Arithmetic Overflow",
+      "message": "Under certain execution paths, arithmetic operation on '{varName}' may overflow the type range {typeRange}.",
+      "pedagogical_label": "Arithmetic Safety",
+      "knowledge_concept": "Integer_Overflow_Fundamentals",
+      "remediation": "Add bounds checking before arithmetic operations. Consider using safe arithmetic libraries or wider types for intermediate results."
+    },
+
+    "CPP_DYNAMIC_BUFFER_OVERFLOW_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Buffer Overflow",
+      "message": "Buffer '{bufferName}' of size {bufferSize} will definitely overflow with access at offset {accessOffset}.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Buffer_Overflow_Fundamentals",
+      "remediation": "Ensure buffer accesses stay within bounds. Use bounds-checked access functions or containers like std::array/std::vector."
+    },
+
+    "CPP_DYNAMIC_BUFFER_OVERFLOW_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Potential Buffer Overflow",
+      "message": "Under certain execution paths, buffer '{bufferName}' of size {bufferSize} may overflow with access at interval {accessInterval}.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Buffer_Overflow_Fundamentals",
+      "remediation": "Add bounds checking before buffer operations. Replace raw arrays with std::vector or std::string which provide automatic bounds checking."
+    },
+
+    "CPP_DYNAMIC_FORMAT_STRING_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Format String Vulnerability",
+      "message": "Untrusted data is definitely being used as a format string to {functionName}, creating a vulnerability.",
+      "pedagogical_label": "Security",
+      "knowledge_concept": "Format_String_Vulnerability_Fundamentals",
+      "remediation": "Never pass untrusted input as format string. Use: `printf(\"%s\", userInput);` instead of `printf(userInput);`."
+    },
+
+    "CPP_DYNAMIC_FORMAT_STRING_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Potential Format String Vulnerability",
+      "message": "Untrusted or uninitialized data may be used as format string to {functionName} under certain execution paths.",
+      "pedagogical_label": "Security",
+      "knowledge_concept": "Format_String_Vulnerability_Fundamentals",
+      "remediation": "Always use string literals for format specifiers. Validate and sanitize any user-controlled format strings before use."
+    },
+
+    "CPP_DYNAMIC_PARAM_TAINT_DEFINITE": {
+      "severity": "High",
+      "display_name": "Definite Tainted Parameter Use",
+      "message": "Parameter '{paramName}' from untrusted source is definitely passed to sensitive operation {operationName}.",
+      "pedagogical_label": "Security",
+      "knowledge_concept": "Taint_Analysis_Fundamentals",
+      "remediation": "Validate and sanitize all user input before use. Apply bounds checking, format validation, or escape sequences as appropriate."
+    },
+
+    "CPP_DYNAMIC_PARAM_TAINT_SUSPECTED": {
+      "severity": "Medium",
+      "display_name": "Potential Tainted Parameter Use",
+      "message": "Parameter '{paramName}' from untrusted source may be passed to sensitive operation {operationName} under certain paths.",
+      "pedagogical_label": "Security",
+      "knowledge_concept": "Taint_Analysis_Fundamentals",
+      "remediation": "Implement input validation early. Use allowlists for acceptable values and escape output when necessary for the context."
+    },
+
+    "CPP_DYNAMIC_CAST_OVERFLOW_DEFINITE": {
+      "severity": "High",
+      "display_name": "Definite Type Cast Overflow",
+      "message": "Casting value from '{sourceType}' to '{targetType}' will definitely cause overflow or data loss.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type_Cast_Safety_Fundamentals",
+      "remediation": "Use safe casting with range checks: `if (value >= 0 && value <= MAX_INT) { int result = static_cast<int>(value); }`."
+    },
+
+    "CPP_DYNAMIC_CAST_OVERFLOW_SUSPECTED": {
+      "severity": "Medium",
+      "display_name": "Potential Type Cast Overflow",
+      "message": "Casting value from '{sourceType}' to '{targetType}' may cause overflow or data loss under certain execution paths.",
+      "pedagogical_label": "Type Safety",
+      "knowledge_concept": "Type_Cast_Safety_Fundamentals",
+      "remediation": "Always validate source values before narrowing casts. Consider using static_cast with explicit range validation."
+    },
+
+    "CPP_DYNAMIC_UNINIT_PARAM_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Uninitialized Parameter",
+      "message": "Parameter '{paramName}' (argument {argumentIndex}) is definitely uninitialized when passed to function '{functionName}'.",
+      "pedagogical_label": "Variable Initialization",
+      "knowledge_concept": "Function_Parameter_Initialization",
+      "remediation": "Initialize the variable before passing it to the function: `int x = 0;` before calling `function(x);`."
+    },
+
+    "CPP_DYNAMIC_UNINIT_PARAM_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Potential Uninitialized Parameter",
+      "message": "Parameter '{paramName}' (argument {argumentIndex}) may be uninitialized when passed to function '{functionName}' under certain execution paths.",
+      "pedagogical_label": "Variable Initialization",
+      "knowledge_concept": "Function_Parameter_Initialization",
+      "remediation": "Ensure all variables are initialized before use. Add explicit initialization or provide default values."
+    },
+
+    "CPP_DYNAMIC_TAINTED_INDEX_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Tainted Array Index",
+      "message": "Array '{arrayName}' is accessed with tainted index '{indexName}' that definitely comes from untrusted source.",
+      "pedagogical_label": "Security",
+      "knowledge_concept": "Taint_Analysis_Fundamentals",
+      "remediation": "Validate and sanitize the index before using it. Apply bounds checking: `if (index >= 0 && index < array_size) { arr[index] = value; }`."
+    },
+
+    "CPP_DYNAMIC_TAINTED_INDEX_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Potential Tainted Array Index",
+      "message": "Array '{arrayName}' is accessed with index '{indexName}' that may come from untrusted source under certain execution paths.",
+      "pedagogical_label": "Security",
+      "knowledge_concept": "Taint_Analysis_Fundamentals",
+      "remediation": "Implement input validation for all user-controlled indices. Use allowlists or bounds checks before array access."
+    },
+
+    "CPP_DYNAMIC_DOUBLE_FREE_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Definite Double Free",
+      "message": "Pointer '{pointerName}' is definitely freed more than once.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Double_Free_Fundamentals",
+      "remediation": "Ensure pointers are freed only once. Set pointer to nullptr after freeing: `delete ptr; ptr = nullptr;`."
+    },
+
+    "CPP_DYNAMIC_DOUBLE_FREE_SUSPECTED": {
+      "severity": "Critical",
+      "display_name": "Potential Double Free",
+      "message": "Pointer '{pointerName}' may be freed more than once under certain execution paths.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Double_Free_Fundamentals",
+      "remediation": "Use smart pointers (unique_ptr, shared_ptr) to manage memory automatically and prevent double-free bugs."
+    },
+
+    "CPP_DYNAMIC_TAINTED_RETURN_DEFINITE": {
+      "severity": "High",
+      "display_name": "Definite Tainted Return Value Use",
+      "message": "Variable '{variableName}' contains untrusted data from function '{functionName}' and is used without validation.",
+      "pedagogical_label": "Security",
+      "knowledge_concept": "Taint_Analysis_Fundamentals",
+      "remediation": "Validate and sanitize return values from untrusted sources before use. Apply bounds checking or format validation as appropriate."
+    },
+
+    "CPP_DYNAMIC_TAINTED_RETURN_SUSPECTED": {
+      "severity": "Medium",
+      "display_name": "Potential Tainted Return Value Use",
+      "message": "Variable '{variableName}' may contain untrusted data from function '{functionName}' under certain execution paths and is used without validation.",
+      "pedagogical_label": "Security",
+      "knowledge_concept": "Taint_Analysis_Fundamentals",
+      "remediation": "Always validate return values from external or user-controlled sources. Implement input validation early in the processing pipeline."
+    },
+    "CPP_DYNAMIC_TAINTED_DEREF_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Tainted Pointer Dereference",
+      "message": "Pointer '{pointerName}' is dereferenced with the {operationType} operator, but its value comes from an untrusted source. This could lead to memory corruption or other security vulnerabilities.",
+      "pedagogical_label": "Security",
+      "knowledge_concept": "Taint_Analysis_Fundamentals",
+      "remediation": "Validate and sanitize data from untrusted sources before dereferencing pointers. Use bounds checking and permission validation."
+    },
+    "CPP_DYNAMIC_UNINIT_DEREF_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Uninitialized Pointer Dereference",
+      "message": "Pointer '{pointerName}' is dereferenced with the {operationType} operator, but it has never been initialized. This will cause undefined behavior.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Uninitialized_Variables_Fundamentals",
+      "remediation": "Always initialize pointers before use. Use nullptr for unintended pointers and validate before dereferencing."
+    },
+    "CPP_DYNAMIC_UNINIT_DEREF_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Possibly Uninitialized Pointer Dereference",
+      "message": "Pointer '{pointerName}' is dereferenced with the {operationType} operator. It may be uninitialized, null, or tainted under certain execution paths.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Uninitialized_Variables_Fundamentals",
+      "remediation": "Initialize all pointers explicitly and add null checks before dereferencing."
+    },
+    "CPP_DYNAMIC_USE_AFTER_FREE_PARAM_DEFINITE": {
+      "severity": "Critical",
+      "display_name": "Use-After-Free in Function Parameter",
+      "message": "Pointer '{paramName}' is passed as an argument to function '{functionName}', but it has already been freed. This will cause undefined behavior or crash.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Use_After_Free_Fundamentals",
+      "remediation": "Track pointer lifetime. Do not reuse pointers after free/delete. Use smart pointers (unique_ptr, shared_ptr) for automatic memory management."
+    },
+    "CPP_DYNAMIC_USE_AFTER_FREE_PARAM_SUSPECTED": {
+      "severity": "High",
+      "display_name": "Possible Use-After-Free in Function Parameter",
+      "message": "Pointer '{paramName}' passed to function '{functionName}' may have been freed under certain execution paths.",
+      "pedagogical_label": "Memory Safety",
+      "knowledge_concept": "Use_After_Free_Fundamentals",
+      "remediation": "Ensure proper lifetime management. Use unique_ptr or shared_ptr to prevent double-free and use-after-free."
+    }
+  }
+}

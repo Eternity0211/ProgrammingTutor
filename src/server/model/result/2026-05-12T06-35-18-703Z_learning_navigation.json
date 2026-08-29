@@ -1,0 +1,94 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "通用编程基础",
+            "逻辑验证与代码规范"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "编程基础与代码规范",
+                "duration": "1周",
+                "resources": [
+                    "《C++ Primer》第1-3章",
+                    "Google C++ Style Guide",
+                    "C++ Core Guidelines"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "基本数据结构与STL容器",
+                "duration": "2周",
+                "resources": [
+                    "《C++ Primer》第9-11章",
+                    "LeetCode Explore - 数组与字符串",
+                    "LeetCode Explore - 哈希表"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "指针与引用基础",
+                "duration": "1周",
+                "resources": [
+                    "《C++ Primer》第2章",
+                    "《深入理解计算机系统》第9章",
+                    "C++ References官方文档"
+                ]
+            },
+            {
+                "step": 4,
+                "topic": "递归算法入门",
+                "duration": "2周",
+                "resources": [
+                    "《算法导论》第4章",
+                    "LeetCode Explore - 递归I",
+                    "《编程珠玑》相关章节"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc1",
+                "title": "两数之和",
+                "difficulty": "入门",
+                "purpose": "训练使用哈希表（unordered_map）解决查找问题的能力，理解STL容器的基本应用。",
+                "url": "https://leetcode.cn/problems/two-sum"
+            },
+            {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "掌握栈（stack）的基本操作，训练对序列的匹配和验证逻辑，培养边界条件处理意识。",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+            },
+            {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "理解链表遍历和双指针（快慢指针）技巧，为后续复杂的链表操作打下基础。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+            },
+            {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "掌握二叉树递归遍历的基本框架，理解递归的终止条件和返回值。",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc206",
+                "title": "反转链表",
+                "difficulty": "初级",
+                "purpose": "深入理解指针操作，掌握迭代和递归两种方法反转链表，巩固指针的指向变更。",
+                "url": "https://leetcode.cn/problems/reverse-linked-list"
+            },
+            {
+                "id": "lc94",
+                "title": "二叉树的中序遍历",
+                "difficulty": "初级",
+                "purpose": "掌握二叉树中序遍历的递归和迭代实现，理解栈在非递归遍历中的应用。",
+                "url": "https://leetcode.cn/problems/binary-tree-inorder-traversal"
+            }
+        ]
+    }
+}

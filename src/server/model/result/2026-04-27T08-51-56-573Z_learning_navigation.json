@@ -1,0 +1,89 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "C++ 类型安全与类型转换",
+            "内存安全与生命周期管理",
+            "整数溢出与边界检查",
+            "算法复杂度分析与选择"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "C++ 类型系统与安全的类型转换",
+                "duration": "2-3小时",
+                "resources": [
+                    "《C++ Primer》第2章：变量和基本类型，第4章：表达式",
+                    "cppreference.com 上的 static_cast, const_cast, reinterpret_cast 文档"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "C++ 内存管理基础与智能指针",
+                "duration": "3-4小时",
+                "resources": [
+                    "《C++ Primer》第12章：动态内存",
+                    "学习 RAII 原则和 std::unique_ptr/std::shared_ptr 的基本用法"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "整数溢出、边界检查与安全编程",
+                "duration": "2小时",
+                "resources": [
+                    "《C++ 安全编码规范》相关章节",
+                    "阅读 CWE-190 (Integer Overflow) 和 CWE-131 (Incorrect Buffer Size) 描述"
+                ]
+            },
+            {
+                "step": 4,
+                "topic": "算法复杂度分析与排序算法选择",
+                "duration": "2-3小时",
+                "resources": [
+                    "《算法导论》第2章：算法基础",
+                    "比较冒泡排序、选择排序、快速排序、归并排序的适用场景"
+                ]
+            },
+            {
+                "step": 5,
+                "topic": "综合实践：编写安全、高效的排序函数",
+                "duration": "3-4小时",
+                "resources": [
+                    "使用前几步学到的知识，重新实现一个安全的排序函数（例如使用模板和迭代器）",
+                    "使用 Valgrind 或 AddressSanitizer 进行内存检查"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "ex_type_01",
+                "title": "修复不安全的类型转换",
+                "difficulty": "初级",
+                "purpose": "识别并修改代码中的 const_cast 和 reinterpret_cast 滥用，使用安全的 static_cast 或修改设计来避免转换，理解不同转换的语义和风险。"
+            },
+            {
+                "id": "ex_mem_01",
+                "title": "实现一个 RAII 管理的简单容器",
+                "difficulty": "初级",
+                "purpose": "编写一个管理动态数组的类，在构造函数中分配内存，在析构函数中释放，体会资源获取即初始化的思想，避免手动内存管理错误。"
+            },
+            {
+                "id": "ex_safe_01",
+                "title": "为数组操作添加边界检查",
+                "difficulty": "入门",
+                "purpose": "为一个现有的数组遍历函数添加索引有效性检查，防止越界访问，并处理可能的整数溢出情况。"
+            },
+            {
+                "id": "ex_algo_01",
+                "title": "比较不同排序算法的性能",
+                "difficulty": "中级",
+                "purpose": "实现冒泡排序和快速排序，对不同规模（小、中、大）的随机数据集进行排序，测量运行时间，直观感受 O(n²) 和 O(n log n) 的差异。"
+            },
+            {
+                "id": "ex_integrate_01",
+                "title": "代码审查与重构练习",
+                "difficulty": "中级",
+                "purpose": "给定一份包含类似审查问题（不安全转换、潜在溢出）的代码，找出所有问题，提出并实施重构方案，使其类型安全、内存安全。"
+            }
+        ]
+    }
+}

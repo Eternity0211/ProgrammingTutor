@@ -1,0 +1,70 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "边界条件处理"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "理解边界条件与测试用例",
+                "duration": "1-2小时",
+                "resources": [
+                    "学习如何识别常见边界条件：空输入、单个元素、极值、循环终止条件等"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "通过简单数据结构练习边界处理",
+                "duration": "2-3小时",
+                "resources": [
+                    "在数组、字符串和链表的简单操作中，刻意练习对边界情况的代码编写"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "巩固与提升边界条件思维",
+                "duration": "2-3小时",
+                "resources": [
+                    "在解决更复杂的问题时，养成先分析边界条件再编写主逻辑的习惯"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "训练对空树（根节点为空）这一基本边界条件的处理。",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc111",
+                "title": "二叉树的最小深度",
+                "difficulty": "入门",
+                "purpose": "强化边界条件思维，特别是处理单子树（如左子树为空，右子树不空）的特殊情况。",
+                "url": "https://leetcode.cn/problems/minimum-depth-of-binary-tree"
+            },
+            {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "练习在链表遍历中处理节点数为奇数和偶数这两种不同边界情况下的指针移动。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+            },
+            {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "训练在指针移动中处理空链表和快慢指针相遇的边界条件，防止空指针访问。",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+            },
+            {
+                "id": "lc110",
+                "title": "平衡二叉树",
+                "difficulty": "初级",
+                "purpose": "综合练习递归中的边界条件（空节点）以及提前终止递归以优化效率的技巧。",
+                "url": "https://leetcode.cn/problems/balanced-binary-tree"
+            }
+        ]
+    }
+}

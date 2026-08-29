@@ -1,0 +1,95 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "内存安全与生命周期管理",
+            "C++类型系统与安全转换",
+            "算法边界条件与逻辑",
+            "代码规范与防御性编程",
+            "整数溢出与输入验证"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "C++内存模型与基础安全",
+                "duration": "3-5小时",
+                "resources": [
+                    "《C++ Primer》第12章动态内存",
+                    "cppreference.com - RAII",
+                    "练习：手动实现一个简单的智能指针（如scoped_ptr）"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "C++类型转换：安全与危险",
+                "duration": "2-3小时",
+                "resources": [
+                    "《Effective C++》条款27：尽量少做转型动作",
+                    "cppreference.com - const_cast, reinterpret_cast, static_cast, dynamic_cast",
+                    "练习：对比C风格强制转换与C++四种cast在不同场景下的行为与安全性"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "基础算法实现与边界条件",
+                "duration": "3-4小时",
+                "resources": [
+                    "《算法导论》第2章：算法基础（循环不变式）",
+                    "可视化网站：visualgo.net/en/sorting",
+                    "练习：为冒泡排序、选择排序等基础算法编写测试，专门测试空数组、单元素、已排序、逆序等边界情况"
+                ]
+            },
+            {
+                "step": 4,
+                "topic": "代码规范、函数接口与防御性编程",
+                "duration": "2-3小时",
+                "resources": [
+                    "Google C++ Style Guide - Functions",
+                    "《代码整洁之道》函数章节",
+                    "练习：审查自己的旧代码，消除未使用的参数、魔法数字，为所有函数添加参数校验和前置条件断言"
+                ]
+            },
+            {
+                "step": 5,
+                "topic": "整数运算安全与输入验证",
+                "duration": "2小时",
+                "resources": [
+                    "《深入理解计算机系统》第2章：整数表示与运算",
+                    "CERT C++ Secure Coding Standard - INT",
+                    "练习：编写一个安全的‘读入数组大小n并分配内存’的函数，处理负数、零、过大值等所有非法输入"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "ex_mem_001",
+                "title": "模拟use-after-free场景与修复",
+                "difficulty": "初级",
+                "purpose": "通过一个故意制造use-after-free的小程序，理解其危害，并使用RAII（如std::vector或std::unique_ptr）进行修复，体会资源自动管理的安全性。"
+            },
+            {
+                "id": "ex_cast_001",
+                "title": "类型双关（Type Punning）的安全实现",
+                "difficulty": "中级",
+                "purpose": "给定一个需要将float的位模式解释为int的任务，对比使用reinterpret_cast、union（C++中条件允许）、memcpy及C风格强制转换的不同，理解严格别名规则和符合标准的做法。"
+            },
+            {
+                "id": "ex_algo_001",
+                "title": "冒泡排序的‘完全正确’实现",
+                "difficulty": "入门",
+                "purpose": "实现一个冒泡排序函数，要求：1.正确处理所有边界（空、单元素）。2.使用size_t类型索引。3.内循环边界严格为 n - i - 1。4.添加断言验证循环不变式。目标是写出无懈可击的基础算法。"
+            },
+            {
+                "id": "ex_defense_001",
+                "title": "函数契约设计与验证",
+                "difficulty": "初级",
+                "purpose": "为一个计算数组平均值的函数设计清晰的接口（参数、返回值、异常），使用assert或异常对输入（如空指针、大小为零）进行校验，并编写测试用例验证校验是否生效。"
+            },
+            {
+                "id": "ex_int_001",
+                "title": "安全整数运算库函数模拟",
+                "difficulty": "中级",
+                "purpose": "实现一组安全的整数运算函数，如SafeAdd(int a, int b, bool &overflow)，在发生溢出时设置overflow标志而非直接溢出。训练对整数运算极限情况的敏感度。"
+            }
+        ]
+    }
+}

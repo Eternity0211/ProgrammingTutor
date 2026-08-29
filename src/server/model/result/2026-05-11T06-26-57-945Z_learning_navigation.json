@@ -1,0 +1,76 @@
+{
+    "learning_navigation": {
+        "weaknesses": [
+            "基础编程能力",
+            "问题分析与调试"
+        ],
+        "learning_path": [
+            {
+                "step": 1,
+                "topic": "编程基础与问题理解",
+                "duration": "2-3天",
+                "resources": [
+                    "复习编程语言基础语法（变量、循环、条件判断）",
+                    "学习如何阅读题目要求并转化为算法步骤"
+                ]
+            },
+            {
+                "step": 2,
+                "topic": "基础数据结构入门",
+                "duration": "3-5天",
+                "resources": [
+                    "学习数组/列表的基本操作",
+                    "了解哈希表（字典/映射）的概念与简单应用",
+                    "学习栈和队列的基本概念"
+                ]
+            },
+            {
+                "step": 3,
+                "topic": "基础算法与逻辑构建",
+                "duration": "3-5天",
+                "resources": [
+                    "学习简单的递归思想（如斐波那契数列）",
+                    "练习使用指针/引用操作链表",
+                    "通过简单题目巩固对数据结构的理解"
+                ]
+            }
+        ],
+        "recommended_exercises": [
+            {
+                "id": "lc1",
+                "title": "两数之和",
+                "difficulty": "入门",
+                "purpose": "训练使用哈希表（字典）解决查找匹配问题的能力，理解时间复杂度优化。",
+                "url": "https://leetcode.cn/problems/two-sum"
+            },
+            {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "训练使用栈来处理具有对称和嵌套特性的问题，培养对数据结构适用场景的判断。",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+            },
+            {
+                "id": "lc509",
+                "title": "斐波那契数",
+                "difficulty": "入门",
+                "purpose": "理解递归的基本思想，并练习将其转化为迭代解法，掌握基础的状态转移。",
+                "url": "https://leetcode.cn/problems/fibonacci-number"
+            },
+            {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "学习链表的基本遍历，并引入快慢指针的双指针技巧，为更复杂的链表问题打基础。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+            },
+            {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "巩固递归思想，将其应用于树形结构，理解递归在分治问题中的运用。",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+            }
+        ]
+    }
+}
