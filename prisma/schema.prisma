@@ -24,6 +24,7 @@ model User {
   accounts          Account[]
   enrolledClasses   Classroom[]        @relation("StudentClasses")
   chatSessions      ChatSession[]
+  studentProfile    StudentProfile?
 
   @@map("users")
 }
@@ -273,6 +274,19 @@ model ChatMessage {
 
   @@index([sessionId])
   @@map("chat_messages")
+}
+
+model StudentProfile {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeSubmissionRecords Json     @default("[]")
+  weakKnowledgePoints   String[] @default([])
+  emotionStats          Json     @default("[]")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("student_profiles")
 }
 
 enum Role {
