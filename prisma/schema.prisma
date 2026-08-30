@@ -23,6 +23,7 @@ model User {
   submissions       Submission[]
   accounts          Account[]
   enrolledClasses   Classroom[]        @relation("StudentClasses")
+  chatSessions      ChatSession[]
 
   @@map("users")
 }
@@ -246,6 +247,32 @@ model Challenge {
   difficulty  String // 入门/初级/中级/高级
   topic       String // 对应维度：内存管理/STL容器...
   createdAt   DateTime @default(now())
+}
+
+model ChatSession {
+  id           String        @id @default(cuid())
+  userId       String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  sessionState Json?         @default("{}")
+  messages     ChatMessage[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id          String      @id @default(cuid())
+  sessionId   String
+  role        String
+  content     String
+  timestamp   DateTime    @default(now())
+  metadata    Json?
+  session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("chat_messages")
 }
 
 enum Role {
