@@ -43,7 +43,9 @@ export interface AgentResultSnapshot {
 
 export interface SessionState {
   lastIntent?: DialogueIntent;
-  lastAgentResults?: AgentResultSnapshot;
+  lastCodeReview?: {
+    reviewSummary: string;
+  };
   contextSummary?: string;
 }
 
