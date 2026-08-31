@@ -4,7 +4,7 @@ import { DialogueLlmClient } from "@/server/model/dialogue/shared/llm-client";
 jest.mock("openai");
 
 describe("DialogueLlmClient", () => {
-  const originalKey = process.env.DASHSCOPE_API_KEY;
+  const originalKey = process.env.DEEPSEEK_API_KEY;
 
   beforeEach(() => {
     DialogueLlmClient.resetInstance();
@@ -12,34 +12,34 @@ describe("DialogueLlmClient", () => {
   });
 
   afterEach(() => {
-    process.env.DASHSCOPE_API_KEY = originalKey;
+    process.env.DEEPSEEK_API_KEY = originalKey;
   });
 
-  it("should throw when DASHSCOPE_API_KEY is missing", () => {
-    delete process.env.DASHSCOPE_API_KEY;
+  it("should throw when DEEPSEEK_API_KEY is missing", () => {
+    delete process.env.DEEPSEEK_API_KEY;
     expect(() => DialogueLlmClient.getInstance()).toThrow(
-      /Missing DASHSCOPE_API_KEY/,
+      /Missing DEEPSEEK_API_KEY/,
     );
   });
 
   it("should return the same singleton instance", () => {
-    process.env.DASHSCOPE_API_KEY = "test-key";
+    process.env.DEEPSEEK_API_KEY = "test-key";
     const instance1 = DialogueLlmClient.getInstance();
     const instance2 = DialogueLlmClient.getInstance();
     expect(instance1).toBe(instance2);
   });
 
   it("should configure OpenAI with DashScope auth and baseURL", () => {
-    process.env.DASHSCOPE_API_KEY = '"test-key-with-quotes"';
+    process.env.DEEPSEEK_API_KEY = '"test-key-with-quotes"';
     DialogueLlmClient.getInstance();
     expect(OpenAI).toHaveBeenCalledWith({
       apiKey: "test-key-with-quotes",
-      baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      baseURL: "https://api.deepseek.com/v1",
     });
   });
 
   it("should call chat completions with correct params", async () => {
-    process.env.DASHSCOPE_API_KEY = "test-key";
+    process.env.DEEPSEEK_API_KEY = "test-key";
     const mockChatCreate = jest.fn().mockResolvedValue({
       choices: [{ message: { content: "test response" } }],
     });
@@ -57,14 +57,14 @@ describe("DialogueLlmClient", () => {
     expect(result).toBe("test response");
     expect(mockChatCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "deepseek-v3.2",
+        model: "deepseek-chat",
         response_format: { type: "json_object" },
       }),
     );
   });
 
   it("should call embeddings using the same client instance", async () => {
-    process.env.DASHSCOPE_API_KEY = "test-key";
+    process.env.DEEPSEEK_API_KEY = "test-key";
     const mockEmbeddingsCreate = jest.fn().mockResolvedValue({
       data: [{ embedding: [0.1, 0.2, 0.3] }],
     });
@@ -86,7 +86,7 @@ describe("DialogueLlmClient", () => {
   });
 
   it("should throw when chat completion returns empty content", async () => {
-    process.env.DASHSCOPE_API_KEY = "test-key";
+    process.env.DEEPSEEK_API_KEY = "test-key";
     const mockChatCreate = jest.fn().mockResolvedValue({
       choices: [{ message: { content: null } }],
     });
@@ -102,7 +102,7 @@ describe("DialogueLlmClient", () => {
   });
 
   it("should return empty array when embedding response is missing", async () => {
-    process.env.DASHSCOPE_API_KEY = "test-key";
+    process.env.DEEPSEEK_API_KEY = "test-key";
     const mockEmbeddingsCreate = jest.fn().mockResolvedValue({
       data: [],
     });
