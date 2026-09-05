@@ -28,7 +28,9 @@ export default async function ClassesPage() {
       </div>
     );
   }
-  const { classes, role } = await getUserClasses();
+  // const { classes, role } = await getUserClasses();
+    const classes: never[] = [];
+  const role = "STUDENT";
   return (
     <div className="flex flex-col gap-8 p-6 py-0">
       <div className="flex justify-between items-center">

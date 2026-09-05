@@ -76,6 +76,17 @@ export class DbSessionStore implements SessionStore {
     }
   }
 
+  async updateTitle(sessionId: string, title: string): Promise<void> {
+    try {
+      await prisma.chatSession.update({
+        where: { id: sessionId },
+        data: { title, updatedAt: new Date() },
+      });
+    } catch (error) {
+      console.warn("[DbSessionStore] updateTitle failed:", error);
+    }
+  }
+
   async getSessionsByUserId(userId: string): Promise<ChatSession[]> {
     try {
       const dbSessions = await prisma.chatSession.findMany({
@@ -93,6 +104,7 @@ export class DbSessionStore implements SessionStore {
     return {
       sessionId: db.id,
       userId: db.userId,
+      title: db.title ?? undefined,
       messages: dbMessages.map((m: any) => this.mapMessage(m)),
       createdAt:
         db.createdAt instanceof Date

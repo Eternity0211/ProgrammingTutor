@@ -52,6 +52,7 @@ export interface SessionState {
 export interface ChatSession {
   sessionId: string;
   userId: string;
+  title?: string;
   messages: ChatMessage[];
   createdAt: number;
   updatedAt: number;

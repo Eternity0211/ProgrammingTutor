@@ -96,6 +96,15 @@ export class DualSessionStore implements SessionStore {
     }
   }
 
+  async updateTitle(sessionId: string, title: string): Promise<void> {
+    await this.memory.updateTitle(sessionId, title);
+    try {
+      await this.db.updateTitle(sessionId, title);
+    } catch (error) {
+      console.warn("[DualSessionStore] DB updateTitle failed:", error);
+    }
+  }
+
   async getSessionsByUserId(userId: string): Promise<ChatSession[]> {
     const cached = await this.memory.getSessionsByUserId(userId);
     if (cached.length > 0) return cached;

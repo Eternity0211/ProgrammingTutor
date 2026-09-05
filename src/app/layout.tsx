@@ -3,6 +3,7 @@ import "@/app/styles/globals.css";
 import { ThemeProvider } from "@/lib/providers/theme-provider";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
+import { DraggableFloatChat } from "@/app/_components/draggable‑float‑chat";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://grade-it-ten.vercel.app"),
@@ -125,6 +126,7 @@ export default function RootLayout({
           <NextTopLoader />
           {children}
           <Toaster />
+          <DraggableFloatChat />
         </ThemeProvider>
       </body>
     </html>

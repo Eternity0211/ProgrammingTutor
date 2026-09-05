@@ -93,6 +93,11 @@ export class DialogueOrchestrator {
       const userMessage = createChatMessage("user", request.message);
       await this.sessionStore.addMessage(sessionId, userMessage);
 
+      if (activeSession.messages.length === 0) {
+        const title = await this.generateSessionTitle(request.message);
+        await this.sessionStore.updateTitle(sessionId, title);
+      }
+
       const messages = await this.sessionStore.getMessages(sessionId);
       const trimmed = await this.contextTrimmer.trimForAgent(messages);
 
@@ -453,5 +458,28 @@ export class DialogueOrchestrator {
   ): Promise<SessionState | undefined> {
     const session = await this.sessionStore.getSession(sessionId);
     return session?.sessionState;
+  }
+
+  private async generateSessionTitle(message: string): Promise<string> {
+    try {
+      const title = await this.llm.chatCompletion({
+        messages: [
+          {
+            role: "system",
+            content:
+              "请根据学生的提问生成一个简短的会话标题，不超过20个字，只输出标题文本，不要加引号或其他标点。",
+          },
+          { role: "user", content: message },
+        ],
+        temperature: 0.3,
+      });
+      return title.slice(0, 20).trim();
+    } catch (error) {
+      console.warn(
+        "[DialogueOrchestrator] Title generation failed:",
+        error,
+      );
+      return message.slice(0, 20).trim();
+    }
   }
 }

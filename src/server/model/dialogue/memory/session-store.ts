@@ -7,6 +7,7 @@ export interface SessionStore {
   addMessage(sessionId: string, message: ChatMessage): Promise<void>;
   getMessages(sessionId: string): Promise<ChatMessage[]>;
   updateSessionState(sessionId: string, state: SessionState): Promise<void>;
+  updateTitle(sessionId: string, title: string): Promise<void>;
   getSessionsByUserId(userId: string): Promise<ChatSession[]>;
 }
 
@@ -64,6 +65,13 @@ export class InMemorySessionStore implements SessionStore {
     const session = this.sessions.get(sessionId);
     if (!session) return;
     session.sessionState = state;
+    session.updatedAt = Date.now();
+  }
+
+  async updateTitle(sessionId: string, title: string): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+    session.title = title;
     session.updatedAt = Date.now();
   }
 
