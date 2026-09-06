@@ -14,7 +14,7 @@ export default function StudentsSection() {
             <div className="relative">
               <div className="rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm bg-card/90 border border-border">
                 <ParallaxImage
-                  src="/placeholder.svg?height=500&width=600"
+                  src="/images/landing/codingEnv.png"
                   width={600}
                   height={500}
                   alt="Student Coding Interface"
