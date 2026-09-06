@@ -13,6 +13,8 @@ export const EXTERNAL_JUDGE0_API =
 export const ROUTES = {
   HOME: "/",
   CLASSES: "/classes",
+  LOGIN: "/login",
+  REGISTER: "/register",
   INVITE: (code: string) => `/invite/${code}`,
 
   // 班级详情页
@@ -29,7 +31,7 @@ export const ROUTES = {
 };
 
 export const AUTH_ROUTES = {
-  SIGN_IN: "/auth/signin",
-  SIGN_UP: "/auth/signup",
-  ERROR: "/auth/error",
+  SIGN_IN: "/login",
+  SIGN_UP: "/register",
+  ERROR: "/login",
 };

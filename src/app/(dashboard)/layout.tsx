@@ -6,12 +6,13 @@ import {
   SidebarTrigger,
 } from "@/app/_components/ui/sidebar";
 import { auth } from "@/lib/auth";
-import AuthPopup from "../_components/auth/auth-popup";
 import { SessionProvider } from "next-auth/react";
 import { AppBreadcrumbs } from "../_components/navigation/breadcrumbs";
 import OnboardingCheck from "./(features)/onboarding/onboarding-check";
 import { getNavigationConfig } from "@/config/navigation";
 import { isUserOnboarded } from "@/server/actions/utility-actions";
+import { DraggableFloatChat } from "@/app/_components/draggable‑float‑chat";
+import { prisma } from "@/lib/prisma";
 
 export default async function DashboardLayout({
   children,
@@ -21,17 +22,25 @@ export default async function DashboardLayout({
   const sessionData = await auth();
   let navGroups: any = [];
   let isoOnboarded = false;
+  let userRole: string | null = null;
 
   if (sessionData?.user) {
     const config = await getNavigationConfig();
     navGroups = config.navGroups;
     isoOnboarded = await isUserOnboarded(sessionData.user.id);
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: sessionData.user.id },
+      select: { role: true },
+    });
+    if (dbUser) {
+      userRole = dbUser.role;
+    }
   }
 
   return (
     <>
       <SessionProvider>
-        {!sessionData && <AuthPopup />}
         {sessionData && <OnboardingCheck onboarded={isoOnboarded} />}
         <SidebarProvider>
           <AppSidebar navGroups={navGroups} />
@@ -46,6 +55,7 @@ export default async function DashboardLayout({
             <div className="container p-4">{children}</div>
           </SidebarInset>
         </SidebarProvider>
+        {sessionData && userRole === "STUDENT" && <DraggableFloatChat />}
       </SessionProvider>
     </>
   );

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Role } from "@prisma/client";
 
 // 通用用户查询函数（复用逻辑）
-const getCurrentUser = async () => {
+export const getCurrentUser = async () => {
   const session = await auth();
 
   if (!session?.user) {

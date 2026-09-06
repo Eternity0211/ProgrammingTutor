@@ -1,11 +1,9 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import Google from "next-auth/providers/google";
 import { prisma } from "./prisma";
-import { Role } from "@prisma/client";
-import crypto from "crypto";
-import { ROUTES } from "@/config/route";
+import { authConfig } from "@/auth.config";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { verifyPassword } from "./password";
 
 let fetchRetryPatched = false;
 
@@ -93,84 +91,38 @@ const patchGlobalFetchWithRetry = () => {
 
 patchGlobalFetchWithRetry();
 
-const isPlaceholderValue = (value?: string) => {
-  if (!value) return true;
-  const normalized = value.trim().toLowerCase();
-  return (
-    normalized.length === 0 ||
-    normalized.startsWith("your-") ||
-    normalized.includes("oauth-client-id") ||
-    normalized.includes("oauth-client-secret")
-  );
-};
-
-const googleClientId =
-  process.env.AUTH_GOOGLE_ID?.trim() ||
-  process.env.GOOGLE_CLIENT_ID?.trim() ||
-  "";
-
-const googleClientSecret =
-  process.env.AUTH_GOOGLE_SECRET?.trim() ||
-  process.env.GOOGLE_CLIENT_SECRET?.trim() ||
-  "";
-
-if (
-  isPlaceholderValue(googleClientId) ||
-  isPlaceholderValue(googleClientSecret)
-) {
-  if (process.env.NODE_ENV !== "development") {
-    throw new Error(
-      "Google OAuth is not configured correctly. Set AUTH_GOOGLE_ID/AUTH_GOOGLE_SECRET (or GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET) with real values from Google Cloud Console.",
-    );
-  }
-}
-
-// Use APP_URL as a fallback so Auth.js can build callback URLs consistently.
-if (!process.env.AUTH_URL && !process.env.NEXTAUTH_URL && process.env.APP_URL) {
-  process.env.AUTH_URL = process.env.APP_URL;
-}
-
-// 解释：从环境变量读取认证 secret。如果没有设置且在开发环境中，动态生成一个临时 secret，避免在本地开发时报 MissingSecret 错误。
-const AUTH_SECRET =
-  process.env.NEXTAUTH_SECRET ||
-  process.env.AUTH_SECRET ||
-  (process.env.NODE_ENV === "development"
-    ? crypto.randomBytes(32).toString("hex")
-    : undefined);
-
-const TEST_USER = {
-  // id: "test-user-1",
-  // email: "test@test.com",
-  // name: "Test Teacher",
-  // role: "FACULTY" as Role, // 👈 切换 STUDENT / FACULTY
-  id: "test-student-1",
-  email: "student@test.com",
-  name: "Test Student",
-  role: "STUDENT" as Role,
-  onboarded: true,
-};
-
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
   providers: [
-    // Google({
-    //   clientId: googleClientId,
-    //   clientSecret: googleClientSecret,
-    //   authorization: {
-    //     params: {
-    //       prompt: "select_account",
-    //     },
-    //   },
-    // }),
-
     CredentialsProvider({
-      name: "Test Login",
+      name: "Account",
       credentials: {
         email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email) return null;
-        return TEST_USER;
+        const email = credentials?.email as string;
+        const password = credentials?.password as string;
+
+        if (!email || !password) return null;
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (!user || !user.password) return null;
+
+        const isValid = await verifyPassword(password, user.password);
+        if (!isValid) return null;
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          onboarded: user.onboarded,
+        };
       },
     }),
   ],
@@ -182,58 +134,15 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   jwt: {
     maxAge: 60 * 60 * 8,
   },
-  // 把 secret 传入 NextAuth 配置中
-  secret: AUTH_SECRET,
-  callbacks: {
-    async redirect({ url, baseUrl }) {
-      const classesUrl = `${baseUrl}${ROUTES.CLASSES}`;
-
-      if (!url) {
-        return classesUrl;
-      }
-
-      if (url.startsWith("/")) {
-        const normalizedPath = url.startsWith(ROUTES.CLASSES)
-          ? url
-          : ROUTES.CLASSES;
-        return `${baseUrl}${normalizedPath}`;
-      }
-
-      try {
-        const target = new URL(url);
-        if (target.origin === baseUrl) {
-          return target.pathname.startsWith(ROUTES.CLASSES)
-            ? target.toString()
-            : classesUrl;
-        }
-      } catch {
-        // Ignore malformed redirect URLs and fall back to classes.
-      }
-
-      return classesUrl;
-    },
-    async jwt({ token, user }) {
-      if (process.env.NODE_ENV === "development") {
-        token.id = TEST_USER.id;
-        token.role = TEST_USER.role;
-        token.onboarded = TEST_USER.onboarded;
-      }
-      if (user && user.id) {
-        token.id = user.id;
-        //@ts-ignore
-        token.role = user.role;
-        //@ts-ignore
-        token.onboarded = user.onboarded;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.role = token.role as Role;
-        session.onboarded = token.onboarded;
-      }
-      return session;
-    },
-  },
 });
+
+export async function getAuthenticatedUser() {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  });
+
+  return user;
+}

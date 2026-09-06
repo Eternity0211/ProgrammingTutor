@@ -77,14 +77,14 @@ export default function SiteHeader() {
                 asChild
                 className="border-border text-text hover:bg-muted hover:text-foreground"
               >
-                <Link href="/classes">Log in</Link>
+                <Link href="/login">Log in</Link>
               </Button>
               <Button
                 size="sm"
                 asChild
                 className="text-white bg-primary-button hover:bg-main-700"
               >
-                <Link href="/classes">Sign up</Link>
+                <Link href="/register">Sign up</Link>
               </Button>
             </div>
 
@@ -153,13 +153,13 @@ export default function SiteHeader() {
                   className="w-full border-border text-text hover:bg-muted hover:text-foreground"
                   asChild
                 >
-                  <Link href="/classes">Log in</Link>
+                  <Link href="/login">Log in</Link>
                 </Button>
                 <Button
                   className="w-full text-white  bg-primary-button hover:bg-main-700"
                   asChild
                 >
-                  <Link href="/classes">Sign up</Link>
+                  <Link href="/register">Sign up</Link>
                 </Button>
               </div>
             </motion.div>

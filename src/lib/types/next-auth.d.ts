@@ -10,7 +10,10 @@ declare module "next-auth" {
       role: Role;
     } & DefaultSession["user"];
   }
-  interface User {}
+  interface User {
+    role?: Role;
+    onboarded?: boolean;
+  }
 }
 
 declare module "next-auth/jwt" {

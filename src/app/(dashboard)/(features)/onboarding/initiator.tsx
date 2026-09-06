@@ -32,7 +32,7 @@ export default function OnboardingInitiator({
 
   const handleSubmit = async () => {
     if (!role) {
-      toast.error("Please select a role before proceeding.");
+      toast.error("请先选择您的身份");
       return;
     }
     setIsSubmitting(true);
@@ -43,12 +43,12 @@ export default function OnboardingInitiator({
       roleUpdate.status === "success" &&
       onboardingUpdate.status === "success"
     ) {
-      toast.success("Onboarding complete!");
+      toast.success("身份确认完成！");
       setIsOnboardingComplete(true);
       router.refresh();
       onClose();
     } else {
-      toast.error("Something went wrong. Please try again.");
+      toast.error("提交失败，请重试。");
     }
     setIsSubmitting(false);
   };
@@ -56,12 +56,12 @@ export default function OnboardingInitiator({
   return (
     <div className="w-full max-w-md">
       <div className="mb-6 text-center">
-        <h2 className="mt-2 text-2xl font-bold">Select Your Role</h2>
+        <h2 className="mt-2 text-2xl font-bold">确认您的身份</h2>
       </div>
       <Card className="w-full shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl font-semibold tracking-tight">
-            Are you a Faculty or a Student?
+            请确认您的身份
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -71,21 +71,21 @@ export default function OnboardingInitiator({
               onClick={() => setRole("FACULTY")}
               disabled={isSubmitting}
             >
-              Faculty
+              老师
             </Button>
             <Button
               variant={role === "STUDENT" ? "default" : "outline"}
               onClick={() => setRole("STUDENT")}
               disabled={isSubmitting}
             >
-              Student
+              学生
             </Button>
           </div>
         </CardContent>
       </Card>
       <div className="mt-6 flex justify-end">
         <Button onClick={handleSubmit} disabled={isSubmitting || !role}>
-          {isSubmitting ? "Submitting..." : "Continue"}
+          {isSubmitting ? "提交中..." : "继续"}
         </Button>
       </div>
     </div>
