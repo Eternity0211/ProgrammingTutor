@@ -1,6 +1,7 @@
 import type { AgentResultSnapshot, StudentProfile } from "../types";
 import type { ProfileStore } from "./profile-store";
 import { InMemoryProfileStore } from "./profile-store";
+import type { RagResponse } from "../types";
 
 const PROGRAMMING_CONCEPTS = [
   "指针", "引用", "内存", "递归", "循环", "数组", "链表", "树", "图",
@@ -67,6 +68,17 @@ export class ProfileUpdater {
         for (const weakness of agentResults.navigation.weaknesses) {
           if (!profile.weakKnowledgePoints.includes(weakness)) {
             profile.weakKnowledgePoints.push(weakness);
+          }
+        }
+      }
+
+      if (agentResults.rag?.sources) {
+        const sourceText = agentResults.rag.sources.map((doc) => doc.content).join(" ");
+
+        const ragConcepts = PROGRAMMING_CONCEPTS.filter((c) => sourceText.includes(c));
+        for (const concept of ragConcepts) {
+          if (!profile.weakKnowledgePoints.includes(concept)) {
+            profile.weakKnowledgePoints.push(concept);
           }
         }
       }

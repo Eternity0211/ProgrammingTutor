@@ -168,25 +168,26 @@ export class DialogueOrchestrator {
 
       if (result.agentResults) {
         const snapshot: AgentResultSnapshot = {
-          codeReview: result.agentResults.codeReview,
-          emotion: result.agentResults.emotion,
-          navigation: result.agentResults.navigation,
-        };
-        try {
-          await this.profileUpdater.updateFromAgentResults(
-            request.userId,
-            snapshot,
-            {
-              questionId: request.context?.questionId,
-              score: undefined,
-            },
-          );
-        } catch (error) {
-          console.warn(
-            "[DialogueOrchestrator] Profile update failed:",
-            error,
-          );
-        }
+  codeReview: result.agentResults?.codeReview,
+  emotion: result.agentResults?.emotion,
+  navigation: result.agentResults?.navigation,
+  rag: result.agentResults?.rag,
+};
+try {
+  await this.profileUpdater.updateFromAgentResults(
+    request.userId,
+    snapshot,
+    {
+      questionId: request.context?.questionId,
+      score: undefined,
+    },
+  );
+} catch (error) {
+  console.warn(
+    "[DialogueOrchestrator] Profile update failed:",
+    error,
+  );
+}
       }
 
       return {

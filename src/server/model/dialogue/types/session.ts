@@ -1,4 +1,5 @@
 import { DialogueIntent } from "./intent";
+import type { RagResponse } from "./rag";
 
 export type ChatRole = "user" | "assistant" | "system";
 
@@ -39,6 +40,7 @@ export interface AgentResultSnapshot {
       url: string;
     }>;
   };
+  rag?: RagResponse;
 }
 
 export interface SessionState {
