@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { runCodeReviewAgent } from "@/server/model/neural/codeAgent";
 import type { CodeReviewAgentInput } from "@/server/model/neural/codeAgent";
 import { generateEmotionalSupport } from "@/server/model/neural/emotionAgent";
@@ -82,6 +81,8 @@ export class DialogueOrchestrator {
       request.sessionId,
       request.userId,
     );
+
+    const spanId = traceLogger.startSpan("orchestrator.chat");
 
     try {
       const session = request.sessionId
@@ -203,6 +204,8 @@ export class DialogueOrchestrator {
         sessionId: request.sessionId ?? "",
         traceId: traceLogger.traceId,
       };
+    } finally {
+      traceLogger.endSpan(spanId);
     }
   }
 
