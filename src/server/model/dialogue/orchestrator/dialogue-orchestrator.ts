@@ -275,6 +275,7 @@ try {
 
     if (symbolic && testSummary && code) {
       try {
+        const codeSpan = ctx.traceLogger.startSpan("agent.codeReview", undefined);
         const codeReview = await withTimeout(runCodeReviewAgent({
           code,
           language,
@@ -283,9 +284,14 @@ try {
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
         } as CodeReviewAgentInput), "codeReviewAgent");
+        ctx.traceLogger.endSpan(codeSpan, {
+          confidence: codeReview.confidence,
+          suggestions: codeReview.suggestions.length,
+        });
 
         let emotion: AgentResultSnapshot["emotion"] | undefined;
         try {
+          const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", undefined);
           const emotionResult = await withTimeout(generateEmotionalSupport({
             codeReviewResult: codeReview.reviewSummary,
             studentProfileSummary: profileSummary,
@@ -294,6 +300,7 @@ try {
           if (emotionResult?.emotion_analysis) {
             emotion = emotionResult.emotion_analysis;
           }
+          ctx.traceLogger.endSpan(emotionSpan, { available: Boolean(emotion) });
         } catch (error) {
           console.warn(
             "[DialogueOrchestrator] emotionAgent failed, skipping:",
@@ -348,6 +355,7 @@ try {
     let emotion: AgentResultSnapshot["emotion"] | undefined;
     if (codeReviewResult) {
       try {
+        const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", undefined);
         const emotionResult = await withTimeout(generateEmotionalSupport({
           codeReviewResult,
           studentProfileSummary: profileSummary,
@@ -356,6 +364,7 @@ try {
         if (emotionResult?.emotion_analysis) {
           emotion = emotionResult.emotion_analysis;
         }
+        ctx.traceLogger.endSpan(emotionSpan, { available: Boolean(emotion) });
       } catch (error) {
         console.warn(
           "[DialogueOrchestrator] emotionAgent failed, using LLM fallback:",
@@ -390,6 +399,7 @@ try {
     let navigation: AgentResultSnapshot["navigation"] | undefined;
     if (codeReviewResult) {
       try {
+        const navigationSpan = ctx.traceLogger.startSpan("agent.navigation", undefined);
         const navResult = await withTimeout(generateLearningNavigation({
           codeReviewResult,
           knowledgeGraph: "",
@@ -400,6 +410,10 @@ try {
         if (navResult?.learning_navigation) {
           navigation = navResult.learning_navigation;
         }
+        ctx.traceLogger.endSpan(navigationSpan, {
+          available: Boolean(navigation),
+          pathSteps: navigation?.learning_path.length ?? 0,
+        });
       } catch (error) {
         console.warn(
           "[DialogueOrchestrator] navigationAgent failed, using LLM fallback:",
@@ -426,18 +440,30 @@ try {
     ctx: HandlerContext,
   ): Promise<HandlerResult> {
     const { request } = ctx;
-    const ragResponse = await this.ragEngine.answer(request.message);
+    const ragSpan = ctx.traceLogger.startSpan("rag.answer", undefined);
+    try {
+      const ragResponse = await this.ragEngine.answer(request.message);
+      ctx.traceLogger.endSpan(ragSpan, {
+        degraded: ragResponse.degraded,
+        sourceCount: ragResponse.sources.length,
+      });
 
-    return {
-      reply: ragResponse.answer,
-      agentResults: {
-        rag: {
-          answer: ragResponse.answer,
-          sources: ragResponse.sources,
-          degraded: ragResponse.degraded,
+      return {
+        reply: ragResponse.answer,
+        agentResults: {
+          rag: {
+            answer: ragResponse.answer,
+            sources: ragResponse.sources,
+            degraded: ragResponse.degraded,
+          },
         },
-      },
-    };
+      };
+    } catch (error) {
+      ctx.traceLogger.endSpan(ragSpan, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   }
 
   private async handleThoughtFollowup(
