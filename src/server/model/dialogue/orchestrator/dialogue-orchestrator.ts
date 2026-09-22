@@ -56,6 +56,27 @@ interface HandlerResult {
   sessionStateUpdate?: Partial<SessionState>;
 }
 
+const AGENT_TIMEOUT_MS = Number(process.env.DIALOGUE_AGENT_TIMEOUT_MS ?? 30_000);
+
+function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`${label} timed out after ${AGENT_TIMEOUT_MS}ms`)),
+      AGENT_TIMEOUT_MS,
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 export class DialogueOrchestrator {
   private sessionStore: SessionStore;
   private profileStore: ProfileStore;
@@ -254,22 +275,22 @@ try {
 
     if (symbolic && testSummary && code) {
       try {
-        const codeReview = await runCodeReviewAgent({
+        const codeReview = await withTimeout(runCodeReviewAgent({
           code,
           language,
           symbolic,
           testSummary,
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
-        } as CodeReviewAgentInput);
+        } as CodeReviewAgentInput), "codeReviewAgent");
 
         let emotion: AgentResultSnapshot["emotion"] | undefined;
         try {
-          const emotionResult = await generateEmotionalSupport({
+          const emotionResult = await withTimeout(generateEmotionalSupport({
             codeReviewResult: codeReview.reviewSummary,
             studentProfileSummary: profileSummary,
             sessionContext: trimmed.recentMessages,
-          } as EmotionInputs);
+          } as EmotionInputs), "emotionAgent");
           if (emotionResult?.emotion_analysis) {
             emotion = emotionResult.emotion_analysis;
           }
@@ -327,11 +348,11 @@ try {
     let emotion: AgentResultSnapshot["emotion"] | undefined;
     if (codeReviewResult) {
       try {
-        const emotionResult = await generateEmotionalSupport({
+        const emotionResult = await withTimeout(generateEmotionalSupport({
           codeReviewResult,
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
-        } as EmotionInputs);
+        } as EmotionInputs), "emotionAgent");
         if (emotionResult?.emotion_analysis) {
           emotion = emotionResult.emotion_analysis;
         }
@@ -369,13 +390,13 @@ try {
     let navigation: AgentResultSnapshot["navigation"] | undefined;
     if (codeReviewResult) {
       try {
-        const navResult = await generateLearningNavigation({
+        const navResult = await withTimeout(generateLearningNavigation({
           codeReviewResult,
           knowledgeGraph: "",
           studentHistory: profileSummary,
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
-        } as NavigatorInputs);
+        } as NavigatorInputs), "navigationAgent");
         if (navResult?.learning_navigation) {
           navigation = navResult.learning_navigation;
         }
