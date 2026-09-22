@@ -8,19 +8,32 @@ export class RagEngine {
   private store: KnowledgeStore;
   private llm: DialogueLlmClient;
   private scoreThreshold: number;
+  private loadPromise?: Promise<void>;
 
   constructor(options?: {
     store?: KnowledgeStore;
     llm?: DialogueLlmClient;
     scoreThreshold?: number;
+    autoLoad?: boolean;
+    persistDocuments?: boolean;
   }) {
     this.llm = options?.llm ?? DialogueLlmClient.getInstance();
-    this.store = options?.store ?? new KnowledgeStore(this.llm);
+    this.store =
+      options?.store ??
+      new KnowledgeStore(this.llm, {
+        persistDocuments: options?.persistDocuments,
+      });
     this.scoreThreshold = options?.scoreThreshold ?? 0.3;
+    if (options?.autoLoad) {
+      this.loadPromise = this.store.loadFromDatabase().catch((error) => {
+        console.warn("[RagEngine] Knowledge database unavailable:", error);
+      });
+    }
   }
 
   async answer(question: string): Promise<RagResponse> {
     try {
+      await this.loadPromise;
       const results = await this.store.search(question, 3);
 
       if (results.length === 0 || results[0].score < this.scoreThreshold) {

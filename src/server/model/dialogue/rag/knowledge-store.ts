@@ -3,6 +3,10 @@ import type { RetrievalResult } from "../types";
 import { DialogueLlmClient } from "../shared/llm-client";
 import { prisma } from "@/lib/prisma";
 
+export type KnowledgeDocumentInput = Omit<KnowledgeDocument, "embedding"> & {
+  embedding?: number[];
+};
+
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length || a.length === 0) return 0;
 
@@ -24,40 +28,60 @@ export class KnowledgeStore {
   private documents: KnowledgeDocument[] = [];
   private embeddings: Map<string, number[]> = new Map();
   private llm: DialogueLlmClient;
+  private persistDocuments: boolean;
 
-  constructor(llm?: DialogueLlmClient) {
+  constructor(llm?: DialogueLlmClient, options?: { persistDocuments?: boolean }) {
     this.llm = llm ?? DialogueLlmClient.getInstance();
+    this.persistDocuments = options?.persistDocuments ?? false;
   }
 
-  async addDocument(document: KnowledgeDocument): Promise<void> {
+  async addDocument(document: KnowledgeDocumentInput): Promise<void> {
     const embedding = await this.llm.createEmbedding(document.content);
-    this.documents.push(document);
+    const storedDocument = { ...document, embedding };
+    if (this.persistDocuments) {
+      await prisma.knowledgeDocument.upsert({
+        where: { id: document.id },
+        create: {
+          id: document.id,
+          title: document.title,
+          content: document.content,
+          metadata: document.metadata as never,
+          embedding,
+          createdAt: document.createdAt,
+          updatedAt: document.updatedAt,
+        },
+        update: {
+          title: document.title,
+          content: document.content,
+          metadata: document.metadata as never,
+          embedding,
+          updatedAt: document.updatedAt,
+        },
+      });
+    }
+    this.documents = this.documents.filter((doc) => doc.id !== document.id);
+    this.documents.push(storedDocument);
     this.embeddings.set(document.id, embedding);
   }
 
   async loadFromDatabase(): Promise<void> {
-  const dbDocs = await prisma.knowledgeDocument.findMany();
-  let loadedCount = 0;
-  for (const doc of dbDocs) {
-    if (this.embeddings.has(doc.id)) continue;
-    try {
-      this.documents.push({
-        id: doc.id,
-        title: doc.title,
-        content: doc.content,
-        metadata: doc.metadata,
-        createdAt: doc.createdAt,
-        updatedAt: doc.updatedAt,
-      });
-      const emb = (doc as any).embedding;
-      this.embeddings.set(doc.id, emb);
+    const dbDocs = await prisma.knowledgeDocument.findMany();
+    let loadedCount = 0;
+    for (const doc of dbDocs) {
+      if (this.embeddings.has(doc.id)) continue;
+      const embedding = Array.isArray(doc.embedding) ? doc.embedding : [];
+      if (embedding.length === 0) {
+        console.warn(`[KnowledgeStore] 跳过没有 embedding 的文档 id=${doc.id}`);
+        continue;
+      }
+      this.documents.push({ ...doc, embedding });
+      this.embeddings.set(doc.id, embedding);
       loadedCount += 1;
-    } catch (err) {
-      console.warn(`[KnowledgeStore] 加载文档失败 id=${doc.id}`, err);
     }
+    console.log(
+      `[KnowledgeStore] 完成从数据库加载，本次载入 ${loadedCount}，内存总文档数 ${this.size()}`,
+    );
   }
-  console.log(`[KnowledgeStore] 完成从数据库加载，本次载入 ${loadedCount}，内存总文档数 ${this.size()}`);
-}
 
 
   async search(query: string, topK: number = 3): Promise<RetrievalResult[]> {
@@ -84,7 +108,7 @@ export class KnowledgeStore {
     this.embeddings.clear();
   }
 
-  getDocuments(): KnowledgeDocument[] {
+  getDocuments(): KnowledgeDocumentInput[] {
     return [...this.documents];
   }
 }
