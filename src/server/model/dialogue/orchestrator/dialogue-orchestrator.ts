@@ -194,6 +194,7 @@ export class DialogueOrchestrator {
       const newState: SessionState = {
         ...currentState,
         lastIntent: intent.intent,
+        ...(trimmed.summary ? { contextSummary: trimmed.summary } : {}),
         ...result.sessionStateUpdate,
       };
       await this.sessionStore.updateSessionState(sessionId, newState);

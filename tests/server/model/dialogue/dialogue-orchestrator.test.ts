@@ -395,6 +395,26 @@ describe("DialogueOrchestrator", () => {
   });
 
   describe("sessionState update", () => {
+    it("should persist the context summary for the next turn", async () => {
+      (contextTrimmer.trimForAgent as jest.Mock).mockResolvedValue({
+        summary: "学生正在学习指针并处理空指针问题",
+        recentMessages: [],
+        extractedFields: {},
+      });
+      const recognizer = makeMockRecognizer("THOUGHT_FOLLOWUP");
+      const orchestrator = makeOrchestrator({ recognizer });
+
+      const response = await orchestrator.chat({
+        userId: "user-1",
+        message: "继续刚才的问题",
+      });
+
+      const session = await sessionStore.getSession(response.sessionId);
+      expect(session?.sessionState?.contextSummary).toBe(
+        "学生正在学习指针并处理空指针问题",
+      );
+    });
+
     it("should store lastCodeReview after codeAgent call", async () => {
       const recognizer = makeMockRecognizer("CODE_SUBMISSION", {
         codeSnippet: "int *p = null;",
