@@ -37,6 +37,14 @@ export class EvalRunner {
 
     const failures = this.assert(testCase.expected, actual);
     const durationMs = Date.now() - startTime;
+    if (
+      testCase.expected.maxDurationMs !== undefined &&
+      durationMs > testCase.expected.maxDurationMs
+    ) {
+      failures.push(
+        `maxDurationMs: expected <= ${testCase.expected.maxDurationMs}, got ${durationMs}`,
+      );
+    }
 
     return {
       testCaseId: testCase.id,
@@ -92,6 +100,14 @@ export class EvalRunner {
       );
     }
     if (
+      expected.replyNotContains !== undefined &&
+      actual.reply.includes(expected.replyNotContains)
+    ) {
+      failures.push(
+        `replyNotContains: expected reply not to contain "${expected.replyNotContains}"`,
+      );
+    }
+    if (
       expected.degraded !== undefined &&
       actual.degraded !== expected.degraded
     ) {
@@ -105,6 +121,22 @@ export class EvalRunner {
     ) {
       failures.push(
         `hasAgentResults: expected ${expected.hasAgentResults}, got ${actual.hasAgentResults}`,
+      );
+    }
+    if (
+      expected.traceIdPresent !== undefined &&
+      (actual.traceId.length > 0) !== expected.traceIdPresent
+    ) {
+      failures.push(
+        `traceIdPresent: expected ${expected.traceIdPresent}, got ${actual.traceId.length > 0}`,
+      );
+    }
+    if (
+      expected.sessionIdPresent !== undefined &&
+      (actual.sessionId.length > 0) !== expected.sessionIdPresent
+    ) {
+      failures.push(
+        `sessionIdPresent: expected ${expected.sessionIdPresent}, got ${actual.sessionId.length > 0}`,
       );
     }
 

@@ -99,6 +99,22 @@ describe("EvalRunner.runSingle", () => {
     expect(result.failures[0]).toContain("replyContains");
   });
 
+  it("should validate negative reply and trace/session presence assertions", async () => {
+    const runner = new EvalRunner(
+      makeMockOrchestrator({ reply: "安全的指针示例" }),
+    );
+
+    const result = await runner.runSingle(
+      makeTestCase("t3b", "解释指针", {
+        replyNotContains: "错误",
+        traceIdPresent: true,
+        sessionIdPresent: true,
+      }),
+    );
+
+    expect(result.passed).toBe(true);
+  });
+
   it("should fail when degraded does not match", async () => {
     const orchestrator = makeMockOrchestrator({
       intent: "KNOWLEDGE_QUESTION",

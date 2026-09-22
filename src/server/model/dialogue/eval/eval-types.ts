@@ -8,8 +8,12 @@ export interface EvalTestCase {
   expected: {
     intent?: DialogueIntent;
     replyContains?: string;
+    replyNotContains?: string;
     degraded?: boolean;
     hasAgentResults?: boolean;
+    traceIdPresent?: boolean;
+    sessionIdPresent?: boolean;
+    maxDurationMs?: number;
   };
 }
 
