@@ -1,10 +1,12 @@
 import { analyzeCode } from "@/server/model/symbolic/service";
 
 export interface RuntimeExecutionResult {
-  status: "passed" | "failed";
+  status: "passed" | "failed" | "blocked" | "error";
+  executed: boolean;
   output: string;
   error: string;
   runtimeMs: number;
+  symbolic: Awaited<ReturnType<typeof analyzeCode>>;
 }
 
 function hasSymbolicBlockingIssues(
@@ -34,16 +36,23 @@ export async function evaluateRuntimeExecution(
   if (blocking) {
     return {
       status: "failed",
+      executed: false,
       output: "",
       error: buildBlockingErrorSummary(symbolic.errors),
       runtimeMs,
+      symbolic,
     };
   }
 
+  // This service performs symbolic preflight only. Actual execution must go
+  // through Judge0 via the submission/compile pipeline; reporting success here
+  // would incorrectly claim that user code had run.
   return {
-    status: "passed",
-    output: "Execution completed by internal platform pipeline.",
-    error: "",
+    status: "blocked",
+    executed: false,
+    output: "",
+    error: "Runtime executor is not configured for this entry point; use the Judge0 pipeline.",
     runtimeMs,
+    symbolic,
   };
 }
