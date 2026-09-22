@@ -180,4 +180,18 @@ describe("KnowledgeStore", () => {
     const docs2 = store.getDocuments();
     expect(docs2).toHaveLength(1);
   });
+
+  it("should not expose embeddings in retrieval documents", async () => {
+    await store.addDocument({
+      id: "doc-embedding",
+      title: "向量",
+      content: "向量检索",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const results = await store.search("向量");
+    expect(results[0].document).not.toHaveProperty("embedding");
+  });
 });

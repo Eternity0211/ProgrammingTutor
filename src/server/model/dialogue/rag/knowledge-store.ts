@@ -92,7 +92,7 @@ export class KnowledgeStore {
     const scores = this.documents.map((doc) => {
       const docEmbedding = this.embeddings.get(doc.id)!;
       const score = cosineSimilarity(queryEmbedding, docEmbedding);
-      return { document: doc, score };
+      return { document: this.toPublicDocument(doc), score };
     });
 
     scores.sort((a, b) => b.score - a.score);
@@ -109,6 +109,11 @@ export class KnowledgeStore {
   }
 
   getDocuments(): KnowledgeDocumentInput[] {
-    return [...this.documents];
+    return this.documents.map((document) => this.toPublicDocument(document));
+  }
+
+  private toPublicDocument(document: KnowledgeDocument): KnowledgeDocumentInput {
+    const { embedding: _embedding, ...publicDocument } = document;
+    return publicDocument;
   }
 }
