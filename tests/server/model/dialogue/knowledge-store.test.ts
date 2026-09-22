@@ -56,7 +56,9 @@ describe("KnowledgeStore", () => {
       id: "doc-1",
       title: "指针",
       content: "指针是变量的内存地址",
-      source: "textbook",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     await store.addDocument(doc);
     expect(store.size()).toBe(1);
@@ -70,13 +72,17 @@ describe("KnowledgeStore", () => {
       id: "doc-1",
       title: "指针",
       content: "指针是变量的内存地址",
-      source: "textbook",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     await store.addDocument({
       id: "doc-2",
       title: "递归",
       content: "递归是函数调用自身",
-      source: "textbook",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     const results = await store.search("什么是指针", 2);
@@ -96,13 +102,17 @@ describe("KnowledgeStore", () => {
       id: "doc-1",
       title: "指针",
       content: "指针是变量的内存地址",
-      source: "textbook",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     await store.addDocument({
       id: "doc-2",
       title: "递归",
       content: "递归是函数调用自身",
-      source: "textbook",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     const results = await store.search("什么是指针", 1);
@@ -115,7 +125,9 @@ describe("KnowledgeStore", () => {
       id: "doc-1",
       title: "指针",
       content: "指针是变量的内存地址",
-      source: "textbook",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     expect(store.size()).toBe(1);
     store.clear();
@@ -129,13 +141,17 @@ describe("KnowledgeStore", () => {
       id: "doc-1",
       title: "指针",
       content: "指针是变量的内存地址",
-      source: "textbook",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     await store.addDocument({
       id: "doc-2",
       title: "递归",
       content: "递归是函数调用自身",
-      source: "textbook",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     const docs = store.getDocuments();
     expect(docs).toHaveLength(2);
@@ -148,14 +164,18 @@ describe("KnowledgeStore", () => {
       id: "doc-1",
       title: "指针",
       content: "指针是变量的内存地址",
-      source: "textbook",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     const docs1 = store.getDocuments();
     docs1.push({
       id: "doc-2",
       title: "test",
       content: "test",
-      source: "test",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
     const docs2 = store.getDocuments();
     expect(docs2).toHaveLength(1);

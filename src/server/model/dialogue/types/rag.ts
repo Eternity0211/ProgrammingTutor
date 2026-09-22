@@ -1,9 +1,12 @@
+import type { JsonValue } from "@prisma/client/runtime/library";
+
 export interface KnowledgeDocument {
   id: string;
-  title: string;
+  title: string | null;
   content: string;
-  source: string;
-  metadata?: Record<string, unknown>;
+  metadata: JsonValue | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface RetrievalResult {

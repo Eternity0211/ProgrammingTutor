@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import type { KnowledgeDocument, RagResponse, RetrievalResult } from "../types";
 import { DialogueLlmClient } from "../shared/llm-client";
 import { KnowledgeStore } from "./knowledge-store";
+import { scanMdDirectory } from "./rag‑parser";
 
 export class RagEngine {
   private store: KnowledgeStore;
@@ -82,17 +83,39 @@ export class RagEngine {
   }
 
   async addKnowledge(
-    title: string,
+    title: string | null,
     content: string,
-    source: string,
   ): Promise<void> {
+    const now = new Date();
     const doc: KnowledgeDocument = {
       id: randomUUID(),
       title,
       content,
-      source,
+      metadata: null,
+      createdAt: now,
+      updatedAt: now,
     };
     await this.store.addDocument(doc);
+  }
+
+  async loadKnowledgeDirectory(dirPath: string) {
+    const chunks = await scanMdDirectory(dirPath);
+    for (const ck of chunks) {
+      const now = new Date();
+      const doc: KnowledgeDocument = {
+        id: randomUUID(),
+        title: ck.title,
+        content: ck.content,
+        metadata: {
+          headingPath: ck.headingPath,
+          filePath: ck.filePath,
+        } as any,
+        createdAt: now,
+        updatedAt: now,
+      };
+      await this.store.addDocument(doc);
+    }
+    console.log(`[RagEngine] 导入完成，共${chunks.length}个文档块`);
   }
 
   getStore(): KnowledgeStore {

@@ -27,7 +27,7 @@ describe("RagEngine", () => {
 
   it("should answer with knowledge base when retrieval is good", async () => {
     mockLlm.chatCompletion.mockResolvedValue("指针是变量的内存地址");
-    await engine.addKnowledge("指针", "指针是变量的内存地址", "textbook");
+    await engine.addKnowledge("指针", "指针是变量的内存地址");
 
     const response = await engine.answer("什么是指针");
 
@@ -39,7 +39,7 @@ describe("RagEngine", () => {
 
   it("should include knowledge base content in prompt when not degraded", async () => {
     mockLlm.chatCompletion.mockResolvedValue("answer");
-    await engine.addKnowledge("指针", "指针是变量的内存地址", "textbook");
+    await engine.addKnowledge("指针", "指针是变量的内存地址");
 
     await engine.answer("什么是指针");
 
@@ -51,7 +51,7 @@ describe("RagEngine", () => {
 
   it("should degrade when retrieval score is below threshold", async () => {
     mockLlm.chatCompletion.mockResolvedValue("递归是函数调用自身");
-    await engine.addKnowledge("指针", "指针是变量的内存地址", "textbook");
+    await engine.addKnowledge("指针", "指针是变量的内存地址");
 
     const response = await engine.answer("什么是递归");
 
@@ -62,7 +62,7 @@ describe("RagEngine", () => {
 
   it("should not include knowledge base content in prompt when degraded", async () => {
     mockLlm.chatCompletion.mockResolvedValue("递归是函数调用自身");
-    await engine.addKnowledge("指针", "指针是变量的内存地址", "textbook");
+    await engine.addKnowledge("指针", "指针是变量的内存地址");
 
     await engine.answer("什么是递归");
 
@@ -82,7 +82,7 @@ describe("RagEngine", () => {
   });
 
   it("should degrade when embedding API fails", async () => {
-    await engine.addKnowledge("指针", "指针是变量的内存地址", "textbook");
+    await engine.addKnowledge("指针", "指针是变量的内存地址");
     mockLlm.createEmbedding.mockRejectedValue(new Error("Embedding API down"));
     mockLlm.chatCompletion.mockResolvedValue("递归是函数调用自身");
 
@@ -105,7 +105,7 @@ describe("RagEngine", () => {
 
   it("should add knowledge via addKnowledge", async () => {
     mockLlm.chatCompletion.mockResolvedValue("answer");
-    await engine.addKnowledge("指针", "指针是变量的内存地址", "textbook");
+    await engine.addKnowledge("指针", "指针是变量的内存地址");
 
     expect(engine.getStore().size()).toBe(1);
   });
@@ -115,7 +115,7 @@ describe("RagEngine", () => {
       llm: mockLlm,
       scoreThreshold: 1.01,
     });
-    await strictEngine.addKnowledge("指针", "指针是变量的内存地址", "textbook");
+    await strictEngine.addKnowledge("指针", "指针是变量的内存地址");
     mockLlm.chatCompletion.mockResolvedValue("degraded answer");
 
     const response = await strictEngine.answer("什么是指针");

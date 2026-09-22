@@ -321,3 +321,15 @@ enum CodeEvaluationStatus {
   LLM_EVALUATION_FAILED
   EVALUATION_COMPLETE
 }
+
+model KnowledgeDocument {
+  id        String   @id @default(cuid())
+  content   String   // 分块后的知识库文本片段
+  title     String?  // 文档标题
+  metadata  Json?    // 存heading_path、来源路径等扩展元数据
+  embedding Float[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("knowledge_documents")
+}

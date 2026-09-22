@@ -1,5 +1,7 @@
-import type { KnowledgeDocument, RetrievalResult } from "../types";
+import type { KnowledgeDocument } from "@prisma/client";
+import type { RetrievalResult } from "../types";
 import { DialogueLlmClient } from "../shared/llm-client";
+import { prisma } from "@/lib/prisma";
 
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length || a.length === 0) return 0;
@@ -33,6 +35,31 @@ export class KnowledgeStore {
     this.embeddings.set(document.id, embedding);
   }
 
+  async loadFromDatabase(): Promise<void> {
+  const dbDocs = await prisma.knowledgeDocument.findMany();
+  let loadedCount = 0;
+  for (const doc of dbDocs) {
+    if (this.embeddings.has(doc.id)) continue;
+    try {
+      this.documents.push({
+        id: doc.id,
+        title: doc.title,
+        content: doc.content,
+        metadata: doc.metadata,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      });
+      const emb = (doc as any).embedding;
+      this.embeddings.set(doc.id, emb);
+      loadedCount += 1;
+    } catch (err) {
+      console.warn(`[KnowledgeStore] 加载文档失败 id=${doc.id}`, err);
+    }
+  }
+  console.log(`[KnowledgeStore] 完成从数据库加载，本次载入 ${loadedCount}，内存总文档数 ${this.size()}`);
+}
+
+
   async search(query: string, topK: number = 3): Promise<RetrievalResult[]> {
     if (this.documents.length === 0) return [];
 
@@ -45,7 +72,7 @@ export class KnowledgeStore {
     });
 
     scores.sort((a, b) => b.score - a.score);
-    return scores.slice(0, topK);
+    return scores.slice(0, topK) as RetrievalResult[];
   }
 
   size(): number {
