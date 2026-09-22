@@ -85,11 +85,13 @@ export class DialogueOrchestrator {
     const spanId = traceLogger.startSpan("orchestrator.chat");
 
     try {
+      const sessionSpan = traceLogger.startSpan("session.load", spanId);
       const session = request.sessionId
         ? await this.sessionStore.getSession(request.sessionId)
         : null;
       const activeSession = session ?? (await this.sessionStore.createSession(request.userId));
       const sessionId = activeSession.sessionId;
+      traceLogger.endSpan(sessionSpan, { sessionId, created: session === null });
 
       const userMessage = createChatMessage("user", request.message);
       await this.sessionStore.addMessage(sessionId, userMessage);
@@ -100,18 +102,33 @@ export class DialogueOrchestrator {
       }
 
       const messages = await this.sessionStore.getMessages(sessionId);
+      const trimSpan = traceLogger.startSpan("context.trim", spanId);
       const trimmed = await this.contextTrimmer.trimForAgent(messages);
+      traceLogger.endSpan(trimSpan, {
+        inputMessages: messages.length,
+        outputMessages: trimmed.recentMessages.length,
+        summarized: Boolean(trimmed.summary),
+      });
 
       const profile = await this.profileStore.getProfile(request.userId);
       const profileSummary = this.profileUpdater.summarizeForContext(profile);
 
       let intent: IntentRecognitionResult;
+      const intentSpan = traceLogger.startSpan("intent.recognize", spanId);
       try {
         intent = await this.intentRecognizer.recognize(
           request.message,
           trimmed.recentMessages,
         );
+        traceLogger.endSpan(intentSpan, {
+          intent: intent.intent,
+          confidence: intent.confidence,
+        });
       } catch (error) {
+        traceLogger.endSpan(intentSpan, {
+          error: error instanceof Error ? error.message : String(error),
+          fallback: true,
+        });
         console.warn(
           "[DialogueOrchestrator] Intent recognition failed, routing to THOUGHT_FOLLOWUP:",
           error,
@@ -136,27 +153,42 @@ export class DialogueOrchestrator {
       };
 
       let result: HandlerResult;
-      switch (intent.intent) {
-        case "CODE_SUBMISSION":
-          result = await this.handleCodeSubmission(ctx);
-          break;
-        case "EMOTIONAL_VENTING":
-          result = await this.handleEmotionalVenting(ctx);
-          break;
-        case "LEARNING_PATH_INQUIRY":
-          result = await this.handleLearningPath(ctx);
-          break;
-        case "KNOWLEDGE_QUESTION":
-          result = await this.handleKnowledgeQuestion(ctx);
-          break;
-        case "THOUGHT_FOLLOWUP":
-        default:
-          result = await this.handleThoughtFollowup(ctx);
-          break;
+      const handlerSpan = traceLogger.startSpan(`handler.${intent.intent}`, spanId);
+      try {
+        switch (intent.intent) {
+          case "CODE_SUBMISSION":
+            result = await this.handleCodeSubmission(ctx);
+            break;
+          case "EMOTIONAL_VENTING":
+            result = await this.handleEmotionalVenting(ctx);
+            break;
+          case "LEARNING_PATH_INQUIRY":
+            result = await this.handleLearningPath(ctx);
+            break;
+          case "KNOWLEDGE_QUESTION":
+            result = await this.handleKnowledgeQuestion(ctx);
+            break;
+          case "THOUGHT_FOLLOWUP":
+          default:
+            result = await this.handleThoughtFollowup(ctx);
+            break;
+        }
+        traceLogger.endSpan(handlerSpan, {
+          hasAgentResults: Boolean(result.agentResults),
+        });
+      } catch (error) {
+        traceLogger.endSpan(handlerSpan, {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        throw error;
       }
 
       const assistantMessage = createChatMessage("assistant", result.reply);
       await this.sessionStore.addMessage(sessionId, assistantMessage);
+      traceLogger.logEvent("info", "dialogue.completed", {
+        intent: intent.intent,
+        hasAgentResults: Boolean(result.agentResults),
+      });
 
       const currentState = activeSession.sessionState ?? {};
       const newState: SessionState = {
