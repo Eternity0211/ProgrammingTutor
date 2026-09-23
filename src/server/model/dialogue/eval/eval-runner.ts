@@ -22,6 +22,7 @@ export class EvalRunner {
         traceId: response.traceId,
         hasAgentResults: response.agentResults !== undefined,
         degraded: response.agentResults?.rag?.degraded === true,
+        qualityScore: 0,
       };
     } catch (error) {
       actual = {
@@ -32,9 +33,11 @@ export class EvalRunner {
         hasAgentResults: false,
         degraded: false,
         error: error instanceof Error ? error.message : String(error),
+        qualityScore: 0,
       };
     }
 
+    actual.qualityScore = this.qualityScore(testCase.expected, actual.reply);
     const failures = this.assert(testCase.expected, actual);
     const durationMs = Date.now() - startTime;
     if (
@@ -68,6 +71,9 @@ export class EvalRunner {
     const passed = results.filter((r) => r.passed).length;
     const failed = totalCases - passed;
     const degradedCount = results.filter((r) => r.actual.degraded).length;
+    const averageQualityScore = totalCases > 0
+      ? results.reduce((sum, result) => sum + result.actual.qualityScore, 0) / totalCases
+      : 0;
 
     return {
       totalCases,
@@ -75,6 +81,7 @@ export class EvalRunner {
       failed,
       passRate: totalCases > 0 ? passed / totalCases : 0,
       degradationRate: totalCases > 0 ? degradedCount / totalCases : 0,
+      averageQualityScore,
       results,
       totalDurationMs: Date.now() - startTime,
     };
@@ -98,6 +105,9 @@ export class EvalRunner {
       failures.push(
         `replyContains: expected reply to contain "${expected.replyContains}"`,
       );
+    }
+    if (expected.minQualityScore !== undefined && this.qualityScore(expected, actual.reply) < expected.minQualityScore) {
+      failures.push(`minQualityScore: expected >= ${expected.minQualityScore}`);
     }
     if (
       expected.replyNotContains !== undefined &&
@@ -141,5 +151,11 @@ export class EvalRunner {
     }
 
     return failures;
+  }
+
+  private qualityScore(expected: EvalTestCase["expected"], reply: string): number {
+    const keywords = expected.replyKeywords ?? [];
+    if (keywords.length === 0) return expected.replyContains && reply.includes(expected.replyContains) ? 1 : 0;
+    return keywords.filter((keyword) => reply.toLowerCase().includes(keyword.toLowerCase())).length / keywords.length;
   }
 }

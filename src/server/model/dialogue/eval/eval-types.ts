@@ -9,6 +9,8 @@ export interface EvalTestCase {
     intent?: DialogueIntent;
     replyContains?: string;
     replyNotContains?: string;
+    replyKeywords?: string[];
+    minQualityScore?: number;
     degraded?: boolean;
     hasAgentResults?: boolean;
     traceIdPresent?: boolean;
@@ -25,6 +27,7 @@ export interface EvalActual {
   hasAgentResults: boolean;
   degraded: boolean;
   error?: string;
+  qualityScore: number;
 }
 
 export interface EvalResult {
@@ -42,6 +45,7 @@ export interface EvalReport {
   failed: number;
   passRate: number;
   degradationRate: number;
+  averageQualityScore: number;
   results: EvalResult[];
   totalDurationMs: number;
 }
