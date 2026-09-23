@@ -36,6 +36,9 @@ services:
   judge0-server:
     image: judge0/judge0:latest
     privileged: true
+    environment:
+      ENABLE_PER_PROCESS_AND_THREAD_TIME_LIMIT: "true"
+      ENABLE_PER_PROCESS_AND_THREAD_MEMORY_LIMIT: "true"
     volumes:
       - ./judge0.conf:/judge0.conf:ro
       - judge0_box:/box
@@ -54,6 +57,9 @@ services:
     image: judge0/judge0:latest
     command: ["./scripts/workers"]
     privileged: true
+    environment:
+      ENABLE_PER_PROCESS_AND_THREAD_TIME_LIMIT: "true"
+      ENABLE_PER_PROCESS_AND_THREAD_MEMORY_LIMIT: "true"
     volumes:
       - ./judge0.conf:/judge0.conf:ro
       - judge0_box:/box
