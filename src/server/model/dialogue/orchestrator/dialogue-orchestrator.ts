@@ -27,6 +27,11 @@ import type {
   SessionState,
   StudentProfile,
 } from "../types";
+import {
+  codeReviewAgentResultSchema,
+  emotionAgentResultSchema,
+  navigationAgentResultSchema,
+} from "../types/agent-results";
 
 interface OrchestratorOptions {
   sessionStore?: SessionStore;
@@ -284,21 +289,28 @@ try {
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
         } as CodeReviewAgentInput), "codeReviewAgent");
+        const validatedCodeReview = codeReviewAgentResultSchema.safeParse(codeReview);
+        if (!validatedCodeReview.success) {
+          throw new Error("codeReviewAgent returned an invalid result");
+        }
         ctx.traceLogger.endSpan(codeSpan, {
-          confidence: codeReview.confidence,
-          suggestions: codeReview.suggestions.length,
+          confidence: validatedCodeReview.data.confidence,
+          suggestions: validatedCodeReview.data.suggestions.length,
         });
 
         let emotion: AgentResultSnapshot["emotion"] | undefined;
         try {
           const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", undefined);
           const emotionResult = await withTimeout(generateEmotionalSupport({
-            codeReviewResult: codeReview.reviewSummary,
+            codeReviewResult: validatedCodeReview.data.reviewSummary,
             studentProfileSummary: profileSummary,
             sessionContext: trimmed.recentMessages,
           } as EmotionInputs), "emotionAgent");
           if (emotionResult?.emotion_analysis) {
-            emotion = emotionResult.emotion_analysis;
+            const validatedEmotion = emotionAgentResultSchema.safeParse(
+              emotionResult.emotion_analysis,
+            );
+            if (validatedEmotion.success) emotion = validatedEmotion.data;
           }
           ctx.traceLogger.endSpan(emotionSpan, { available: Boolean(emotion) });
         } catch (error) {
@@ -309,7 +321,7 @@ try {
         }
 
         const agentResults: DialogueAgentResults = {
-          codeReview,
+            codeReview: validatedCodeReview.data,
           ...(emotion ? { emotion } : {}),
         };
 
@@ -324,7 +336,9 @@ try {
           reply,
           agentResults,
           sessionStateUpdate: {
-            lastCodeReview: { reviewSummary: codeReview.reviewSummary },
+            lastCodeReview: {
+              reviewSummary: validatedCodeReview.data.reviewSummary,
+            },
           },
         };
       } catch (error) {
@@ -362,7 +376,10 @@ try {
           sessionContext: trimmed.recentMessages,
         } as EmotionInputs), "emotionAgent");
         if (emotionResult?.emotion_analysis) {
-          emotion = emotionResult.emotion_analysis;
+          const validatedEmotion = emotionAgentResultSchema.safeParse(
+            emotionResult.emotion_analysis,
+          );
+          if (validatedEmotion.success) emotion = validatedEmotion.data;
         }
         ctx.traceLogger.endSpan(emotionSpan, { available: Boolean(emotion) });
       } catch (error) {
@@ -408,7 +425,10 @@ try {
           sessionContext: trimmed.recentMessages,
         } as NavigatorInputs), "navigationAgent");
         if (navResult?.learning_navigation) {
-          navigation = navResult.learning_navigation;
+          const validatedNavigation = navigationAgentResultSchema.safeParse(
+            navResult.learning_navigation,
+          );
+          if (validatedNavigation.success) navigation = validatedNavigation.data;
         }
         ctx.traceLogger.endSpan(navigationSpan, {
           available: Boolean(navigation),
