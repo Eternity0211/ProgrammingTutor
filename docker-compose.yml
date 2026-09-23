@@ -38,11 +38,16 @@ services:
     privileged: true
     volumes:
       - ./judge0.conf:/judge0.conf:ro
+      - judge0_box:/box
     ports:
       - "2358:2358"
     depends_on:
-      - judge0-db
-      - judge0-redis
+      judge0-box-init:
+        condition: service_completed_successfully
+      judge0-db:
+        condition: service_started
+      judge0-redis:
+        condition: service_started
     restart: unless-stopped
 
   judge0-worker:
@@ -51,10 +56,22 @@ services:
     privileged: true
     volumes:
       - ./judge0.conf:/judge0.conf:ro
+      - judge0_box:/box
     depends_on:
-      - judge0-db
-      - judge0-redis
+      judge0-box-init:
+        condition: service_completed_successfully
+      judge0-db:
+        condition: service_started
+      judge0-redis:
+        condition: service_started
     restart: unless-stopped
+
+  judge0-box-init:
+    image: alpine:3.20
+    user: "0:0"
+    volumes:
+      - judge0_box:/box
+    command: ["sh", "-c", "chown 1000:999 /box && chmod 0775 /box"]
 
   judge0-db:
     image: postgres:16.2
@@ -80,5 +97,6 @@ services:
 volumes:
   gradeit_node_modules:
   db_data:
+  judge0_box:
   judge0_postgres_data:
   judge0_redis_data:
