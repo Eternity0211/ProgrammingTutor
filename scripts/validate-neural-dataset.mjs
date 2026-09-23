@@ -6,6 +6,7 @@ const datasetDir = path.resolve(datasetArg ?? "data/neural");
 const requireComplete = process.argv.includes("--require-complete");
 const splits = ["train", "val", "test"];
 const seenInputs = new Map();
+const normalizeInput = (value) => value.replace(/\s+/g, " ").trim().toLowerCase();
 let errors = 0;
 let totalRows = 0;
 
@@ -38,9 +39,14 @@ for (const split of splits) {
       }
     }
     if (typeof row.input === "string") {
-      const previous = seenInputs.get(row.input);
-      if (previous) { console.error(`[dataset] duplicate input at ${location}; first seen at ${previous}`); errors += 1; }
-      else seenInputs.set(row.input, location);
+      const normalizedInput = normalizeInput(row.input);
+      const previous = seenInputs.get(normalizedInput);
+      if (previous) {
+        const previousSplit = previous.split(".jsonl:")[0];
+        const issue = previousSplit === split ? "duplicate input" : "cross-split leakage";
+        console.error(`[dataset] ${issue} at ${location}; first seen at ${previous}`);
+        errors += 1;
+      } else seenInputs.set(normalizedInput, location);
     }
   });
   console.log(`[dataset] ${split}: ${lines.length} rows`);
