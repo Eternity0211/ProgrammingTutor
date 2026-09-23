@@ -57,6 +57,16 @@ const metadataPath = path.join(datasetDir, "metadata.json");
 if (fs.existsSync(metadataPath)) {
   try {
     const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+    for (const field of ["source", "languages", "error_types", "difficulty_levels", "dataset_revision"]) {
+      const value = metadata?.[field];
+      const valid = field === "source" || field === "dataset_revision"
+        ? typeof value === "string" && value.trim().length > 0
+        : Array.isArray(value) && value.length > 0;
+      if (!valid) {
+        console.error(`[dataset] metadata missing provenance field: ${field}`);
+        errors += 1;
+      }
+    }
     const expected = metadata?.statistics?.total_samples;
     if (typeof expected === "number" && expected !== totalRows) {
       const message = `[dataset] metadata total_samples=${expected}, actual=${totalRows}`;
