@@ -1,0 +1,48 @@
+import fs from "node:fs";
+import path from "node:path";
+
+const datasetDir = path.resolve(process.argv[2] ?? "data/neural");
+const requireComplete = process.argv.includes("--require-complete");
+const splits = ["train", "val", "test"];
+const seenInputs = new Map();
+let errors = 0;
+
+for (const split of splits) {
+  const filePath = path.join(datasetDir, `${split}.jsonl`);
+  if (!fs.existsSync(filePath)) {
+    console.error(`[dataset] missing split: ${filePath}`);
+    errors += 1;
+    continue;
+  }
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (lines.length === 0) {
+    const level = requireComplete ? "error" : "warn";
+    console[level](`[dataset] ${split} is empty`);
+    if (requireComplete) errors += 1;
+  }
+  lines.forEach((line, index) => {
+    const location = `${split}.jsonl:${index + 1}`;
+    let row;
+    try { row = JSON.parse(line); } catch { console.error(`[dataset] ${location}: invalid JSON`); errors += 1; return; }
+    if (row === null || typeof row !== "object" || Array.isArray(row)) {
+      console.error(`[dataset] ${location}: expected an object`);
+      errors += 1;
+      return;
+    }
+    for (const field of ["instruction", "input", "output"]) {
+      if (typeof row[field] !== "string" || row[field].trim().length === 0) {
+        console.error(`[dataset] ${location}: missing non-empty ${field}`);
+        errors += 1;
+      }
+    }
+    if (typeof row.input === "string") {
+      const previous = seenInputs.get(row.input);
+      if (previous) { console.error(`[dataset] duplicate input at ${location}; first seen at ${previous}`); errors += 1; }
+      else seenInputs.set(row.input, location);
+    }
+  });
+  console.log(`[dataset] ${split}: ${lines.length} rows`);
+}
+
+if (errors > 0) { console.error(`[dataset] validation failed with ${errors} error(s)`); process.exitCode = 1; }
+else console.log(`[dataset] validation passed: ${seenInputs.size} unique inputs`);

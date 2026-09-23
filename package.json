@@ -13,7 +13,9 @@
     "format": "npx prettier --write .",
     "prepare": "husky",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "typecheck": "tsc --noEmit",
+    "validate:dataset": "node scripts/validate-neural-dataset.mjs"
   },
   "dependencies": {
     "@ai-sdk/groq": "^1.2.9",
