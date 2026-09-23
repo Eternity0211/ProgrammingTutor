@@ -65,6 +65,7 @@ interface HandlerResult {
 }
 
 const AGENT_TIMEOUT_MS = Number(process.env.DIALOGUE_AGENT_TIMEOUT_MS ?? 30_000);
+const AGENT_RETRIES = Math.max(0, Number(process.env.DIALOGUE_AGENT_RETRIES ?? 1));
 
 function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -83,6 +84,23 @@ function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
       },
     );
   });
+}
+
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  label: string,
+  onRetry?: (attempt: number, error: unknown) => void,
+): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= AGENT_RETRIES; attempt += 1) {
+    try {
+      return await withTimeout(operation(), label);
+    } catch (error) {
+      lastError = error;
+      if (attempt < AGENT_RETRIES) onRetry?.(attempt + 1, error);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 export class DialogueOrchestrator {
@@ -292,7 +310,9 @@ try {
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
         });
-        const codeReview = await withTimeout(runCodeReviewAgent(codeReviewInput as CodeReviewAgentInput), "codeReviewAgent");
+        const codeReview = await withRetry(() => runCodeReviewAgent(codeReviewInput as CodeReviewAgentInput), "codeReviewAgent", (attempt, error) =>
+          ctx.traceLogger.logEvent("warn", "agent.retry", { agent: "codeReviewAgent", attempt, error: String(error) }),
+        );
         const validatedCodeReview = codeReviewAgentResultSchema.safeParse(codeReview);
         if (!validatedCodeReview.success) {
           throw new Error("codeReviewAgent returned an invalid result");
@@ -310,7 +330,9 @@ try {
             studentProfileSummary: profileSummary,
             sessionContext: trimmed.recentMessages,
           });
-          const emotionResult = await withTimeout(generateEmotionalSupport(emotionInput as EmotionInputs), "emotionAgent");
+          const emotionResult = await withRetry(() => generateEmotionalSupport(emotionInput as EmotionInputs), "emotionAgent", (attempt, error) =>
+            ctx.traceLogger.logEvent("warn", "agent.retry", { agent: "emotionAgent", attempt, error: String(error) }),
+          );
           if (emotionResult?.emotion_analysis) {
             const validatedEmotion = emotionAgentResultSchema.safeParse(
               emotionResult.emotion_analysis,
@@ -380,7 +402,9 @@ try {
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
         });
-        const emotionResult = await withTimeout(generateEmotionalSupport(emotionInput as EmotionInputs), "emotionAgent");
+        const emotionResult = await withRetry(() => generateEmotionalSupport(emotionInput as EmotionInputs), "emotionAgent", (attempt, error) =>
+          ctx.traceLogger.logEvent("warn", "agent.retry", { agent: "emotionAgent", attempt, error: String(error) }),
+        );
         if (emotionResult?.emotion_analysis) {
           const validatedEmotion = emotionAgentResultSchema.safeParse(
             emotionResult.emotion_analysis,
@@ -430,7 +454,9 @@ try {
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
         });
-        const navResult = await withTimeout(generateLearningNavigation(navigationInput as NavigatorInputs), "navigationAgent");
+        const navResult = await withRetry(() => generateLearningNavigation(navigationInput as NavigatorInputs), "navigationAgent", (attempt, error) =>
+          ctx.traceLogger.logEvent("warn", "agent.retry", { agent: "navigationAgent", attempt, error: String(error) }),
+        );
         if (navResult?.learning_navigation) {
           const validatedNavigation = navigationAgentResultSchema.safeParse(
             navResult.learning_navigation,
