@@ -23,6 +23,7 @@ export class EvalRunner {
         hasAgentResults: response.agentResults !== undefined,
         degraded: response.agentResults?.rag?.degraded === true,
         qualityScore: 0,
+        ragSourceCount: response.agentResults?.rag?.sources.length ?? 0,
       };
     } catch (error) {
       actual = {
@@ -34,6 +35,7 @@ export class EvalRunner {
         degraded: false,
         error: error instanceof Error ? error.message : String(error),
         qualityScore: 0,
+        ragSourceCount: 0,
       };
     }
 
@@ -74,6 +76,8 @@ export class EvalRunner {
     const averageQualityScore = totalCases > 0
       ? results.reduce((sum, result) => sum + result.actual.qualityScore, 0) / totalCases
       : 0;
+    const ragCases = results.filter((result) => result.actual.hasAgentResults);
+    const ragHitCases = results.filter((result) => result.actual.ragSourceCount > 0);
 
     return {
       totalCases,
@@ -82,6 +86,10 @@ export class EvalRunner {
       passRate: totalCases > 0 ? passed / totalCases : 0,
       degradationRate: totalCases > 0 ? degradedCount / totalCases : 0,
       averageQualityScore,
+      ragHitRate: totalCases > 0 ? ragHitCases.length / totalCases : 0,
+      citationCoverageRate: ragCases.length > 0
+        ? ragHitCases.length / ragCases.length
+        : 0,
       results,
       totalDurationMs: Date.now() - startTime,
     };
@@ -108,6 +116,9 @@ export class EvalRunner {
     }
     if (expected.minQualityScore !== undefined && this.qualityScore(expected, actual.reply) < expected.minQualityScore) {
       failures.push(`minQualityScore: expected >= ${expected.minQualityScore}`);
+    }
+    if (expected.minSourceCount !== undefined && actual.ragSourceCount < expected.minSourceCount) {
+      failures.push(`minSourceCount: expected >= ${expected.minSourceCount}, got ${actual.ragSourceCount}`);
     }
     if (
       expected.replyNotContains !== undefined &&

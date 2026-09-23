@@ -11,6 +11,7 @@ export interface EvalTestCase {
     replyNotContains?: string;
     replyKeywords?: string[];
     minQualityScore?: number;
+    minSourceCount?: number;
     degraded?: boolean;
     hasAgentResults?: boolean;
     traceIdPresent?: boolean;
@@ -28,6 +29,7 @@ export interface EvalActual {
   degraded: boolean;
   error?: string;
   qualityScore: number;
+  ragSourceCount: number;
 }
 
 export interface EvalResult {
@@ -46,6 +48,8 @@ export interface EvalReport {
   passRate: number;
   degradationRate: number;
   averageQualityScore: number;
+  ragHitRate: number;
+  citationCoverageRate: number;
   results: EvalResult[];
   totalDurationMs: number;
 }
