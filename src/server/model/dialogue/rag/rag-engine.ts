@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import type { KnowledgeDocument, RagResponse, RetrievalResult } from "../types";
 import { DialogueLlmClient } from "../shared/llm-client";
-import { KnowledgeStore } from "./knowledge-store";
+import { KnowledgeStore, type KnowledgeFilters } from "./knowledge-store";
 import { scanMdDirectory } from "./rag‑parser";
 
 export class RagEngine {
@@ -31,10 +31,10 @@ export class RagEngine {
     }
   }
 
-  async answer(question: string): Promise<RagResponse> {
+  async answer(question: string, filters?: KnowledgeFilters): Promise<RagResponse> {
     try {
       await this.loadPromise;
-      const results = await this.store.search(question, 3);
+      const results = await this.store.search(question, 3, filters);
 
       if (results.length === 0 || results[0].score < this.scoreThreshold) {
         return await this.answerWithLlm(question, [], true);

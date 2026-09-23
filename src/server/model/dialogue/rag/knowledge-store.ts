@@ -7,6 +7,12 @@ import { createHash } from "crypto";
 export type KnowledgeDocumentInput = Omit<KnowledgeDocument, "embedding"> & {
   embedding?: number[];
 };
+export type KnowledgeFilters = Partial<{
+  language: string;
+  course: string;
+  classId: string;
+  topic: string;
+}>;
 
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length || a.length === 0) return 0;
@@ -97,12 +103,26 @@ export class KnowledgeStore {
   }
 
 
-  async search(query: string, topK: number = 3): Promise<RetrievalResult[]> {
+  async search(
+    query: string,
+    topK: number = 3,
+    filters?: KnowledgeFilters,
+  ): Promise<RetrievalResult[]> {
     if (this.documents.length === 0) return [];
+
+    const filteredDocuments = this.documents.filter((doc) => {
+      if (!filters || Object.keys(filters).length === 0) return true;
+      const metadata = doc.metadata;
+      if (!metadata || typeof metadata !== "object") return false;
+      return Object.entries(filters).every(([key, value]) =>
+        value === undefined || (metadata as Record<string, unknown>)[key] === value,
+      );
+    });
+    if (filteredDocuments.length === 0) return [];
 
     const queryEmbedding = await this.llm.createEmbedding(query);
 
-    const scores = this.documents.map((doc) => {
+    const scores = filteredDocuments.map((doc) => {
       const docEmbedding = this.embeddings.get(doc.id)!;
       const score = cosineSimilarity(queryEmbedding, docEmbedding);
       return { document: this.toPublicDocument(doc), score };

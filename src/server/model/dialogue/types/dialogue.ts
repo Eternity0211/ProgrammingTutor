@@ -12,6 +12,12 @@ export interface DialogueRequestContext {
   symbolic?: SymbolicResult;
   testSummary?: { total: number; passed: number; failed: number };
   codeReviewResult?: string;
+  ragFilters?: {
+    language?: string;
+    course?: string;
+    classId?: string;
+    topic?: string;
+  };
 }
 
 export interface DialogueRequest {

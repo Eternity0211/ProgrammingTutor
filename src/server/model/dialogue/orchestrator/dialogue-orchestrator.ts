@@ -506,7 +506,9 @@ try {
     const { request } = ctx;
     const ragSpan = ctx.traceLogger.startSpan("rag.answer", undefined);
     try {
-      const ragResponse = await this.ragEngine.answer(request.message);
+      const ragResponse = request.context?.ragFilters
+        ? await this.ragEngine.answer(request.message, request.context.ragFilters)
+        : await this.ragEngine.answer(request.message);
       ctx.traceLogger.endSpan(ragSpan, {
         degraded: ragResponse.degraded,
         sourceCount: ragResponse.sources.length,
