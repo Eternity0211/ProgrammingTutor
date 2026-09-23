@@ -125,7 +125,7 @@ export class DialogueOrchestrator {
 
   async chat(request: DialogueRequest): Promise<DialogueResponse> {
     const traceLogger = new TraceLogger(
-      undefined,
+      request.traceId,
       request.sessionId,
       request.userId,
     );

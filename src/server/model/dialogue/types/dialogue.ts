@@ -18,6 +18,7 @@ export interface DialogueRequest {
   userId: string;
   message: string;
   sessionId?: string;
+  traceId?: string;
   context?: DialogueRequestContext;
 }
 

@@ -10,9 +10,10 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { message, sessionId, context } = body as {
+    const { message, sessionId, context, traceId } = body as {
       message?: string;
       sessionId?: string;
+      traceId?: string;
       context?: Record<string, unknown>;
     };
 
@@ -28,10 +29,13 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       message: message.trim(),
       sessionId,
+      traceId: req.headers.get("x-trace-id") ?? traceId,
       context,
     });
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: { "x-trace-id": response.traceId },
+    });
   } catch (error: any) {
     console.error("[API /dialogue] Error:", error);
     return NextResponse.json(

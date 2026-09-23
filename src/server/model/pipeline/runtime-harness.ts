@@ -4,12 +4,15 @@ import {
   type Judge0ExecutionLike,
   type NormalizedRuntimeResult,
 } from "./runtime-result";
+import type { TraceLogger } from "@/server/model/dialogue/shared/trace-logger";
 
 export interface RuntimeHarnessRequest {
   code: string;
   input?: string;
   expectedOutput?: string;
   languageId: number;
+  traceLogger?: TraceLogger;
+  parentSpanId?: string;
 }
 
 export interface RuntimeHarness {
@@ -22,6 +25,7 @@ function encode(value: string): string {
 
 export class Judge0RuntimeHarness implements RuntimeHarness {
   async execute(request: RuntimeHarnessRequest): Promise<NormalizedRuntimeResult> {
+    const spanId = request.traceLogger?.startSpan("runtime.judge0", request.parentSpanId);
     const payload = {
       source_code: encode(request.code),
       stdin: encode(request.input ?? ""),
@@ -35,13 +39,24 @@ export class Judge0RuntimeHarness implements RuntimeHarness {
       headers["X-RapidAPI-Key"] = apiKey;
       headers["X-RapidAPI-Host"] = apiHost;
     }
-    const response = await fetch(
-      `${EXTERNAL_JUDGE0_API}/submissions?base64_encoded=true&wait=true`,
-      { method: "POST", headers, body: JSON.stringify(payload) },
-    );
-    if (!response.ok) {
-      throw new Error(`Judge0 request failed (${response.status}): ${await response.text()}`);
+    try {
+      const response = await fetch(
+        `${EXTERNAL_JUDGE0_API}/submissions?base64_encoded=true&wait=true`,
+        { method: "POST", headers, body: JSON.stringify(payload) },
+      );
+      if (!response.ok) {
+        throw new Error(`Judge0 request failed (${response.status}): ${await response.text()}`);
+      }
+      const result = normalizeJudge0Result((await response.json()) as Judge0ExecutionLike);
+      if (spanId) request.traceLogger?.endSpan(spanId, {
+        status: result.status,
+        failureKind: result.failureKind,
+        runtimeMs: result.runtimeMs,
+      });
+      return result;
+    } catch (error) {
+      if (spanId) request.traceLogger?.endSpan(spanId, { status: "error", error: String(error) });
+      throw error;
     }
-    return normalizeJudge0Result((await response.json()) as Judge0ExecutionLike);
   }
 }
