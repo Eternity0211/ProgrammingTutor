@@ -67,6 +67,10 @@ if (fs.existsSync(metadataPath)) {
         errors += 1;
       }
     }
+    if (!metadata?.knowledge_concept_ids || typeof metadata.knowledge_concept_ids !== "object") {
+      console.error("[dataset] metadata missing knowledge_concept_ids mapping");
+      errors += 1;
+    }
     const expected = metadata?.statistics?.total_samples;
     if (typeof expected === "number" && expected !== totalRows) {
       const message = `[dataset] metadata total_samples=${expected}, actual=${totalRows}`;
