@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
+import { checkProductionConfig } from "@/server/config";
 import { prisma } from "@/lib/prisma";
 import { LANGUAGE_ID_MAP } from "@/config/constants";
 import { EXTERNAL_JUDGE0_API } from "@/config/route";
@@ -143,6 +144,13 @@ function toRunResult(params: {
 }
 
 export async function POST(req: NextRequest) {
+  const configIssues = checkProductionConfig();
+  if (configIssues.length > 0) {
+    return NextResponse.json(
+      { error: "Server configuration incomplete", issues: configIssues },
+      { status: 503 },
+    );
+  }
   try {
     const session = await auth();
     if (!session || !session.user) {
