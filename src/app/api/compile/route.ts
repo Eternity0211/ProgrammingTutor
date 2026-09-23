@@ -3,14 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkProductionConfig } from "@/server/config";
 import { prisma } from "@/lib/prisma";
 import { LANGUAGE_ID_MAP } from "@/config/constants";
-import { EXTERNAL_JUDGE0_API } from "@/config/route";
 import { analyzeCode } from "@/server/model/symbolic/service";
 import {
-  normalizeJudge0Result,
-  type Judge0ExecutionLike,
+  type NormalizedRuntimeResult,
 } from "@/server/model/pipeline/runtime-result";
+import { Judge0RuntimeHarness } from "@/server/model/pipeline/runtime-harness";
 
-type Judge0Execution = Judge0ExecutionLike;
+const runtimeHarness = new Judge0RuntimeHarness();
+type Judge0Execution = NormalizedRuntimeResult;
 
 type RunCaseResult = {
   caseLabel: string;
@@ -40,51 +40,13 @@ function buildBlockingErrorSummary(
     .join(" | ");
 }
 
-function encodeBase64(value: string) {
-  return Buffer.from(value, "utf-8").toString("base64");
-}
-
 async function executeWithJudge0(params: {
   code: string;
   input: string;
   languageId: number;
   expectedOutput?: string;
 }): Promise<Judge0Execution> {
-  const payload: Record<string, unknown> = {
-    source_code: encodeBase64(params.code),
-    stdin: encodeBase64(params.input || ""),
-    language_id: params.languageId,
-  };
-
-  if (typeof params.expectedOutput === "string") {
-    payload.expected_output = encodeBase64(params.expectedOutput);
-  }
-
-  const judge0Url = `${EXTERNAL_JUDGE0_API}/submissions?base64_encoded=true&wait=true`;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-
-  const apiKey = process.env.JUDGE0_API_KEY?.trim();
-  const apiHost = process.env.JUDGE0_API_HOST?.trim();
-
-  if (apiKey && apiHost) {
-    headers["X-RapidAPI-Key"] = apiKey;
-    headers["X-RapidAPI-Host"] = apiHost;
-  }
-
-  const response = await fetch(judge0Url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Judge0 request failed (${response.status}): ${text}`);
-  }
-
-  return (await response.json()) as Judge0Execution;
+  return runtimeHarness.execute(params);
 }
 
 function toRunResult(params: {
@@ -94,8 +56,7 @@ function toRunResult(params: {
   input: string;
   expectedOutput?: string;
 }): RunCaseResult {
-  const execution = params.execution;
-  const normalized = normalizeJudge0Result(execution);
+  const normalized = params.execution;
   const runtime = normalized.runtimeMs === null ? "N/A" : `${normalized.runtimeMs}ms`;
   const memory = normalized.memoryKb === null ? "N/A" : `${normalized.memoryKb} KB`;
 
