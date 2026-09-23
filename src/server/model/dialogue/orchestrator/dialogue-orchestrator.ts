@@ -238,7 +238,14 @@ export class DialogueOrchestrator {
       }
 
       const assistantMessage = createChatMessage("assistant", result.reply);
-      await this.sessionStore.addMessage(sessionId, assistantMessage);
+      const messageSpan = traceLogger.startSpan("database.session.addMessage", spanId);
+      try {
+        await this.sessionStore.addMessage(sessionId, assistantMessage);
+        traceLogger.endSpan(messageSpan, { sessionId });
+      } catch (error) {
+        traceLogger.endSpan(messageSpan, { error: String(error) });
+        throw error;
+      }
       traceLogger.logEvent("info", "dialogue.completed", {
         intent: intent.intent,
         hasAgentResults: Boolean(result.agentResults),
@@ -251,7 +258,14 @@ export class DialogueOrchestrator {
         ...(trimmed.summary ? { contextSummary: trimmed.summary } : {}),
         ...result.sessionStateUpdate,
       };
-      await this.sessionStore.updateSessionState(sessionId, newState);
+      const stateSpan = traceLogger.startSpan("database.session.updateState", spanId);
+      try {
+        await this.sessionStore.updateSessionState(sessionId, newState);
+        traceLogger.endSpan(stateSpan, { sessionId });
+      } catch (error) {
+        traceLogger.endSpan(stateSpan, { error: String(error) });
+        throw error;
+      }
 
       if (result.agentResults) {
         const snapshot: AgentResultSnapshot = {
@@ -260,6 +274,7 @@ export class DialogueOrchestrator {
   navigation: result.agentResults?.navigation,
   rag: result.agentResults?.rag,
 };
+const profileSpan = traceLogger.startSpan("database.profile.update", spanId);
 try {
   await this.profileUpdater.updateFromAgentResults(
     request.userId,
@@ -269,7 +284,9 @@ try {
       score: undefined,
     },
   );
+  traceLogger.endSpan(profileSpan, { userId: request.userId });
 } catch (error) {
+  traceLogger.endSpan(profileSpan, { error: String(error) });
   console.warn(
     "[DialogueOrchestrator] Profile update failed:",
     error,
