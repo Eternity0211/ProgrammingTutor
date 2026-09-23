@@ -6,10 +6,27 @@ import type {
   TraceSpan,
 } from "../types";
 
+export interface TraceSink {
+  write(context: TraceContext): Promise<void>;
+}
+
+export class InMemoryTraceSink implements TraceSink {
+  readonly traces: TraceContext[] = [];
+
+  async write(context: TraceContext): Promise<void> {
+    this.traces.push(context);
+  }
+}
+
 export class TraceLogger {
   private readonly context: TraceContext;
 
-  constructor(traceId?: string, sessionId?: string, userId?: string) {
+  constructor(
+    traceId?: string,
+    sessionId?: string,
+    userId?: string,
+    private readonly sink?: TraceSink,
+  ) {
     this.context = {
       traceId: traceId ?? randomUUID(),
       sessionId,
@@ -69,5 +86,9 @@ export class TraceLogger {
 
   flush(): void {
     console.log(JSON.stringify(this.context, null, 2));
+  }
+
+  async persist(): Promise<void> {
+    if (this.sink) await this.sink.write(this.getContext());
   }
 }
