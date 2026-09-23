@@ -7,6 +7,7 @@ const requireComplete = process.argv.includes("--require-complete");
 const splits = ["train", "val", "test"];
 const seenInputs = new Map();
 let errors = 0;
+let totalRows = 0;
 
 for (const split of splits) {
   const filePath = path.join(datasetDir, `${split}.jsonl`);
@@ -43,6 +44,23 @@ for (const split of splits) {
     }
   });
   console.log(`[dataset] ${split}: ${lines.length} rows`);
+  totalRows += lines.length;
+}
+
+const metadataPath = path.join(datasetDir, "metadata.json");
+if (fs.existsSync(metadataPath)) {
+  try {
+    const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
+    const expected = metadata?.statistics?.total_samples;
+    if (typeof expected === "number" && expected !== totalRows) {
+      const message = `[dataset] metadata total_samples=${expected}, actual=${totalRows}`;
+      if (requireComplete) { console.error(message); errors += 1; }
+      else console.warn(message);
+    }
+  } catch {
+    console.error(`[dataset] invalid metadata.json`);
+    errors += 1;
+  }
 }
 
 if (errors > 0) { console.error(`[dataset] validation failed with ${errors} error(s)`); process.exitCode = 1; }
