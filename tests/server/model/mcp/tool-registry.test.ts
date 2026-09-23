@@ -1,0 +1,15 @@
+import { TutorToolRegistry } from "@/server/model/mcp";
+
+describe("TutorToolRegistry", () => {
+  it("lists the knowledge tool", () => {
+    expect(new TutorToolRegistry({} as never).listTools().map((tool) => tool.name)).toEqual([
+      "knowledge_answer",
+    ]);
+  });
+
+  it("validates tool names and arguments", async () => {
+    const registry = new TutorToolRegistry({ answer: jest.fn() } as never);
+    await expect(registry.callTool("missing", {})).rejects.toThrow("Unknown MCP tool");
+    await expect(registry.callTool("knowledge_answer", { question: " " })).rejects.toThrow();
+  });
+});
