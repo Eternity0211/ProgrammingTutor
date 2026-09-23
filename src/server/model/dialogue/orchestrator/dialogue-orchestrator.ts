@@ -369,6 +369,7 @@ try {
           profileSummary,
           trimmed.summary,
           agentResults,
+          ctx.traceLogger,
         );
 
         return {
@@ -392,6 +393,8 @@ try {
       request.message,
       profileSummary,
       trimmed.summary,
+      undefined,
+      ctx.traceLogger,
     );
     return { reply };
   }
@@ -441,6 +444,7 @@ try {
       profileSummary,
       trimmed.summary,
       agentResults,
+      ctx.traceLogger,
     );
 
     return { reply, agentResults };
@@ -506,6 +510,7 @@ try {
       profileSummary,
       trimmed.summary,
       agentResults,
+      ctx.traceLogger,
     );
 
     return { reply, agentResults };
@@ -551,6 +556,8 @@ try {
       request.message,
       profileSummary,
       trimmed.summary,
+      undefined,
+      ctx.traceLogger,
     );
     return { reply };
   }
@@ -560,6 +567,7 @@ try {
     profileSummary: string,
     contextSummary: string | undefined,
     agentResults?: DialogueAgentResults,
+    traceLogger?: TraceLogger,
   ): Promise<string> {
     const contextParts: string[] = [];
     if (profileSummary && profileSummary !== "暂无学生画像数据") {
@@ -598,13 +606,16 @@ try {
         : "暂无额外上下文。");
 
     try {
-      return await this.llm.chatCompletion({
+      const llmSpan = traceLogger?.startSpan("llm.reply", undefined);
+      const reply = await this.llm.chatCompletion({
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message },
         ],
         temperature: 0.7,
       });
+      if (llmSpan) traceLogger?.endSpan(llmSpan, { model: "dialogue" });
+      return reply;
     } catch (error) {
       console.warn(
         "[DialogueOrchestrator] LLM reply generation failed:",
