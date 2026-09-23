@@ -9,6 +9,10 @@ import { getAggregatedKnowledgeContext } from "@/lib/services/graph-service";
 import { generateLearningNavigation } from "@/server/model/neural/navigationAgent";
 import { generateEmotionalSupport } from "@/server/model/neural/emotionAgent";
 import { updateSubmissionStatus } from "@/server/actions/submission-actions";
+import {
+  normalizeJudge0Result,
+  normalizeJudge0Status,
+} from "./runtime-result";
 
 type Judge0Execution = {
   stdout: string | null;
@@ -104,17 +108,17 @@ export async function evaluateSubmissionInsidePlatform(codeSubmissionId: string)
             languageId 
           });
           
-          const statusId = execution.status?.id;
-          const status = statusId === 3 ? TestCaseStatus.PASSED : (statusId === 4 ? TestCaseStatus.FAILED : TestCaseStatus.ERROR);
+           const normalized = normalizeJudge0Result(execution);
+           const status = normalizeJudge0Status(execution) as TestCaseStatus;
           
           // 更新测试用例明细记录
           await prisma.testCaseResult.update({
             where: { codeSubmissionId_testCaseId: { codeSubmissionId, testCaseId: testCase.id } },
             data: { 
               status, 
-              actualOutput: decodeBase64(execution.stdout),
-              errorMessage: decodeBase64(execution.compile_output) || decodeBase64(execution.stderr) || execution.message,
-              executionTime: execution.time ? Math.round(parseFloat(execution.time) * 1000) : null,
+               actualOutput: normalized.output,
+               errorMessage: normalized.error,
+               executionTime: normalized.runtimeMs,
             },
           });
 

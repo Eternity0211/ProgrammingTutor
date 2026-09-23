@@ -4,19 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { LANGUAGE_ID_MAP } from "@/config/constants";
 import { EXTERNAL_JUDGE0_API } from "@/config/route";
 import { analyzeCode } from "@/server/model/symbolic/service";
+import {
+  normalizeJudge0Result,
+  type Judge0ExecutionLike,
+} from "@/server/model/pipeline/runtime-result";
 
-type Judge0Execution = {
-  stdout: string | null;
-  stderr: string | null;
-  compile_output: string | null;
-  message: string | null;
-  status?: {
-    id: number;
-    description: string;
-  };
-  time?: string | null;
-  memory?: number | null;
-};
+type Judge0Execution = Judge0ExecutionLike;
 
 type RunCaseResult = {
   caseLabel: string;
@@ -48,11 +41,6 @@ function buildBlockingErrorSummary(
 
 function encodeBase64(value: string) {
   return Buffer.from(value, "utf-8").toString("base64");
-}
-
-function decodeBase64(value: string | null | undefined) {
-  if (!value) return "";
-  return Buffer.from(value, "base64").toString("utf-8");
 }
 
 async function executeWithJudge0(params: {
@@ -106,25 +94,18 @@ function toRunResult(params: {
   expectedOutput?: string;
 }): RunCaseResult {
   const execution = params.execution;
-  const output = decodeBase64(execution.stdout);
-  const compileError = decodeBase64(execution.compile_output);
-  const runtimeError = decodeBase64(execution.stderr);
-  const error = compileError || runtimeError;
+  const normalized = normalizeJudge0Result(execution);
+  const runtime = normalized.runtimeMs === null ? "N/A" : `${normalized.runtimeMs}ms`;
+  const memory = normalized.memoryKb === null ? "N/A" : `${normalized.memoryKb} KB`;
 
-  const runtime = execution.time
-    ? `${Math.round(parseFloat(execution.time) * 1000)}ms`
-    : "N/A";
-  const memory =
-    typeof execution.memory === "number" ? `${execution.memory} KB` : "N/A";
-
-  if (error) {
+  if (normalized.status === "error" || normalized.error) {
     return {
       caseLabel: params.caseLabel,
       isCustom: params.isCustom,
       input: params.input,
       expectedOutput: params.isCustom ? null : params.expectedOutput || null,
-      output,
-      error,
+      output: normalized.output,
+      error: normalized.error,
       status: "failed",
       runtime,
       memory,
@@ -138,7 +119,7 @@ function toRunResult(params: {
       isCustom: true,
       input: params.input,
       expectedOutput: null,
-      output,
+       output: normalized.output,
       error: "",
       status: "executed",
       runtime,
@@ -152,9 +133,9 @@ function toRunResult(params: {
     isCustom: false,
     input: params.input,
     expectedOutput: params.expectedOutput || "",
-    output,
-    error: "",
-    status: execution.status?.id === 3 ? "passed" : "failed",
+    output: normalized.output,
+    error: normalized.error,
+    status: normalized.status === "passed" ? "passed" : "failed",
     runtime,
     memory,
     hidden: false,
