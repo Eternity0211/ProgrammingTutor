@@ -13,6 +13,7 @@
     "format": "npx prettier --write .",
     "prepare": "husky",
     "test": "jest",
+    "test:integration:external": "cross-env RUN_EXTERNAL_INTEGRATION=1 jest tests/integration/external-services.integration.test.ts --runInBand",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "validate:dataset": "node scripts/validate-neural-dataset.mjs",

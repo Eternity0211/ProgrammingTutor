@@ -4,6 +4,13 @@ on:
   push:
     branches: [feature-agent-tutor, main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      run_external:
+        description: Run real PostgreSQL, Neo4j and Judge0 integration tests
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   quality:
@@ -18,3 +25,24 @@ jobs:
       - run: npm run validate:dataset:strict
       - run: npm run typecheck
       - run: npm test -- --runInBand
+
+  external-integration:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_external
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEO4J_URI: ${{ secrets.NEO4J_URI }}
+      NEO4J_USER: ${{ secrets.NEO4J_USER }}
+      NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+      JUDGE0_API_URL: ${{ secrets.JUDGE0_API_URL }}
+      JUDGE0_API_KEY: ${{ secrets.JUDGE0_API_KEY }}
+      JUDGE0_API_HOST: ${{ secrets.JUDGE0_API_HOST }}
+      JUDGE0_CPP_LANGUAGE_ID: ${{ vars.JUDGE0_CPP_LANGUAGE_ID || '54' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run test:integration:external
