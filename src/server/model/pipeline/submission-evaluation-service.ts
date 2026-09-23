@@ -1,7 +1,6 @@
 import { CodeEvaluationStatus, Prisma, TestCaseStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { LANGUAGE_ID_MAP } from "@/config/constants";
-import { EXTERNAL_JUDGE0_API } from "@/config/route";
 import { analyzeCode } from "@/server/model/symbolic/service";
 import { evaluateCodeWithLLM } from "@/lib/services/code-evaluation-llm-service";
 import { runCodeReviewAgent } from "@/server/model/neural/codeAgent";
@@ -9,60 +8,9 @@ import { getAggregatedKnowledgeContext } from "@/lib/services/graph-service";
 import { generateLearningNavigation } from "@/server/model/neural/navigationAgent";
 import { generateEmotionalSupport } from "@/server/model/neural/emotionAgent";
 import { updateSubmissionStatus } from "@/server/actions/submission-actions";
-import {
-  normalizeJudge0Result,
-  normalizeJudge0Status,
-} from "./runtime-result";
+import { Judge0RuntimeHarness } from "./runtime-harness";
 
-type Judge0Execution = {
-  stdout: string | null;
-  stderr: string | null;
-  compile_output: string | null;
-  message: string | null;
-  status?: { id: number; description: string };
-  time?: string | null;
-};
-
-function encodeBase64(value: string) {
-  return Buffer.from(value, "utf-8").toString("base64");
-}
-
-function decodeBase64(value: string | null | undefined) {
-  if (!value) return "";
-  try {
-    return Buffer.from(value, "base64").toString("utf-8");
-  } catch (e) {
-    return value || "";
-  }
-}
-
-async function executeWithJudge0(params: {
-  code: string;
-  input: string;
-  expectedOutput?: string;
-  languageId: number;
-}): Promise<Judge0Execution> {
-  const payload: Record<string, unknown> = {
-    source_code: encodeBase64(params.code),
-    stdin: encodeBase64(params.input || ""),
-    language_id: params.languageId,
-    expected_output: encodeBase64(params.expectedOutput || ""),
-  };
-  const judge0Url = `${EXTERNAL_JUDGE0_API}/submissions?base64_encoded=true&wait=true`;
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const apiKey = process.env.JUDGE0_API_KEY?.trim();
-  const apiHost = process.env.JUDGE0_API_HOST?.trim();
-  if (apiKey && apiHost) {
-    headers["X-RapidAPI-Key"] = apiKey;
-    headers["X-RapidAPI-Host"] = apiHost;
-  }
-  const response = await fetch(judge0Url, { method: "POST", headers, body: JSON.stringify(payload) });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Judge0 request failed (${response.status}): ${text}`);
-  }
-  return (await response.json()) as Judge0Execution;
-}
+const runtimeHarness = new Judge0RuntimeHarness();
 
 function hasSymbolicBlockingIssues(symbolicErrors: { severity: string }[]): boolean {
   return symbolicErrors.some(issue => issue.severity === "Critical" || issue.severity === "High");
@@ -101,15 +49,15 @@ export async function evaluateSubmissionInsidePlatform(codeSubmissionId: string)
       // ✅ 修改点：使用结果数组统一计数，解决判定不准问题
       const results = await Promise.all(codeSubmission.question.testCases.map(async (testCase) => {
         try {
-          const execution = await executeWithJudge0({ 
+          const execution = await runtimeHarness.execute({ 
             code: codeSubmission.code, 
             input: testCase.input, 
             expectedOutput: testCase.expectedOutput, 
             languageId 
           });
           
-           const normalized = normalizeJudge0Result(execution);
-           const status = normalizeJudge0Status(execution) as TestCaseStatus;
+           const normalized = execution;
+           const status = execution.status.toUpperCase() as TestCaseStatus;
           
           // 更新测试用例明细记录
           await prisma.testCaseResult.update({
