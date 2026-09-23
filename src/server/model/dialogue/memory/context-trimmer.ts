@@ -4,6 +4,7 @@ import type { ChatMessage } from "../types";
 export interface TrimOptions {
   maxMessages: number;
   maxCharsPerMessage: number;
+  maxTokens?: number;
   summarizeThreshold: number;
   agentType?: "codeAgent" | "emotionAgent" | "navigationAgent";
 }
@@ -20,6 +21,7 @@ export interface TrimmedContext {
 const DEFAULT_OPTIONS: TrimOptions = {
   maxMessages: 6,
   maxCharsPerMessage: 1500,
+  maxTokens: 4000,
   summarizeThreshold: 10,
 };
 
@@ -52,6 +54,7 @@ export class ContextTrimmer {
     recentMessages = recentMessages.map((m) =>
       this.trimMessage(m, opts.maxCharsPerMessage),
     );
+    recentMessages = this.trimToTokenBudget(recentMessages, opts.maxTokens);
 
     const extractedFields = this.extractFields(recentMessages);
 
@@ -92,6 +95,37 @@ export class ContextTrimmer {
       ...message,
       content: message.content.slice(0, maxChars) + "...[truncated]",
     };
+  }
+
+  /** Roughly estimates tokens for mixed Chinese/English text without adding a tokenizer dependency. */
+  private estimateTokens(content: string): number {
+    return Math.ceil(content.length / 4);
+  }
+
+  private trimToTokenBudget(
+    messages: ChatMessage[],
+    maxTokens?: number,
+  ): ChatMessage[] {
+    if (!maxTokens || maxTokens <= 0) return messages;
+
+    let remaining = maxTokens;
+    const kept: ChatMessage[] = [];
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+      const tokens = this.estimateTokens(message.content);
+      if (tokens <= remaining) {
+        kept.unshift(message);
+        remaining -= tokens;
+        continue;
+      }
+
+      if (remaining > 0) {
+        const maxChars = Math.max(1, remaining * 4 - "...[truncated]".length);
+        kept.unshift(this.trimMessage(message, maxChars));
+      }
+      break;
+    }
+    return kept;
   }
 
   private extractFields(

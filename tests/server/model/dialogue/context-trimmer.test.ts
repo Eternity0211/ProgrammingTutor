@@ -23,6 +23,29 @@ function makeMockLlm() {
 }
 
 describe("ContextTrimmer", () => {
+  it("should enforce an approximate token budget after character trimming", async () => {
+    const trimmer = new ContextTrimmer(makeMockLlm());
+    const messages = [
+      createChatMessage("user", "a".repeat(80)),
+      createChatMessage("assistant", "b".repeat(80)),
+      createChatMessage("user", "c".repeat(80)),
+    ];
+
+    const result = await trimmer.trimForAgent(messages, {
+      maxMessages: 6,
+      maxCharsPerMessage: 200,
+      maxTokens: 30,
+      summarizeThreshold: 99,
+    });
+
+    expect(result.recentMessages.length).toBeGreaterThan(0);
+    expect(
+      result.recentMessages.reduce(
+        (total, message) => total + Math.ceil(message.content.length / 4),
+        0,
+      ),
+    ).toBeLessThanOrEqual(30);
+  });
   it("should return at most maxMessages recent messages", async () => {
     const trimmer = new ContextTrimmer(makeMockLlm());
     const messages = makeMessages(8);
