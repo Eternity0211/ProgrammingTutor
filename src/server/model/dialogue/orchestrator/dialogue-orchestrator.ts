@@ -16,7 +16,7 @@ import { InMemorySessionStore } from "../memory";
 import { createChatMessage } from "../memory";
 import type { SessionStore } from "../memory";
 import { DialogueLlmClient } from "../shared/llm-client";
-import { TraceLogger } from "../shared/trace-logger";
+import { JsonlTraceSink, TraceLogger, type TraceSink } from "../shared/trace-logger";
 import type {
   AgentResultSnapshot,
   ChatMessage,
@@ -46,6 +46,7 @@ interface OrchestratorOptions {
   contextTrimmer?: ContextTrimmer;
   llm?: DialogueLlmClient;
   traceLogger?: TraceLogger;
+  traceSink?: TraceSink;
 }
 
 interface HandlerContext {
@@ -111,6 +112,7 @@ export class DialogueOrchestrator {
   private ragEngine: RagEngine;
   private profileUpdater: ProfileUpdater;
   private contextTrimmer: ContextTrimmer;
+  private traceSink?: TraceSink;
   private llm: DialogueLlmClient;
 
   constructor(options?: OrchestratorOptions) {
@@ -121,6 +123,9 @@ export class DialogueOrchestrator {
     this.ragEngine = options?.ragEngine ?? new RagEngine();
     this.profileUpdater = options?.profileUpdater ?? new ProfileUpdater();
     this.contextTrimmer = options?.contextTrimmer ?? new ContextTrimmer();
+    this.traceSink = options?.traceSink ?? (process.env.TRACE_LOG_PATH
+      ? new JsonlTraceSink(process.env.TRACE_LOG_PATH)
+      : undefined);
   }
 
   async chat(request: DialogueRequest): Promise<DialogueResponse> {
@@ -128,6 +133,7 @@ export class DialogueOrchestrator {
       request.traceId,
       request.sessionId,
       request.userId,
+      this.traceSink,
     );
 
     const spanId = traceLogger.startSpan("orchestrator.chat");
@@ -288,6 +294,11 @@ try {
       };
     } finally {
       traceLogger.endSpan(spanId);
+      try {
+        await traceLogger.persist();
+      } catch (error) {
+        console.warn("[DialogueOrchestrator] Trace persistence failed:", error);
+      }
     }
   }
 

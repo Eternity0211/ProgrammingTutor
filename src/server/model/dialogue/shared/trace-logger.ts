@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { appendFile } from "fs/promises";
 import type {
   TraceContext,
   TraceEvent,
@@ -15,6 +16,14 @@ export class InMemoryTraceSink implements TraceSink {
 
   async write(context: TraceContext): Promise<void> {
     this.traces.push(context);
+  }
+}
+
+export class JsonlTraceSink implements TraceSink {
+  constructor(private readonly filePath: string) {}
+
+  async write(context: TraceContext): Promise<void> {
+    await appendFile(this.filePath, `${JSON.stringify(context)}\n`, "utf8");
   }
 }
 
