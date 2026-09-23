@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const datasetDir = path.resolve(process.argv[2] ?? "data/neural");
+const datasetArg = process.argv.slice(2).find((arg) => !arg.startsWith("--"));
+const datasetDir = path.resolve(datasetArg ?? "data/neural");
 const requireComplete = process.argv.includes("--require-complete");
 const splits = ["train", "val", "test"];
 const seenInputs = new Map();
