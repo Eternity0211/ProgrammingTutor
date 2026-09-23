@@ -11,7 +11,7 @@ const customJestConfig = {
 
   moduleNameMapper: {
     // 处理 TS 路径别名
-    "^@/(.*)$": "<rootDir>/$1",
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
 
   // 忽略构建目录
