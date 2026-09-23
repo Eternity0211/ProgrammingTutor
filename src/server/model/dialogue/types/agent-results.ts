@@ -1,5 +1,33 @@
 import { z } from "zod";
 
+const chatMessageSchema = z.object({
+  role: z.enum(["user", "assistant", "system"]),
+  content: z.string(),
+}).passthrough();
+
+export const codeReviewAgentInputSchema = z.object({
+  code: z.string().min(1),
+  language: z.string(),
+  symbolic: z.unknown(),
+  testSummary: z.unknown(),
+  studentProfileSummary: z.string(),
+  sessionContext: z.array(chatMessageSchema),
+});
+
+export const emotionAgentInputSchema = z.object({
+  codeReviewResult: z.string().min(1),
+  studentProfileSummary: z.string(),
+  sessionContext: z.array(chatMessageSchema),
+});
+
+export const navigationAgentInputSchema = z.object({
+  codeReviewResult: z.string().min(1),
+  knowledgeGraph: z.string(),
+  studentHistory: z.string().optional(),
+  studentProfileSummary: z.string(),
+  sessionContext: z.array(chatMessageSchema),
+});
+
 export const codeReviewAgentResultSchema = z.object({
   reviewSummary: z.string().min(1),
   causalAnalysis: z.string().min(1),

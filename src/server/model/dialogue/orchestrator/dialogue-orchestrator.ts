@@ -29,7 +29,10 @@ import type {
 } from "../types";
 import {
   codeReviewAgentResultSchema,
+  codeReviewAgentInputSchema,
+  emotionAgentInputSchema,
   emotionAgentResultSchema,
+  navigationAgentInputSchema,
   navigationAgentResultSchema,
 } from "../types/agent-results";
 
@@ -281,14 +284,15 @@ try {
     if (symbolic && testSummary && code) {
       try {
         const codeSpan = ctx.traceLogger.startSpan("agent.codeReview", undefined);
-        const codeReview = await withTimeout(runCodeReviewAgent({
+        const codeReviewInput = codeReviewAgentInputSchema.parse({
           code,
           language,
           symbolic,
           testSummary,
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
-        } as CodeReviewAgentInput), "codeReviewAgent");
+        });
+        const codeReview = await withTimeout(runCodeReviewAgent(codeReviewInput as CodeReviewAgentInput), "codeReviewAgent");
         const validatedCodeReview = codeReviewAgentResultSchema.safeParse(codeReview);
         if (!validatedCodeReview.success) {
           throw new Error("codeReviewAgent returned an invalid result");
@@ -301,11 +305,12 @@ try {
         let emotion: AgentResultSnapshot["emotion"] | undefined;
         try {
           const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", undefined);
-          const emotionResult = await withTimeout(generateEmotionalSupport({
+          const emotionInput = emotionAgentInputSchema.parse({
             codeReviewResult: validatedCodeReview.data.reviewSummary,
             studentProfileSummary: profileSummary,
             sessionContext: trimmed.recentMessages,
-          } as EmotionInputs), "emotionAgent");
+          });
+          const emotionResult = await withTimeout(generateEmotionalSupport(emotionInput as EmotionInputs), "emotionAgent");
           if (emotionResult?.emotion_analysis) {
             const validatedEmotion = emotionAgentResultSchema.safeParse(
               emotionResult.emotion_analysis,
@@ -370,11 +375,12 @@ try {
     if (codeReviewResult) {
       try {
         const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", undefined);
-        const emotionResult = await withTimeout(generateEmotionalSupport({
+        const emotionInput = emotionAgentInputSchema.parse({
           codeReviewResult,
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
-        } as EmotionInputs), "emotionAgent");
+        });
+        const emotionResult = await withTimeout(generateEmotionalSupport(emotionInput as EmotionInputs), "emotionAgent");
         if (emotionResult?.emotion_analysis) {
           const validatedEmotion = emotionAgentResultSchema.safeParse(
             emotionResult.emotion_analysis,
@@ -417,13 +423,14 @@ try {
     if (codeReviewResult) {
       try {
         const navigationSpan = ctx.traceLogger.startSpan("agent.navigation", undefined);
-        const navResult = await withTimeout(generateLearningNavigation({
+        const navigationInput = navigationAgentInputSchema.parse({
           codeReviewResult,
           knowledgeGraph: "",
           studentHistory: profileSummary,
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
-        } as NavigatorInputs), "navigationAgent");
+        });
+        const navResult = await withTimeout(generateLearningNavigation(navigationInput as NavigatorInputs), "navigationAgent");
         if (navResult?.learning_navigation) {
           const validatedNavigation = navigationAgentResultSchema.safeParse(
             navResult.learning_navigation,
