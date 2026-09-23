@@ -7,6 +7,7 @@ export interface KnowledgeDocument {
   metadata: JsonValue | null;
   createdAt: Date;
   updatedAt: Date;
+  /** Metadata may include contentHash, embeddingModel and version. */
 }
 
 export interface RetrievalResult {

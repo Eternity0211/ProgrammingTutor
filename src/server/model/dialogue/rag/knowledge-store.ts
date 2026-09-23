@@ -2,6 +2,7 @@ import type { KnowledgeDocument } from "@prisma/client";
 import type { RetrievalResult } from "../types";
 import { DialogueLlmClient } from "../shared/llm-client";
 import { prisma } from "@/lib/prisma";
+import { createHash } from "crypto";
 
 export type KnowledgeDocumentInput = Omit<KnowledgeDocument, "embedding"> & {
   embedding?: number[];
@@ -37,7 +38,14 @@ export class KnowledgeStore {
 
   async addDocument(document: KnowledgeDocumentInput): Promise<void> {
     const embedding = await this.llm.createEmbedding(document.content);
-    const storedDocument = { ...document, embedding };
+    const contentHash = createHash("sha256").update(document.content).digest("hex");
+    const metadata = {
+      ...(document.metadata && typeof document.metadata === "object" ? document.metadata : {}),
+      contentHash,
+      embeddingModel: process.env.EMBEDDING_MODEL ?? "default",
+      version: 1,
+    };
+    const storedDocument = { ...document, metadata, embedding };
     if (this.persistDocuments) {
       await prisma.knowledgeDocument.upsert({
         where: { id: document.id },
@@ -45,7 +53,7 @@ export class KnowledgeStore {
           id: document.id,
           title: document.title,
           content: document.content,
-          metadata: document.metadata as never,
+          metadata,
           embedding,
           createdAt: document.createdAt,
           updatedAt: document.updatedAt,
@@ -53,13 +61,18 @@ export class KnowledgeStore {
         update: {
           title: document.title,
           content: document.content,
-          metadata: document.metadata as never,
+          metadata,
           embedding,
           updatedAt: document.updatedAt,
         },
       });
     }
-    this.documents = this.documents.filter((doc) => doc.id !== document.id);
+    this.documents = this.documents.filter((doc) => {
+      const existingMetadata = doc.metadata;
+      return doc.id !== document.id &&
+        !(existingMetadata && typeof existingMetadata === "object" &&
+          "contentHash" in existingMetadata && existingMetadata.contentHash === contentHash);
+    });
     this.documents.push(storedDocument);
     this.embeddings.set(document.id, embedding);
   }
