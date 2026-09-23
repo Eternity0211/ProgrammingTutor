@@ -3,16 +3,16 @@
   "dataset_version": "1.0.0",
   "last_updated": "2026-01-27",
   "statistics": {
-    "total_samples": 1500,
+    "total_samples": 4,
     "language_distribution": {
-      "cpp": 900,
-      "python": 600
+      "cpp": 4,
+      "python": 0
     },
     "error_categories": {
-      "ArrayOutOfBounds": 500,
-      "MemoryLeak": 300,
-      "InfiniteRecursion": 400,
-      "LogicError": 300
+      "ArrayOutOfBounds": 1,
+      "MemoryLeak": 1,
+      "InfiniteRecursion": 1,
+      "LogicError": 1
     }
   },
   "data_schema": {
