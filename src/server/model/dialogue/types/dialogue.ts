@@ -4,6 +4,7 @@ import { AgentResultSnapshot } from "./session";
 import type { KnowledgeDocument } from "./rag";
 
 export interface DialogueRequestContext {
+  knowledgeConcepts?: string[];
   questionId?: string;
   assignmentId?: string;
   language?: string;

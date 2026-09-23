@@ -4,6 +4,7 @@ import { generateEmotionalSupport } from "@/server/model/neural/emotionAgent";
 import type { EmotionInputs } from "@/server/model/neural/emotionAgent";
 import { generateLearningNavigation } from "@/server/model/neural/navigationAgent";
 import type { NavigatorInputs } from "@/server/model/neural/navigationAgent";
+import { getAggregatedKnowledgeContext } from "@/lib/services/graph-service";
 import { IntentRecognizer } from "../intent";
 import { RagEngine } from "../rag";
 import { ProfileUpdater } from "../profile";
@@ -446,10 +447,20 @@ try {
     let navigation: AgentResultSnapshot["navigation"] | undefined;
     if (codeReviewResult) {
       try {
+        const graphSpan = ctx.traceLogger.startSpan("knowledgeGraph.navigationContext", undefined);
+        const conceptIds = Array.isArray(request.context?.knowledgeConcepts)
+          ? request.context.knowledgeConcepts.filter((id): id is string => typeof id === "string")
+          : [];
+        const knowledgeGraphContext = await getAggregatedKnowledgeContext(conceptIds);
+        ctx.traceLogger.endSpan(graphSpan, {
+          requestedConcepts: conceptIds.length,
+          resolvedConcepts: knowledgeGraphContext.length,
+          degraded: conceptIds.length > 0 && knowledgeGraphContext.length === 0,
+        });
         const navigationSpan = ctx.traceLogger.startSpan("agent.navigation", undefined);
         const navigationInput = navigationAgentInputSchema.parse({
           codeReviewResult,
-          knowledgeGraph: "",
+          knowledgeGraph: JSON.stringify(knowledgeGraphContext),
           studentHistory: profileSummary,
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
