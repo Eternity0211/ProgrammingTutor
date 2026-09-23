@@ -9,6 +9,7 @@ export type Judge0ExecutionLike = {
 };
 
 export type NormalizedRuntimeStatus = "passed" | "failed" | "timeout" | "error";
+export type RuntimeFailureKind = "symbolic" | "compile" | "runtime" | "timeout" | "configuration";
 
 export interface NormalizedRuntimeResult {
   status: NormalizedRuntimeStatus;
@@ -18,6 +19,24 @@ export interface NormalizedRuntimeResult {
   memoryKb: number | null;
   judgeStatusId: number | null;
   judgeStatus: string | null;
+  failureKind?: RuntimeFailureKind;
+}
+
+export function normalizeSymbolicPreflight(params: {
+  blocking: boolean;
+  error: string;
+  runtimeMs?: number;
+}): NormalizedRuntimeResult {
+  return {
+    status: params.blocking ? "failed" : "passed",
+    output: "",
+    error: params.error,
+    runtimeMs: params.runtimeMs ?? null,
+    memoryKb: null,
+    judgeStatusId: null,
+    judgeStatus: null,
+    ...(params.blocking ? { failureKind: "symbolic" as const } : {}),
+  };
 }
 
 export function decodeJudge0(value: string | null | undefined): string {
@@ -38,6 +57,8 @@ export function normalizeJudge0Result(
   const stderr = decodeJudge0(execution.stderr);
   const output = decodeJudge0(execution.stdout);
   const error = compileOutput || stderr || execution.message || "";
+  const failureKind: RuntimeFailureKind | undefined =
+    statusId === 5 ? "timeout" : statusId === 6 ? "compile" : error ? "runtime" : undefined;
   const runtimeMs = execution.time
     ? Math.round(Number.parseFloat(execution.time) * 1000)
     : null;
@@ -59,6 +80,7 @@ export function normalizeJudge0Result(
     memoryKb: typeof execution.memory === "number" ? execution.memory : null,
     judgeStatusId: statusId,
     judgeStatus: statusDescription,
+    ...(failureKind ? { failureKind } : {}),
   };
 }
 

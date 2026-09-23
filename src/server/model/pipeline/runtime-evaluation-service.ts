@@ -1,4 +1,5 @@
 import { analyzeCode } from "@/server/model/symbolic/service";
+import { normalizeSymbolicPreflight } from "./runtime-result";
 
 export interface RuntimeExecutionResult {
   status: "passed" | "failed" | "blocked" | "error";
@@ -34,11 +35,16 @@ export async function evaluateRuntimeExecution(
   const runtimeMs = Math.round(symbolic.metadata?.parseTime || 0);
 
   if (blocking) {
+    const normalized = normalizeSymbolicPreflight({
+      blocking: true,
+      error: buildBlockingErrorSummary(symbolic.errors),
+      runtimeMs,
+    });
     return {
       status: "failed",
       executed: false,
       output: "",
-      error: buildBlockingErrorSummary(symbolic.errors),
+      error: normalized.error,
       runtimeMs,
       symbolic,
     };
