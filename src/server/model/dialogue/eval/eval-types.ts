@@ -50,6 +50,8 @@ export interface EvalReport {
   averageQualityScore: number;
   ragHitRate: number;
   citationCoverageRate: number;
+  averageDurationMs: number;
+  failureRate: number;
   results: EvalResult[];
   totalDurationMs: number;
 }

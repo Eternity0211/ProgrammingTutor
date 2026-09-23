@@ -78,6 +78,9 @@ export class EvalRunner {
       : 0;
     const ragCases = results.filter((result) => result.actual.hasAgentResults);
     const ragHitCases = results.filter((result) => result.actual.ragSourceCount > 0);
+    const averageDurationMs = totalCases > 0
+      ? results.reduce((sum, result) => sum + result.durationMs, 0) / totalCases
+      : 0;
 
     return {
       totalCases,
@@ -89,6 +92,10 @@ export class EvalRunner {
       ragHitRate: totalCases > 0 ? ragHitCases.length / totalCases : 0,
       citationCoverageRate: ragCases.length > 0
         ? ragHitCases.length / ragCases.length
+        : 0,
+      averageDurationMs,
+      failureRate: totalCases > 0
+        ? results.filter((result) => Boolean(result.actual.error)).length / totalCases
         : 0,
       results,
       totalDurationMs: Date.now() - startTime,
