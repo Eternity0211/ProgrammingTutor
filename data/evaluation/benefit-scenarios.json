@@ -1,0 +1,32 @@
+[
+  {
+    "id": "logic-average",
+    "name": "运算符优先级逻辑错误",
+    "code": "int average(int a, int b) { return a + b / 2; }",
+    "language": "cpp",
+    "symbolic": { "errors": [{ "ruleId": "CPP_LOGIC_WRONG_CONDITION_OPERATOR", "severity": "High", "message": "operator precedence changes the average calculation", "location": { "line": 1, "column": 1 } }], "warnings": [], "metadata": { "parseTime": 4 } },
+    "testSummary": { "total": 3, "passed": 1, "failed": 2 },
+    "emotionContext": "我改了好几次还是不对，有点沮丧。",
+    "studentHistory": "最近连续两次提交逻辑错误，正在学习 C++ 基础。"
+  },
+  {
+    "id": "memory-leak",
+    "name": "动态内存泄漏",
+    "code": "int* makeValue() { int* p = new int(42); return p; }",
+    "language": "cpp",
+    "symbolic": { "errors": [{ "ruleId": "CPP_MEMORY_LEAK", "severity": "High", "message": "allocated memory is not released", "location": { "line": 1, "column": 1 } }], "warnings": [], "metadata": { "parseTime": 5 } },
+    "testSummary": { "total": 2, "passed": 0, "failed": 2 },
+    "emotionContext": "这次提交失败了，我想知道下一步怎么改。",
+    "studentHistory": "正在学习指针和内存管理。"
+  },
+  {
+    "id": "clean-loop",
+    "name": "基本循环正确代码",
+    "code": "int sum(int n) { int result = 0; for (int i = 1; i <= n; ++i) result += i; return result; }",
+    "language": "cpp",
+    "symbolic": { "errors": [], "warnings": [], "metadata": { "parseTime": 3 } },
+    "testSummary": { "total": 3, "passed": 3, "failed": 0 },
+    "emotionContext": "这次运行通过了，我想继续学习。",
+    "studentHistory": "已经掌握基础循环，准备学习算法复杂度。"
+  }
+]
