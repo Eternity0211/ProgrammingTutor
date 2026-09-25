@@ -27,6 +27,20 @@ export class JsonlTraceSink implements TraceSink {
   }
 }
 
+/** Minimal OTLP/HTTP exporter without forcing an observability SDK dependency. */
+export class OtlpTraceSink implements TraceSink {
+  constructor(private readonly endpoint: string, private readonly headers: Record<string, string> = {}) {}
+
+  async write(context: TraceContext): Promise<void> {
+    const response = await fetch(this.endpoint, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...this.headers },
+      body: JSON.stringify({ resourceSpans: [{ resource: { attributes: [{ key: "service.name", value: { stringValue: "programming-tutor" } }] }, scopeSpans: [{ spans: context.spans.map((span) => ({ traceId: context.traceId.replaceAll("-", ""), spanId: span.spanId.replaceAll("-", "").slice(0, 16), name: span.name, startTimeUnixNano: String(span.startTime * 1_000_000), endTimeUnixNano: String((span.endTime ?? span.startTime) * 1_000_000), attributes: Object.entries(span.attributes ?? {}).map(([key, value]) => ({ key, value: { stringValue: String(value) } })) })) }] }] }),
+    });
+    if (!response.ok) throw new Error(`OTLP exporter returned HTTP ${response.status}`);
+  }
+}
+
 export class TraceLogger {
   private readonly context: TraceContext;
 

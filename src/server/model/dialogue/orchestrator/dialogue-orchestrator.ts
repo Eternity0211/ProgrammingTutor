@@ -16,7 +16,7 @@ import { InMemorySessionStore } from "../memory";
 import { createChatMessage } from "../memory";
 import type { SessionStore } from "../memory";
 import { DialogueLlmClient } from "../shared/llm-client";
-import { JsonlTraceSink, TraceLogger, type TraceSink } from "../shared/trace-logger";
+import { JsonlTraceSink, OtlpTraceSink, TraceLogger, type TraceSink } from "../shared/trace-logger";
 import type {
   AgentResultSnapshot,
   ChatMessage,
@@ -124,9 +124,11 @@ export class DialogueOrchestrator {
     this.ragEngine = options?.ragEngine ?? new RagEngine();
     this.profileUpdater = options?.profileUpdater ?? new ProfileUpdater();
     this.contextTrimmer = options?.contextTrimmer ?? new ContextTrimmer();
-    this.traceSink = options?.traceSink ?? (process.env.TRACE_LOG_PATH
-      ? new JsonlTraceSink(process.env.TRACE_LOG_PATH)
-      : undefined);
+    this.traceSink = options?.traceSink ?? (process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+      ? new OtlpTraceSink(process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT)
+      : process.env.TRACE_LOG_PATH
+        ? new JsonlTraceSink(process.env.TRACE_LOG_PATH)
+        : undefined);
   }
 
   async chat(request: DialogueRequest): Promise<DialogueResponse> {
