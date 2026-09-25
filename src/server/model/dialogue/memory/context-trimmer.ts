@@ -7,6 +7,7 @@ export interface TrimOptions {
   maxTokens?: number;
   summarizeThreshold: number;
   agentType?: "codeAgent" | "emotionAgent" | "navigationAgent";
+  tokenCounter?: (content: string) => number;
 }
 
 export interface TrimmedContext {
@@ -54,7 +55,7 @@ export class ContextTrimmer {
     recentMessages = recentMessages.map((m) =>
       this.trimMessage(m, opts.maxCharsPerMessage),
     );
-    recentMessages = this.trimToTokenBudget(recentMessages, opts.maxTokens);
+    recentMessages = this.trimToTokenBudget(recentMessages, opts.maxTokens, opts.tokenCounter);
 
     const extractedFields = this.extractFields(recentMessages);
 
@@ -105,6 +106,7 @@ export class ContextTrimmer {
   private trimToTokenBudget(
     messages: ChatMessage[],
     maxTokens?: number,
+    tokenCounter: (content: string) => number = this.estimateTokens,
   ): ChatMessage[] {
     if (!maxTokens || maxTokens <= 0) return messages;
 
@@ -112,7 +114,7 @@ export class ContextTrimmer {
     const kept: ChatMessage[] = [];
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const message = messages[index];
-      const tokens = this.estimateTokens(message.content);
+      const tokens = Math.max(1, tokenCounter(message.content));
       if (tokens <= remaining) {
         kept.unshift(message);
         remaining -= tokens;

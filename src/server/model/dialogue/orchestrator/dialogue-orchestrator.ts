@@ -270,40 +270,39 @@ export class DialogueOrchestrator {
       };
       state = { ...transition(state, "persist"), sessionState: newState };
       const stateSpan = traceLogger.startSpan("database.session.updateState", spanId);
-      try {
-        await this.sessionStore.updateSessionState(sessionId, newState);
-        traceLogger.endSpan(stateSpan, { sessionId });
-      } catch (error) {
-        traceLogger.endSpan(stateSpan, { error: String(error) });
-        throw error;
-      }
+      const persistState = (async () => {
+        try {
+          await this.sessionStore.updateSessionState(sessionId, newState);
+          traceLogger.endSpan(stateSpan, { sessionId });
+        } catch (error) {
+          traceLogger.endSpan(stateSpan, { error: String(error) });
+          throw error;
+        }
+      })();
 
-      if (result.agentResults) {
+      const persistProfile = (async () => {
+        if (!result.agentResults) return;
         const snapshot: AgentResultSnapshot = {
-  codeReview: result.agentResults?.codeReview,
-  emotion: result.agentResults?.emotion,
-  navigation: result.agentResults?.navigation,
-  rag: result.agentResults?.rag,
-};
-const profileSpan = traceLogger.startSpan("database.profile.update", spanId);
-try {
-  await this.profileUpdater.updateFromAgentResults(
-    request.userId,
-    snapshot,
-    {
-      questionId: request.context?.questionId,
-      score: undefined,
-    },
-  );
-  traceLogger.endSpan(profileSpan, { userId: request.userId });
-} catch (error) {
-  traceLogger.endSpan(profileSpan, { error: String(error) });
-  console.warn(
-    "[DialogueOrchestrator] Profile update failed:",
-    error,
-  );
-}
-      }
+          codeReview: result.agentResults.codeReview,
+          emotion: result.agentResults.emotion,
+          navigation: result.agentResults.navigation,
+          rag: result.agentResults.rag,
+        };
+        const profileSpan = traceLogger.startSpan("database.profile.update", spanId);
+        try {
+          await this.profileUpdater.updateFromAgentResults(request.userId, snapshot, {
+            questionId: request.context?.questionId,
+            score: undefined,
+          });
+          traceLogger.endSpan(profileSpan, { userId: request.userId });
+        } catch (error) {
+          traceLogger.endSpan(profileSpan, { error: String(error) });
+          console.warn("[DialogueOrchestrator] Profile update failed:", error);
+        }
+      })();
+
+      // Session state and profile persistence are independent writes; run them concurrently.
+      await Promise.all([persistState, persistProfile]);
 
       return {
         reply: result.reply,
