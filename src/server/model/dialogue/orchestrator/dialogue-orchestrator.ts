@@ -36,6 +36,7 @@ import {
   navigationAgentInputSchema,
   navigationAgentResultSchema,
 } from "../types/agent-results";
+import { transition, type DialogueState } from "./dialogue-state";
 
 interface OrchestratorOptions {
   sessionStore?: SessionStore;
@@ -137,6 +138,7 @@ export class DialogueOrchestrator {
     );
 
     const spanId = traceLogger.startSpan("orchestrator.chat");
+    let state: DialogueState = { phase: "session", request, traceLogger };
 
     try {
       const sessionSpan = traceLogger.startSpan("session.load", spanId);
@@ -145,6 +147,7 @@ export class DialogueOrchestrator {
         : null;
       const activeSession = session ?? (await this.sessionStore.createSession(request.userId));
       const sessionId = activeSession.sessionId;
+      state = { ...state, sessionId };
       traceLogger.endSpan(sessionSpan, { sessionId, created: session === null });
 
       const userMessage = createChatMessage("user", request.message);
@@ -156,8 +159,10 @@ export class DialogueOrchestrator {
       }
 
       const messages = await this.sessionStore.getMessages(sessionId);
+      state = { ...transition(state, "context"), messages };
       const trimSpan = traceLogger.startSpan("context.trim", spanId);
       const trimmed = await this.contextTrimmer.trimForAgent(messages);
+      state = { ...state, trimmed };
       traceLogger.endSpan(trimSpan, {
         inputMessages: messages.length,
         outputMessages: trimmed.recentMessages.length,
@@ -166,6 +171,7 @@ export class DialogueOrchestrator {
 
       const profile = await this.profileStore.getProfile(request.userId);
       const profileSummary = this.profileUpdater.summarizeForContext(profile);
+      state = { ...state, profile, profileSummary, phase: "intent" };
 
       let intent: IntentRecognitionResult;
       const intentSpan = traceLogger.startSpan("intent.recognize", spanId);
@@ -206,6 +212,7 @@ export class DialogueOrchestrator {
         traceLogger,
       };
 
+      state = transition(state, "handler");
       let result: HandlerResult;
       const handlerSpan = traceLogger.startSpan(`handler.${intent.intent}`, spanId);
       try {
@@ -230,6 +237,7 @@ export class DialogueOrchestrator {
         traceLogger.endSpan(handlerSpan, {
           hasAgentResults: Boolean(result.agentResults),
         });
+        state = { ...state, result };
       } catch (error) {
         traceLogger.endSpan(handlerSpan, {
           error: error instanceof Error ? error.message : String(error),
@@ -258,6 +266,7 @@ export class DialogueOrchestrator {
         ...(trimmed.summary ? { contextSummary: trimmed.summary } : {}),
         ...result.sessionStateUpdate,
       };
+      state = { ...transition(state, "persist"), sessionState: newState };
       const stateSpan = traceLogger.startSpan("database.session.updateState", spanId);
       try {
         await this.sessionStore.updateSessionState(sessionId, newState);
@@ -302,6 +311,7 @@ try {
         agentResults: result.agentResults,
       };
     } catch (error) {
+      state = { ...transition(state, "failed"), error: error instanceof Error ? error.message : String(error) };
       console.error("[DialogueOrchestrator] chat() fatal error:", error);
       return {
         reply: "抱歉，我暂时无法回答。请稍后再试。",
@@ -310,6 +320,7 @@ try {
         traceId: traceLogger.traceId,
       };
     } finally {
+      state = transition(state, state.phase === "failed" ? "failed" : "completed");
       traceLogger.endSpan(spanId);
       try {
         await traceLogger.persist();
