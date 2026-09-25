@@ -1,3 +1,3 @@
-export { TutorToolRegistry, mcpToolDefinitions } from "./tool-registry";
+export { TutorToolRegistry, mcpToolDefinitions, createCoreTutorTools } from "./tool-registry";
 export { defineTutorTool } from "./tool";
 export type { TutorTool, TutorToolDefinition, TutorToolResult } from "./tool";

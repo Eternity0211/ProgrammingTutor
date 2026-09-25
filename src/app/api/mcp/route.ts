@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { TutorToolRegistry } from "@/server/model/mcp";
+import { createCoreTutorTools } from "@/server/model/mcp";
+import { RagEngine } from "@/server/model/dialogue/rag";
+import { Judge0RuntimeHarness } from "@/server/model/pipeline/runtime-harness";
+import { getAggregatedKnowledgeContext } from "@/lib/services/graph-service";
 
-const registry = new TutorToolRegistry();
+const rag = new RagEngine({ autoLoad: true, persistDocuments: true });
+const registry = new TutorToolRegistry(rag, createCoreTutorTools({
+  rag,
+  runtime: new Judge0RuntimeHarness(),
+  getKnowledgeContext: getAggregatedKnowledgeContext,
+}));
 
 export async function GET() {
   const user = await getAuthenticatedUser();

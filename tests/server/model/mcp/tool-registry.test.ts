@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defineTutorTool, TutorToolRegistry } from "@/server/model/mcp";
+import { createCoreTutorTools, defineTutorTool, TutorToolRegistry } from "@/server/model/mcp";
 
 describe("TutorToolRegistry", () => {
   it("lists the knowledge tool", () => {
@@ -30,5 +30,20 @@ describe("TutorToolRegistry", () => {
     await expect(registry.callTool("echo", { value: "ok" })).resolves.toMatchObject({
       content: [{ text: "ok" }],
     });
+  });
+
+  it("builds runtime, graph and evaluation tools from injected services", async () => {
+    const runtime = { execute: jest.fn().mockResolvedValue({ status: "passed" }) };
+    const graph = jest.fn().mockResolvedValue([{ target: { id: "arrays" }, prerequisites: [] }]);
+    const evalRunner = { runAll: jest.fn().mockResolvedValue({ passed: 1 }) };
+    const rag = { getStore: () => ({ search: jest.fn().mockResolvedValue([]) }) } as never;
+    const registry = new TutorToolRegistry(rag, createCoreTutorTools({ rag, runtime, getKnowledgeContext: graph, evalRunner: evalRunner as never }));
+    expect(registry.listTools().map((tool) => tool.name)).toEqual([
+      "knowledge_answer", "knowledge_search", "code_execute", "knowledge_graph_context", "evaluate_dialogue",
+    ]);
+    await registry.callTool("code_execute", { code: "", languageId: 54 }).catch(() => undefined);
+    expect(runtime.execute).not.toHaveBeenCalled();
+    await registry.callTool("knowledge_graph_context", { conceptIds: ["arrays"] });
+    expect(graph).toHaveBeenCalledWith(["arrays"]);
   });
 });
