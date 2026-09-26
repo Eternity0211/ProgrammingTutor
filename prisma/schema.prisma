@@ -163,10 +163,10 @@ model Submission {
   assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   student        User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  aiFeedback          Json? // 存储 AI 分析的 JSON 数据
-  emotion             Json? // 存储情绪反馈的 JSON 数据
+  aiFeedback           Json? // 存储 AI 分析的 JSON 数据
+  emotion              Json? // 存储情绪反馈的 JSON 数据
   recommendedQuestions Json? // 存储推荐练习的 JSON 数据
-  
+
   @@unique([studentId, assignmentId])
 }
 
@@ -190,25 +190,42 @@ model CodeSubmission {
 }
 
 model EvaluationRun {
-  id                 String         @id @default(uuid())
-  codeSubmissionId   String
-  submissionId       String
-  questionId         String
-  language           String
-  branch             String
-  symbolicErrorCount Int            @default(0)
-  symbolicWarningCount Int          @default(0)
-  score              Float          @default(0)
-  metricScore        Float          @default(0)
-  hasNavigation      Boolean        @default(false)
-  hasEmotion         Boolean        @default(false)
-  payload            Json?
-  createdAt          DateTime       @default(now())
-  codeSubmission     CodeSubmission @relation(fields: [codeSubmissionId], references: [id], onDelete: Cascade)
+  id                   String              @id @default(uuid())
+  codeSubmissionId     String
+  submissionId         String
+  questionId           String
+  language             String
+  branch               String
+  symbolicErrorCount   Int                 @default(0)
+  symbolicWarningCount Int                 @default(0)
+  score                Float               @default(0)
+  metricScore          Float               @default(0)
+  hasNavigation        Boolean             @default(false)
+  hasEmotion           Boolean             @default(false)
+  payload              Json?
+  status               EvaluationRunStatus @default(RUNNING)
+  failureScope         String?
+  failureKind          String?
+  errorMessage         String?
+  retryable            Boolean             @default(false)
+  traceId              String?
+  startedAt            DateTime            @default(now())
+  completedAt          DateTime?
+  createdAt            DateTime            @default(now())
+  codeSubmission       CodeSubmission      @relation(fields: [codeSubmissionId], references: [id], onDelete: Cascade)
 
   @@index([codeSubmissionId])
   @@index([submissionId])
   @@index([questionId])
+  @@index([status, retryable])
+}
+
+enum EvaluationRunStatus {
+  RUNNING
+  COMPLETED
+  BLOCKED
+  FAILED_RETRYABLE
+  FAILED_TERMINAL
 }
 
 model SubmissionMetricResult {
@@ -266,13 +283,13 @@ model ChatSession {
 }
 
 model ChatMessage {
-  id          String      @id @default(cuid())
-  sessionId   String
-  role        String
-  content     String
-  timestamp   DateTime    @default(now())
-  metadata    Json?
-  session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id        String      @id @default(cuid())
+  sessionId String
+  role      String
+  content   String
+  timestamp DateTime    @default(now())
+  metadata  Json?
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
   @@map("chat_messages")
@@ -324,9 +341,9 @@ enum CodeEvaluationStatus {
 
 model KnowledgeDocument {
   id        String   @id @default(cuid())
-  content   String   // 分块后的知识库文本片段
-  title     String?  // 文档标题
-  metadata  Json?    // 存heading_path、来源路径等扩展元数据
+  content   String // 分块后的知识库文本片段
+  title     String? // 文档标题
+  metadata  Json? // 存heading_path、来源路径等扩展元数据
   embedding Float[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
