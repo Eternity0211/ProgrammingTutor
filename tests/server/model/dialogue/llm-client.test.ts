@@ -5,6 +5,7 @@ jest.mock("openai");
 
 describe("DialogueLlmClient", () => {
   const originalKey = process.env.DEEPSEEK_API_KEY;
+  const originalEmbeddingKey = process.env.EMBEDDING_API_KEY;
 
   beforeEach(() => {
     DialogueLlmClient.resetInstance();
@@ -13,6 +14,7 @@ describe("DialogueLlmClient", () => {
 
   afterEach(() => {
     process.env.DEEPSEEK_API_KEY = originalKey;
+    process.env.EMBEDDING_API_KEY = originalEmbeddingKey;
   });
 
   it("should throw when DEEPSEEK_API_KEY is missing", () => {
@@ -29,7 +31,7 @@ describe("DialogueLlmClient", () => {
     expect(instance1).toBe(instance2);
   });
 
-  it("should configure OpenAI with DashScope auth and baseURL", () => {
+  it("should configure OpenAI with DeepSeek auth and baseURL", () => {
     process.env.DEEPSEEK_API_KEY = '"test-key-with-quotes"';
     DialogueLlmClient.getInstance();
     expect(OpenAI).toHaveBeenCalledWith({
@@ -57,7 +59,7 @@ describe("DialogueLlmClient", () => {
     expect(result).toBe("test response");
     expect(mockChatCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: "deepseek-chat",
+        model: "deepseek-flash",
         response_format: { type: "json_object" },
       }),
     );
@@ -65,6 +67,7 @@ describe("DialogueLlmClient", () => {
 
   it("should call embeddings using the same client instance", async () => {
     process.env.DEEPSEEK_API_KEY = "test-key";
+    process.env.EMBEDDING_API_KEY = "embedding-test-key";
     const mockEmbeddingsCreate = jest.fn().mockResolvedValue({
       data: [{ embedding: [0.1, 0.2, 0.3] }],
     });

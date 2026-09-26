@@ -4,28 +4,26 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { runCodeReviewAgent, CodeReviewAgentInput } from "@/server/model/neural/codeAgent";
+import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 加载环境变量 (需要根目录下有 .env 文件，内容为 DASHSCOPE_API_KEY=你的key)
+// 加载环境变量 (需要根目录下有 .env 文件，内容为 DEEPSEEK_API_KEY=你的key)
 dotenv.config();
 
-// 1. 延迟初始化 OpenAI 客户端 (兼容阿里云百炼)
-let client: OpenAI | null = null;
+// 1. 延迟初始化 DeepSeek OpenAI-compatible 客户端
+let client: ReturnType<typeof createLlmClient> | null = null;
 
-function getClient(): OpenAI {
+function getClient(): ReturnType<typeof createLlmClient> {
   if (!client) {
-    const apiKey = process.env.DASHSCOPE_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       throw new Error(
-        "Missing credentials: DASHSCOPE_API_KEY. Please set the environment variable.",
+        "Missing credentials: DEEPSEEK_API_KEY. Please set the environment variable.",
       );
     }
-    client = new OpenAI({
-      apiKey,
-      baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    });
+    client = createLlmClient();
   }
   return client;
 }
@@ -193,10 +191,10 @@ export async function generateLearningNavigation(
   inputs: NavigatorInputs,
 ): Promise<LearningNavigationResult | null> {
   try {
-    const apiKey = process.env.DASHSCOPE_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       console.warn(
-        "⚠️  DASHSCOPE_API_KEY not set, returning default learning navigation",
+        "⚠️  DEEPSEEK_API_KEY not set, returning default learning navigation",
       );
       return getDefaultLearningNavigation();
     }
@@ -205,7 +203,7 @@ export async function generateLearningNavigation(
     const messages = buildMessages(inputs);
 
     const completion = await getClient().chat.completions.create({
-      model: "deepseek-v3.2", // 根据百炼平台实际支持的模型名称调整
+      model: getLlmModel(),
       messages: messages,
       // 强制要求 JSON 格式输出 (需模型支持，若不支持可在 prompt 中强调，deepseek在百炼平台支持的)
       response_format: { type: "json_object" },

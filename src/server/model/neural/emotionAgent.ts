@@ -3,28 +3,20 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
+import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 加载环境变量 (需要根目录下有 .env 文件，内容为 DASHSCOPE_API_KEY=你的key)
+// 加载环境变量 (需要根目录下有 .env 文件，内容为 DEEPSEEK_API_KEY=你的key)
 dotenv.config();
 
-// 1. 延迟初始化 OpenAI 客户端 (兼容阿里云百炼)
-let client: OpenAI | null = null;
+// 1. 延迟初始化 DeepSeek OpenAI-compatible 客户端
+let client: ReturnType<typeof createLlmClient> | null = null;
 
-function getClient(): OpenAI {
+function getClient(): ReturnType<typeof createLlmClient> {
   if (!client) {
-    const apiKey = process.env.DASHSCOPE_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "Missing credentials: DASHSCOPE_API_KEY. Please set the environment variable.",
-      );
-    }
-    client = new OpenAI({
-      apiKey,
-      baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    });
+    client = createLlmClient();
   }
   return client;
 }
@@ -135,10 +127,10 @@ export async function generateEmotionalSupport(
   inputs: EmotionInputs,
 ): Promise<EmotionAnalysisResult | null> {
   try {
-    const apiKey = process.env.DASHSCOPE_API_KEY;
+    const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       console.warn(
-        "⚠️  DASHSCOPE_API_KEY not set, returning default emotion analysis",
+        "⚠️  DEEPSEEK_API_KEY not set, returning default emotion analysis",
       );
       return getDefaultEmotionalSupport();
     }
@@ -147,7 +139,7 @@ export async function generateEmotionalSupport(
     const messages = buildMessages(inputs);
 
     const completion = await getClient().chat.completions.create({
-      model: "deepseek-v3.2", // 根据实际模型名称调整
+      model: getLlmModel(),
       messages: messages,
       response_format: { type: "json_object" },
       temperature: 0.8, // 适度温度，保持语言自然但稳定

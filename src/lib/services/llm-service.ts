@@ -1,5 +1,6 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
 import OpenAI from "openai";
+import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
 
 // function getGroqApiKey(): string {
 //   const rawApiKey = process.env.GROQ_API_KEY ?? process.env.AI_GROQ_API_KEY;
@@ -20,23 +21,8 @@ import OpenAI from "openai";
 //   return apiKey;
 // }
 
-function getDashScopeApiKey(): string {
-  const apiKey = process.env.DASHSCOPE_API_KEY;
-
-  if (!apiKey || apiKey === "your-dashscope-api-key") {
-    throw new Error(
-      "Missing credentials: DASHSCOPE_API_KEY. Please set the environment variable.",
-    );
-  }
-
-  return apiKey.trim().replace(/^['\"]|['\"]$/g, "");
-}
-
 function getClient(): OpenAI {
-  return new OpenAI({
-    apiKey: getDashScopeApiKey(),
-    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", //
-  });
+  return createLlmClient();
 }
 
 export function buildTestCaseGenerationPrompt(
@@ -126,7 +112,7 @@ export async function generateTestCases(prompt: string) {
 
     // 调用 DeepSeek 模型
     const completion = await client.chat.completions.create({
-      model: "deepseek-v3.2", //
+      model: getLlmModel(),
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" }, // 强制 JSON 格式输出
       temperature: 0.3,
@@ -154,7 +140,7 @@ export async function generateTestCases(prompt: string) {
 
     if (/invalid api key|401/i.test(message)) {
       throw new Error(
-        "DASHSCOPE_API_KEY is invalid. Please update your environment.",
+        "DEEPSEEK_API_KEY is invalid. Please update your environment.",
       );
     }
 

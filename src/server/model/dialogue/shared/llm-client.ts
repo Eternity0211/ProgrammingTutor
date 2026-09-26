@@ -1,4 +1,9 @@
 import OpenAI from "openai";
+import {
+  createEmbeddingClient,
+  getEmbeddingModel,
+  getLlmModel,
+} from "@/server/model/shared/llm-provider";
 
 export class DialogueLlmClient {
   private static instance: DialogueLlmClient | null = null;
@@ -35,7 +40,7 @@ export class DialogueLlmClient {
     jsonMode?: boolean;
   }): Promise<string> {
     const completion = await this.client.chat.completions.create({
-      model: params.model ?? "deepseek-chat",
+      model: params.model ?? getLlmModel(),
       messages: params.messages,
       temperature: params.temperature ?? 0.3,
       ...(params.jsonMode
@@ -48,8 +53,8 @@ export class DialogueLlmClient {
   }
 
   async createEmbedding(text: string, model?: string): Promise<number[]> {
-    const response = await this.client.embeddings.create({
-      model: model ?? "text-embedding-v3",
+    const response = await createEmbeddingClient().embeddings.create({
+      model: model ?? getEmbeddingModel(),
       input: text,
     });
     return response.data[0]?.embedding ?? [];

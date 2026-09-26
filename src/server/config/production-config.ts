@@ -8,7 +8,7 @@ const requiredInProduction = [
   ["AUTH_SECRET", "认证密钥"],
   ["JUDGE0_API_KEY", "Judge0 API Key"],
   ["JUDGE0_API_HOST", "Judge0 API Host"],
-  ["DASHSCOPE_API_KEY", "LLM API Key"],
+  ["DEEPSEEK_API_KEY", "DeepSeek LLM API Key"],
   ["NEO4J_URI", "Neo4j URI"],
   ["NEO4J_USER", "Neo4j 用户名"],
   ["NEO4J_PASSWORD", "Neo4j 密码"],

@@ -15,7 +15,7 @@ describe("production config", () => {
       "AUTH_SECRET",
       "JUDGE0_API_KEY",
       "JUDGE0_API_HOST",
-      "DASHSCOPE_API_KEY",
+      "DEEPSEEK_API_KEY",
       "NEO4J_URI",
       "NEO4J_USER",
       "NEO4J_PASSWORD",

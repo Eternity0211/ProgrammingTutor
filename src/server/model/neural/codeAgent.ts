@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import OpenAI from "openai";
 import { SymbolicResult } from "@/lib/types/symbolic-types";
+import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
 
 export interface CodeReviewAgentInput {
   code: string;
@@ -33,17 +34,6 @@ export interface CodeReviewAgentResult {
 
 //   return apiKey;
 // }
-
-function getDashScopeClient(): OpenAI {
-  const apiKey = process.env.DASHSCOPE_API_KEY; //
-  if (!apiKey) {
-    throw new Error("Missing DASHSCOPE_API_KEY. Please set the environment variable.");
-  }
-  return new OpenAI({
-    apiKey: apiKey.trim().replace(/^['\"]|['\"]$/g, ""),
-    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", //
-  });
-}
 
 function loadNeuralMetadataContext(): string {
   const metadataPath = path.resolve(process.cwd(), "data/neural/metadata.json");
@@ -158,11 +148,11 @@ export async function runCodeReviewAgent(
   input: CodeReviewAgentInput,
 ): Promise<CodeReviewAgentResult> {
   try {
-    const client = getDashScopeClient();
+    const client = createLlmClient();
     const prompt = buildCodeReviewPrompt(input);
 
     const completion = await client.chat.completions.create({
-      model: "deepseek-v3.2", //
+      model: getLlmModel(),
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" }, //
       temperature: 0.2,

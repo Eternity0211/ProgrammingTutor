@@ -15,7 +15,7 @@ npm install -D typescript @types/node
 2. 在model/neural下创建.env文件中，写入
 
 ```text
-DASHSCOPE_API_KEY修改为自己的API-Key
+DEEPSEEK_API_KEY修改为自己的API-Key
 ```
 
 3. 运行一下命令行完成测试（代码中已预留自测板块）
@@ -28,7 +28,7 @@ npx ts-node navigationAgent.ts
 
 ### 注意事项
 
-1. **环境变量**：运行前确保注入了 `DASHSCOPE_API_KEY`，并在代码中确认 `baseURL` 对应你使用的服务商。
+1. **环境变量**：运行前确保注入了 `DEEPSEEK_API_KEY`；聊天型 Agent 默认使用 `https://api.deepseek.com/v1`。RAG 向量化另行配置 `EMBEDDING_*`。
 2. **JSON 解析异常处理**：由于使用的是 LLM 直接生成结果，存在极低概率的 JSON 格式破损。代码中已包含基础的 `JSON.parse` 错误捕获 (`catch`)。
 3. **响应格式**：已通过 `response_format: { type: "json_object" }` 强制要求模型返回 JSON。使用此特性时，Prompt 中必须明确包含要求输出 JSON 的指令。
 

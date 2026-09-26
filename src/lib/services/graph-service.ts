@@ -1,17 +1,7 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
 import OpenAI from "openai";
 import { getNeo4jSession } from "@/lib/neo4j";
-
-function getDashScopeClient(): OpenAI {
-  const apiKey = process.env.DASHSCOPE_API_KEY; 
-  if (!apiKey) {
-    throw new Error("Missing DASHSCOPE_API_KEY environment variable.");
-  }
-  return new OpenAI({
-    apiKey: apiKey.trim().replace(/^['\"]|['\"]$/g, ""),
-    baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1", 
-  });
-}
+import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
 
 export function buildTestCaseGenerationPrompt(
   title: string,
@@ -135,10 +125,10 @@ export async function getAggregatedKnowledgeContext(
 
 export async function generateTestCases(prompt: string) {
   try {
-    const client = getDashScopeClient();
+    const client = createLlmClient();
 
     const completion = await client.chat.completions.create({
-      model: "deepseek-v3.2", 
+      model: getLlmModel(),
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" }, 
       temperature: 0.3,
@@ -156,7 +146,7 @@ export async function generateTestCases(prompt: string) {
       
     return testCases;
   } catch (error) {
-    console.error("❌ DashScope API Error:", error);
-    throw new Error("Failed to generate test cases via DashScope API");
+    console.error("❌ LLM API Error:", error);
+    throw new Error("Failed to generate test cases via DeepSeek API");
   }
 }
