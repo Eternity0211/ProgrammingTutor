@@ -6,6 +6,7 @@ import { RagEngine } from "@/server/model/dialogue/rag";
 import { Judge0RuntimeHarness } from "@/server/model/pipeline/runtime-harness";
 import { getAggregatedKnowledgeContext } from "@/lib/services/graph-service";
 import { jsonRpcError, jsonRpcResult, type McpJsonRpcRequest } from "@/server/model/mcp/protocol";
+import { observeRoute } from "@/server/observability/http";
 
 const rag = new RagEngine({ autoLoad: true, persistDocuments: true });
 const registry = new TutorToolRegistry(rag, createCoreTutorTools({
@@ -14,13 +15,13 @@ const registry = new TutorToolRegistry(rag, createCoreTutorTools({
   getKnowledgeContext: getAggregatedKnowledgeContext,
 }));
 
-export async function GET() {
+async function handleGet() {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   return NextResponse.json({ tools: registry.listTools() });
 }
 
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
@@ -53,4 +54,12 @@ export async function POST(req: NextRequest) {
     const message = error instanceof Error ? error.message : "Invalid tool request";
     return NextResponse.json({ error: message }, { status: 400 });
   }
+}
+
+export async function GET() {
+  return observeRoute("/api/mcp", "GET", handleGet);
+}
+
+export async function POST(req: NextRequest) {
+  return observeRoute("/api/mcp", "POST", () => handlePost(req));
 }

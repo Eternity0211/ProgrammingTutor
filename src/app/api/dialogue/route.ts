@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { getDialogueOrchestrator } from "@/server/model/dialogue";
+import { observeRoute } from "@/server/observability/http";
 
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   try {
     const user = await getAuthenticatedUser();
     if (!user) {
@@ -43,4 +44,8 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+export async function POST(req: NextRequest) {
+  return observeRoute("/api/dialogue", "POST", () => handlePost(req));
 }

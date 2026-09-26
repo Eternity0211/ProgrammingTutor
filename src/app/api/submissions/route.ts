@@ -11,8 +11,9 @@ import {
   EvaluationPlatformError,
   classifyEvaluationError,
 } from "@/server/model/pipeline/evaluation-failure";
+import { observeRoute } from "@/server/observability/http";
 
-export async function POST(req: NextRequest) {
+async function handlePost(req: NextRequest) {
   try {
     const session = await auth();
     if (!session || !session.user) {
@@ -161,4 +162,8 @@ export async function POST(req: NextRequest) {
       { status: failure.retryable ? 503 : 500 },
     );
   }
+}
+
+export async function POST(req: NextRequest) {
+  return observeRoute("/api/submissions", "POST", () => handlePost(req));
 }

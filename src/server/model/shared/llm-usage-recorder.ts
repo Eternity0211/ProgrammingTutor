@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { recordLlmTokenMetrics } from "@/server/observability/metrics";
 
 type CompletionUsage = {
   prompt_tokens?: number;
@@ -15,7 +16,7 @@ export function recordLlmUsage(
   usage: CompletionUsage | null | undefined,
   metadata: { agent: string; model: string },
 ): void {
-  if (process.env.EVAL_USAGE_LOG !== "1" || !usage) return;
+  if (!usage) return;
 
   const promptTokens = usage.prompt_tokens ?? 0;
   const completionTokens = usage.completion_tokens ?? 0;
@@ -23,6 +24,14 @@ export function recordLlmUsage(
   const outputPrice = Number(process.env.EVAL_OUTPUT_PRICE_PER_1M ?? 0);
   const estimatedCost =
     (promptTokens * inputPrice + completionTokens * outputPrice) / 1_000_000;
+  recordLlmTokenMetrics(
+    metadata.agent,
+    metadata.model,
+    promptTokens,
+    completionTokens,
+    estimatedCost,
+  );
+  if (process.env.EVAL_USAGE_LOG !== "1") return;
   const runId = process.env.EVAL_RUN_ID?.trim() || "local";
   const outputDir = path.resolve(process.cwd(), "data/evaluation/results");
   fs.mkdirSync(outputDir, { recursive: true });

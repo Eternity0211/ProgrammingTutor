@@ -17,6 +17,7 @@ import {
   createConfiguredTraceSink,
   TraceLogger,
 } from "@/server/model/dialogue/shared/trace-logger";
+import { recordEvaluationOutcome } from "@/server/observability/metrics";
 
 const runtimeHarness = new Judge0RuntimeHarness();
 
@@ -312,6 +313,7 @@ export async function evaluateSubmissionInsidePlatform(
 
     await updateSubmissionStatus(codeSubmission.submissionId);
     finalStatus = blocking ? "BLOCKED" : "COMPLETED";
+    recordEvaluationOutcome(finalStatus, branch);
 
     return {
       success: true,
@@ -324,6 +326,7 @@ export async function evaluateSubmissionInsidePlatform(
     finalStatus = failure.retryable ? "FAILED_RETRYABLE" : "FAILED_TERMINAL";
     finalFailureKind = failure.kind;
     finalError = failure.message;
+    recordEvaluationOutcome(finalStatus, "failed", failure.kind);
     traceLogger.logEvent("error", "evaluation.failed", {
       evaluationRunId: evaluationRun.id,
       failureKind: failure.kind,

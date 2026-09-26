@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { appendFile, mkdir } from "fs/promises";
 import { dirname } from "path";
+import { observeTraceSpan } from "@/server/observability/metrics";
 import type {
   TraceContext,
   TraceEvent,
@@ -176,6 +177,10 @@ export class TraceLogger {
   }
 
   async persist(): Promise<void> {
-    if (this.sink) await this.sink.write(this.getContext());
+    const context = this.getContext();
+    for (const span of context.spans) {
+      if (span.endTime) observeTraceSpan(span.name, span.status, span.durationMs);
+    }
+    if (this.sink) await this.sink.write(context);
   }
 }
