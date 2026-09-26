@@ -1,0 +1,457 @@
+{
+  "mode": "B-r2",
+  "generatedAt": "2026-09-26T03:22:36.020Z",
+  "results": [
+    {
+      "id": "logic-average",
+      "name": "运算符优先级逻辑错误",
+      "mode": "B-r2",
+      "codeReview": {
+        "durationMs": 6063,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 6544,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 13889,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "sequentialCriticalPathMs": 26496,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "The function does not compute the average of two integers because operator precedence causes `b / 2` to be evaluated before the addition. The symbolic diagnostic correctly flags this as a high-priority logic error. The operation is O(1) constant time, but the expression is grouped incorrectly.",
+          "causalAnalysis": "In C++, the division operator `/` has higher precedence than the addition operator `+`. Therefore, `a + b / 2` is parsed as `a + (b / 2)`, not `(a + b) / 2`. For example, `average(2, 4)` returns `2 + 4 / 2 = 4` instead of the expected `(2 + 4) / 2 = 3`. Integer division also truncates any fractional part, so the intended integer average must first sum the operands and then divide. This precedence bug explains the failing tests.",
+          "suggestions": [
+            "Replace the return statement with `return (a + b) / 2;` so the addition is performed before division.",
+            "Add or update unit tests to cover the corrected grouping, such as `average(2, 4) == 3`, `average(1, 2) == 1`, and `average(-3, -2) == -2` for C++ integer truncation toward zero.",
+            "If fractional averages are required, change the signature to `double average(int a, int b)` and return `(static_cast<double>(a) + b) / 2.0;` instead of using integer division."
+          ],
+          "confidence": 0.98
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "沮丧",
+            "intensity": "中",
+            "reason": "代码审查只发现一个高优先级、范围明确的逻辑错误：`a + b / 2` 因运算符优先级被解析为 `a + (b / 2)`，并不是多处复杂问题。问题本身容易修复，但你已经多次尝试仍未通过，所以出现持续受挫后的沮丧感是合理的。",
+            "supportive_guidance": "改了好几次还是不对，会有点沮丧真的很正常，先停一下也没关系。好消息是，审查已经帮你把问题收窄到一个点：C++ 会先算 `b / 2`，而不是先算 `a + b`。你现在只需要做一个小动作——把返回语句改成 `return (a + b) / 2;`，然后单独运行 `average(2, 4)`，看它是否返回 `3`。先验证这一步，不用一次性解决所有情况；你已经在靠近答案了。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "C++ 运算符优先级",
+              "表达式分组与括号使用",
+              "整数除法与截断",
+              "函数返回值与逻辑正确性",
+              "单元测试与边界测试",
+              "调试与代码审查习惯"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "C++ 运算符优先级与表达式求值",
+                "duration": "1天（2–3小时）",
+                "resources": [
+                  "cppreference: C++ operator precedence（https://en.cppreference.com/w/cpp/language/operator_precedence）",
+                  "《C++ Primer》第 4 章 表达式：优先级、结合性与求值顺序",
+                  "在线示例：对比 a + b / 2 与 (a + b) / 2"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "整数除法、截断与显式类型转换",
+                "duration": "1天（2小时）",
+                "resources": [
+                  "cppreference: Arithmetic operators 与 Implicit conversions",
+                  "《C++ Primer》第 4 章：算术运算符与类型转换",
+                  "练习：分别实现 int average(int, int) 和 double average(int, int) 并对比输出"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "函数返回值、边界条件与单元测试",
+                "duration": "1天（2小时）",
+                "resources": [
+                  "《C++ Primer》第 6 章 函数：返回类型、参数传递与返回值",
+                  "GoogleTest 入门或 assert 断言",
+                  "为 average(2,4)==3、average(1,2)==1、average(-3,-2)==-2 编写测试用例"
+                ]
+              },
+              {
+                "step": 4,
+                "topic": "调试、代码审查与防御性编程",
+                "duration": "1天（1–2小时）",
+                "resources": [
+                  "GDB 或 IDE 断点调试基础",
+                  "代码审查清单：运算符优先级、括号、整数除法、边界输入",
+                  "LeetCode 150/227 题解与讨论区"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc1",
+                "title": "两数之和",
+                "difficulty": "入门",
+                "purpose": "巩固函数参数、返回值和基础表达式；在实现中主动加括号，避免优先级歧义。",
+                "url": "https://leetcode.cn/problems/two-sum"
+              },
+              {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "训练括号匹配与显式分组思维，强化对括号改变表达式/结构优先级的直觉。",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+              },
+              {
+                "id": "lc150",
+                "title": "逆波兰表达式求值",
+                "difficulty": "中级",
+                "purpose": "训练算术表达式求值、整数除法与栈；暴露运算顺序和类型转换错误。",
+                "url": "https://leetcode.cn/problems/evaluate-reverse-polish-notation"
+              },
+              {
+                "id": "lc227",
+                "title": "基本计算器 II",
+                "difficulty": "中级",
+                "purpose": "直接训练运算符优先级、括号/分组和表达式求值，是本次 precedence bug 的进阶练习。",
+                "url": "https://leetcode.cn/problems/basic-calculator-ii"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-leak",
+      "name": "动态内存泄漏",
+      "mode": "B-r2",
+      "codeReview": {
+        "durationMs": 5747,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 3584,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 12827,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "sequentialCriticalPathMs": 22158,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "The function returns a raw owning pointer allocated with new int(42) without releasing it or documenting ownership. This triggers the high-severity CPP_MEMORY_LEAK diagnostic and likely causes the 0/2 test failures if the tests check for proper cleanup or run repeated calls.",
+          "causalAnalysis": "`new int(42)` allocates an int on the heap, and `return p` transfers the pointer value but not an explicit ownership contract. After the function returns, the caller receives a pointer that must be deleted; if the caller ignores it or the test harness does not delete it, the heap memory remains allocated and leaks. The symbolic finding CPP_MEMORY_LEAK confirms this resource-management bug. The function itself runs in O(1) time and O(1) auxiliary space, but its resource lifetime is incorrect. The main quality issue is using a raw owning pointer instead of value semantics or RAII, which makes leaks likely and hides ownership from the caller.",
+          "suggestions": [
+            "Replace the heap allocation with direct value return: `int makeValue() { return 42; }`, then call it as `int v = makeValue();`. This removes the leak and avoids ownership questions.",
+            "If heap indirection is required, use RAII: include `<memory>` and write `std::unique_ptr<int> makeValue() { return std::make_unique<int>(42); }`. Callers then use `auto p = makeValue();` and no manual `delete` is needed.",
+            "If a raw pointer API is mandatory, document that the caller owns the returned pointer and update every call site to `int* p = makeValue(); /* use p */ delete p;`. Alternatively, restructure so `makeValue` does not transfer ownership, e.g., allocate and delete internally or return by value."
+          ],
+          "confidence": 0.93
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "挫败",
+            "intensity": "中",
+            "reason": "本次提交 0/2 测试未通过，且审查中有一个高严重度诊断 CPP_MEMORY_LEAK，容易让人觉得“又白写了一遍”。但需要看到的是：问题很集中，只有一处资源管理疏漏——makeValue 用 new int(42) 返回裸指针，调用方没有释放。函数本身逻辑、时间与空间复杂度都没问题，参数传递、循环、边界都不需要动。也就是说，这不是能力问题，而是一个非常具体、可精确修复的知识点，审查置信度 0.93 也说明原因基本已锁定，方向是清楚的。",
+            "supportive_guidance": "先别急着重写整个函数，失败的原因只有一颗小螺丝松了。现在花两分钟做这一件事：把 makeValue 的返回从裸指针改成直接返回值——`int makeValue() { return 42; }`，再把调用处改成 `int v = makeValue();`，然后重新跑一次那两条测试。这个改动同时消掉了泄漏和所有权疑问，很可能两条测试就都亮了。如果接口规定必须用指针，那就退一步用 `<memory>` 里的 `std::unique_ptr<int>`，调用方就不用再写 delete。你已经把逻辑写对了，这只是在补一块关于“内存归谁管”的拼图，改完它，你会发现自己离通过其实很近。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "原始指针所有权语义不清",
+              "堆内存泄漏（new 后未 delete）",
+              "RAII 资源管理缺失",
+              "智能指针使用不熟",
+              "值语义与函数接口设计不当",
+              "手动 new/delete 配对意识薄弱"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "指针与动态内存基础：栈/堆、new/delete、取地址与解引用",
+                "duration": "1天",
+                "resources": [
+                  "C++ Primer 第2章：变量和基本类型（指针部分）",
+                  "C++ Primer 第12章：动态内存（直接管理内存）",
+                  "cppreference: new expression / delete expression",
+                  "LearnCpp: Dynamic memory allocation with new and delete"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "所有权与 RAII：谁分配、谁释放，构造函数获取资源、析构函数释放资源",
+                "duration": "1-2天",
+                "resources": [
+                  "Effective C++ 条款13：以对象管理资源",
+                  "Effective C++ 条款14：在资源管理类中小心 copying 行为",
+                  "C++ Core Guidelines: R.1, R.3, R.11, R.20",
+                  "cppreference: RAII"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "智能指针：unique_ptr、shared_ptr、weak_ptr、make_unique/make_shared",
+                "duration": "1-2天",
+                "resources": [
+                  "C++ Primer 第12章：动态内存（智能指针部分）",
+                  "Effective Modern C++ 条款18-22",
+                  "cppreference: std::unique_ptr / std::shared_ptr / std::weak_ptr",
+                  "C++ Core Guidelines: R.20-R.23"
+                ]
+              },
+              {
+                "step": 4,
+                "topic": "现代 C++ 值语义与函数接口：优先按值返回，避免返回裸拥有指针",
+                "duration": "1天",
+                "resources": [
+                  "C++ Core Guidelines: F.20-F.26（返回值和参数传递）",
+                  "Effective Modern C++ 条款23-30（移动语义与完美转发）",
+                  "cppreference: copy elision / return value optimization"
+                ]
+              },
+              {
+                "step": 5,
+                "topic": "指针/引用在数据结构中的应用：链表、树与节点所有权",
+                "duration": "2-3天",
+                "resources": [
+                  "C++ Primer 第12章：动态内存与智能指针综合示例",
+                  "LeetCode 链表与二叉树专题",
+                  "C++ Core Guidelines: 使用智能指针管理容器/节点所有权"
+                ]
+              },
+              {
+                "step": 6,
+                "topic": "内存问题调试与工程习惯：AddressSanitizer、Valgrind、单元测试",
+                "duration": "1天",
+                "resources": [
+                  "AddressSanitizer 官方文档",
+                  "Valgrind Memcheck 使用手册",
+                  "GoogleTest 入门：为返回值和资源释放写测试"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "练习快慢指针与边界条件，不涉及堆分配，先建立指针移动与链表遍历的稳定手感。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+              },
+              {
+                "id": "lc206",
+                "title": "反转链表",
+                "difficulty": "初级",
+                "purpose": "通过原地指针操作反转链表，理解指针重定向、临时变量保存后继节点，避免不必要的 new/delete。",
+                "url": "https://leetcode.cn/problems/reverse-linked-list"
+              },
+              {
+                "id": "lc21",
+                "title": "合并两个有序链表",
+                "difficulty": "初级",
+                "purpose": "练习多指针合并与哑结点技巧；重点体会可直接使用栈上哑结点而非堆分配，减少所有权负担。",
+                "url": "https://leetcode.cn/problems/merge-two-sorted-lists"
+              },
+              {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "用快慢指针判断环，强化指针追踪与终止条件；该题不涉及释放，适合专注指针逻辑本身。",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+              },
+              {
+                "id": "lc2",
+                "title": "两数相加",
+                "difficulty": "中级",
+                "purpose": "需要创建新链表节点，训练 new 节点后的所有权传递；可在本地测试中用 unique_ptr 管理临时节点并确保无泄漏。",
+                "url": "https://leetcode.cn/problems/add-two-numbers"
+              },
+              {
+                "id": "lc138",
+                "title": "复制带随机指针的链表",
+                "difficulty": "中级",
+                "purpose": "深拷贝必须分配新节点，最贴近本次内存泄漏问题；重点训练节点所有权、释放策略和 RAII 封装。",
+                "url": "https://leetcode.cn/problems/copy-list-with-random-pointer"
+              },
+              {
+                "id": "lc707",
+                "title": "设计链表",
+                "difficulty": "中级",
+                "purpose": "在类中管理动态节点，必须自行释放所有节点；强化析构函数、Rule of Three/Five 和 RAII 思想。",
+                "url": "https://leetcode.cn/problems/design-linked-list"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "clean-loop",
+      "name": "基本循环正确代码",
+      "mode": "B-r2",
+      "codeReview": {
+        "durationMs": 7366,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 3015,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 10225,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "sequentialCriticalPathMs": 20606,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "The function is logically correct for typical inputs: all 3 tests pass and no symbolic diagnostics (out-of-bounds, leak, infinite recursion) fired. The loop correctly accumulates the arithmetic series 1+2+...+n with a well-defined invariant (result == sum of i in [1, i-1] at each iteration start). The remaining concerns are not correctness bugs for the tested inputs but latent algorithmic and robustness risks: an unnecessary O(n) loop where an O(1) closed form exists, and signed-integer overflow for large n.",
+          "causalAnalysis": "1) Complexity: the `for (int i = 1; i <= n; ++i)` loop executes exactly n times for n >= 1, so time is O(n) and space is O(1). This is the dominant cost. Because the accumulated value is an arithmetic series, the loop is algorithmically redundant: the same result is `n*(n+1)/2` in O(1). The loop also has a data-dependent cost that grows linearly with input size, which is the classic reason such accumulation loops are flagged in review.\n2) Overflow of `result`: `int` holds at most 2147483647. The sum first exceeds that at n = 65536, where the true sum is 2147516416. The code then assigns an out-of-range value, which is undefined behavior in C++ for signed types; in practice it silently wraps to a negative number, so the function returns a wrong answer with no error signal. Tests with small n cannot expose this.\n3) Overflow of the loop counter: if the caller passes n == INT_MAX, the increment `++i` executes when i == INT_MAX, overflowing a signed int (undefined behavior). In the intended semantics the loop should terminate after that iteration, but the UB means the termination condition is not guaranteed.\n4) Implicit contract for n <= 0: the loop body never runs and the function returns 0. That happens to be the mathematically sensible empty-sum value, but it is undocumented, and a caller expecting an error or different convention for negative n would be misled.\n5) Style/quality: the one-line body hides the loop invariant, and the parameter is passed by value with no const qualification or documentation, which makes the O(n) contract easy to overlook when this function is called inside an outer loop.",
+          "suggestions": [
+            "Replace the loop with the closed form, using 64-bit arithmetic, and cast before the addition to avoid overflowing n+1: `long long sum(int n) { if (n <= 0) return 0; return (long long)n * ((long long)n + 1) / 2; }`. This cuts time from O(n) to O(1) and removes the result-overflow risk up to very large n.",
+            "If the loop must stay (e.g., a course requirement to show iteration), widen both the accumulator and the counter to 64-bit (`long long result = 0; for (long long i = 1; i <= n; ++i)`) so neither `result` nor `++i` can trigger signed-integer overflow, and add a comment stating the loop is O(n).",
+            "Document and enforce the input contract: add a comment or assert that n >= 0, and decide explicitly whether negative n should return 0, throw, or be rejected — currently it silently returns 0.",
+            "Add boundary tests that the current suite is missing: n = 0, n = 1, n = 65535 (largest safe int sum), n = 65536 (first overflow), and n = INT_MAX, asserting against a 64-bit reference value."
+          ],
+          "confidence": 0.86
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "自信",
+            "intensity": "中",
+            "reason": "本次运行的3个测试全部通过，逻辑正确，没有越界、泄漏或无限递归等符号诊断问题，说明核心思路（循环累加1+2+...+n）是站得住的。审查指出的只是潜在的算法与健壮性风险——循环是O(n)但存在O(1)的闭式解，以及n较大时int会溢出——这些都不是当前输入下的正确性缺陷，而是‘已经能跑对，还能更稳更好’的进阶空间。所以这更像是一种带着成就感的、想继续往前的积极状态。",
+            "supportive_guidance": "恭喜你，逻辑跑通了！能写出循环不变式清晰、测试全过的累加实现，说明你对这段代码的每一步是心里有数的，这份掌控感值得记住。接下来的提升不用大动干戈，只做一个小动作就好：在测试里加一行n=65536的情况，看看输出是不是变成了负数——你会亲眼看到‘溢出’是什么样子，比看十遍解释都清楚。看完之后，再试着把循环换成 n*(n+1)/2 的写法（记得用long long），对比一下两种结果的耗时和数值。你已经站在‘能写对’这一层了，下一步只是‘写得更稳’，慢慢来，你完全可以。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "算法复杂度分析（O(n) 与 O(1) 的取舍）",
+              "整数溢出与数据类型范围",
+              "边界条件与测试用例设计",
+              "代码质量：循环不变量与文档注释"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "算法复杂度基础：大 O 表示法",
+                "duration": "2 小时",
+                "resources": [
+                  "《算法导论》第 3 章：函数的增长",
+                  "B 站视频：『算法复杂度分析入门』",
+                  "LeetCode 学习卡片：时间复杂度"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "整数溢出与数据类型范围",
+                "duration": "1.5 小时",
+                "resources": [
+                  "《C++ Primer》第 2 章：变量与基本类型",
+                  "C++ 参考手册：整数类型范围与 limits.h",
+                  "在线练习：整数溢出检测（如 LeetCode 讨论区）"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "循环优化与闭式公式",
+                "duration": "2 小时",
+                "resources": [
+                  "《编程珠玑》第 1 章：性能监控",
+                  "数学公式：等差数列求和",
+                  "LeetCode 讨论区：1+2+...+n 的多种解法"
+                ]
+              },
+              {
+                "step": 4,
+                "topic": "边界条件与测试驱动开发",
+                "duration": "1.5 小时",
+                "resources": [
+                  "《代码大全》第 22 章：测试",
+                  "LeetCode 题目边界测试技巧",
+                  "C++ assert 与异常处理指南"
+                ]
+              },
+              {
+                "step": 5,
+                "topic": "代码质量：循环不变量与注释",
+                "duration": "1 小时",
+                "resources": [
+                  "《编程珠玑》第 4 章：编写正确的程序",
+                  "循环不变量：霍尔逻辑入门",
+                  "Google C++ 风格指南：注释"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc509",
+                "title": "斐波那契数",
+                "difficulty": "入门",
+                "purpose": "理解递归的时间复杂度，学习从 O(2^n) 优化到 O(n) 的记忆化方法，并注意整数范围。",
+                "url": "https://leetcode.cn/problems/fibonacci-number"
+              },
+              {
+                "id": "lc1",
+                "title": "两数之和",
+                "difficulty": "入门",
+                "purpose": "学习用哈希表将暴力 O(n^2) 优化到 O(n)，体会不同算法的时间复杂度差异，并注意边界条件。",
+                "url": "https://leetcode.cn/problems/two-sum"
+              },
+              {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "掌握栈的应用，分析 O(n) 时间复杂度，处理边界情况（空字符串、不匹配等）。",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+              },
+              {
+                "id": "lc206",
+                "title": "反转链表",
+                "difficulty": "初级",
+                "purpose": "对比迭代与递归解法，理解 O(n) 时间与 O(1) 空间，注意指针操作的边界处理。",
+                "url": "https://leetcode.cn/problems/reverse-linked-list"
+              },
+              {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "学习快慢指针技巧，以 O(n) 时间 O(1) 空间解决问题，强化对循环与复杂度的理解。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+              },
+              {
+                "id": "lc150",
+                "title": "逆波兰表达式求值",
+                "difficulty": "中级",
+                "purpose": "在算术运算中注意整数溢出风险，使用栈处理表达式，并设计边界测试用例。",
+                "url": "https://leetcode.cn/problems/evaluate-reverse-polish-notation"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
