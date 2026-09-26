@@ -37,6 +37,10 @@ import {
   navigationAgentResultSchema,
 } from "../types/agent-results";
 import { transition, type DialogueState } from "./dialogue-state";
+import {
+  PrismaEvaluationEvidenceStore,
+  type EvaluationEvidenceStore,
+} from "@/server/model/pipeline/evaluation-evidence-store";
 
 interface OrchestratorOptions {
   sessionStore?: SessionStore;
@@ -48,6 +52,7 @@ interface OrchestratorOptions {
   llm?: DialogueLlmClient;
   traceLogger?: TraceLogger;
   traceSink?: TraceSink;
+  evaluationEvidenceStore?: EvaluationEvidenceStore;
 }
 
 interface HandlerContext {
@@ -115,6 +120,7 @@ export class DialogueOrchestrator {
   private contextTrimmer: ContextTrimmer;
   private traceSink?: TraceSink;
   private llm: DialogueLlmClient;
+  private evaluationEvidenceStore: EvaluationEvidenceStore;
 
   constructor(options?: OrchestratorOptions) {
     this.llm = options?.llm ?? DialogueLlmClient.getInstance();
@@ -124,6 +130,8 @@ export class DialogueOrchestrator {
     this.ragEngine = options?.ragEngine ?? new RagEngine();
     this.profileUpdater = options?.profileUpdater ?? new ProfileUpdater();
     this.contextTrimmer = options?.contextTrimmer ?? new ContextTrimmer();
+    this.evaluationEvidenceStore =
+      options?.evaluationEvidenceStore ?? new PrismaEvaluationEvidenceStore();
     this.traceSink = options?.traceSink ?? (process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
       ? new OtlpTraceSink(process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT)
       : process.env.TRACE_LOG_PATH
@@ -333,12 +341,51 @@ export class DialogueOrchestrator {
 
   private async handleCodeSubmission(ctx: HandlerContext): Promise<HandlerResult> {
     const { request, trimmed, profileSummary, intent } = ctx;
+    const evidenceSpan = ctx.traceLogger.startSpan(
+      "evaluation.evidence.load",
+      undefined,
+    );
+    const evidence = await this.evaluationEvidenceStore.getByReference(
+      request.userId,
+      {
+        evaluationRunId: request.context?.evaluationRunId,
+        codeSubmissionId: request.context?.codeSubmissionId,
+      },
+    );
+    ctx.traceLogger.endSpan(evidenceSpan, {
+      found: Boolean(evidence),
+      evaluationRunId: evidence?.evaluationRunId,
+      status: evidence?.status,
+    });
+    if (evidence?.agentResults) {
+      const reply = await this.generateReply(
+        request.message,
+        profileSummary,
+        trimmed.summary,
+        evidence.agentResults,
+        ctx.traceLogger,
+      );
+      return {
+        reply,
+        agentResults: evidence.agentResults,
+        sessionStateUpdate: evidence.agentResults.codeReview
+          ? {
+              lastCodeReview: {
+                reviewSummary: evidence.agentResults.codeReview.reviewSummary,
+              },
+            }
+          : undefined,
+      };
+    }
     const code =
-      intent.entities.codeSnippet ?? request.context?.code ?? "";
+      evidence?.code ?? intent.entities.codeSnippet ?? request.context?.code ?? "";
     const language =
-      intent.entities.language ?? request.context?.language ?? "";
-    const symbolic = request.context?.symbolic;
-    const testSummary = request.context?.testSummary;
+      evidence?.language ??
+      intent.entities.language ??
+      request.context?.language ??
+      "";
+    const symbolic = evidence?.symbolic ?? request.context?.symbolic;
+    const testSummary = evidence?.testSummary ?? request.context?.testSummary;
 
     if (symbolic && testSummary && code) {
       try {

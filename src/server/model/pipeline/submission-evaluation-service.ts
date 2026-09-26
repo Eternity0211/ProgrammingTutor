@@ -220,7 +220,17 @@ export async function evaluateSubmissionInsidePlatform(
     });
 
     const branch = blocking ? "code-review-agent" : "general-llm";
-    const feedback = { symbolic, aiFeedback, navigation, emotion };
+    const feedback = {
+      symbolic,
+      testSummary: {
+        total: totalCount,
+        passed: passedCount,
+        failed: totalCount - passedCount,
+      },
+      aiFeedback,
+      navigation,
+      emotion,
+    };
     await prisma.$transaction([
       prisma.codeSubmission.update({
         where: { id: codeSubmissionId },

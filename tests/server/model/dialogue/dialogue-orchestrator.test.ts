@@ -21,6 +21,7 @@ import { ProfileUpdater } from "@/server/model/dialogue/profile/profile-updater"
 import { ContextTrimmer } from "@/server/model/dialogue/memory/context-trimmer";
 import { DialogueLlmClient } from "@/server/model/dialogue/shared/llm-client";
 import type { IntentRecognitionResult } from "@/server/model/dialogue/types";
+import type { EvaluationEvidenceStore } from "@/server/model/pipeline/evaluation-evidence-store";
 
 const mockedRunCodeReviewAgent = runCodeReviewAgent as jest.MockedFunction<typeof runCodeReviewAgent>;
 const mockedGenerateEmotionalSupport = generateEmotionalSupport as jest.MockedFunction<typeof generateEmotionalSupport>;
@@ -102,6 +103,7 @@ describe("DialogueOrchestrator", () => {
   function makeOrchestrator(opts: {
     recognizer: IntentRecognizer;
     ragEngine?: RagEngine;
+    evaluationEvidenceStore?: EvaluationEvidenceStore;
   }) {
     return new DialogueOrchestrator({
       sessionStore,
@@ -111,10 +113,54 @@ describe("DialogueOrchestrator", () => {
       profileUpdater,
       contextTrimmer,
       llm: mockLlm,
+      evaluationEvidenceStore:
+        opts.evaluationEvidenceStore ??
+        ({ getByReference: jest.fn().mockResolvedValue(null) } as EvaluationEvidenceStore),
     });
   }
 
   describe("CODE_SUBMISSION", () => {
+    it("reuses the persisted evaluation run as the single source of truth", async () => {
+      const recognizer = makeMockRecognizer("CODE_SUBMISSION");
+      const evaluationEvidenceStore = {
+        getByReference: jest.fn().mockResolvedValue({
+          evaluationRunId: "run-1",
+          codeSubmissionId: "code-1",
+          status: "BLOCKED",
+          code: "int *p = nullptr;",
+          language: "C++",
+          agentResults: {
+            codeReview: {
+              reviewSummary: "持久化的指针问题",
+              causalAnalysis: "空指针",
+              suggestions: ["初始化指针"],
+              confidence: 0.95,
+            },
+          },
+        }),
+      } as unknown as EvaluationEvidenceStore;
+      const orchestrator = makeOrchestrator({
+        recognizer,
+        evaluationEvidenceStore,
+      });
+
+      const response = await orchestrator.chat({
+        userId: "user-1",
+        message: "解释这次提交",
+        context: { evaluationRunId: "run-1" },
+      });
+
+      expect(evaluationEvidenceStore.getByReference).toHaveBeenCalledWith(
+        "user-1",
+        { evaluationRunId: "run-1", codeSubmissionId: undefined },
+      );
+      expect(mockedRunCodeReviewAgent).not.toHaveBeenCalled();
+      expect(mockedGenerateEmotionalSupport).not.toHaveBeenCalled();
+      expect(response.agentResults?.codeReview?.reviewSummary).toBe(
+        "持久化的指针问题",
+      );
+    });
+
     it("should call codeAgent+emotionAgent when symbolic+testSummary provided", async () => {
       const recognizer = makeMockRecognizer("CODE_SUBMISSION", {
         codeSnippet: "int *p = null;",
