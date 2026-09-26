@@ -38,6 +38,10 @@ import {
 } from "../types/agent-results";
 import { transition, type DialogueState } from "./dialogue-state";
 import {
+  enforceDialogueQualityGate,
+  planDialogue,
+} from "./agent-pipeline";
+import {
   PrismaEvaluationEvidenceStore,
   type EvaluationEvidenceStore,
 } from "@/server/model/pipeline/evaluation-evidence-store";
@@ -244,6 +248,25 @@ export class DialogueOrchestrator {
             result = await this.handleThoughtFollowup(ctx);
             break;
         }
+        const qualitySpan = traceLogger.startSpan(
+          "orchestrator.qualityGate",
+          handlerSpan,
+        );
+        const qualityGate = enforceDialogueQualityGate(
+          result,
+          planDialogue(intent.intent),
+        );
+        traceLogger.endSpan(qualitySpan, {
+          accepted: qualityGate.accepted,
+          issues: qualityGate.issues.join(" | "),
+        });
+        if (!qualityGate.accepted) {
+          traceLogger.logEvent("warn", "dialogue.quality_gate_rejected", {
+            intent: intent.intent,
+            issues: qualityGate.issues,
+          });
+        }
+        result = qualityGate.result;
         traceLogger.endSpan(handlerSpan, {
           hasAgentResults: Boolean(result.agentResults),
         });

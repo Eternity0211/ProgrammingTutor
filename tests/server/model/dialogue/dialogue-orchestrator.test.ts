@@ -218,7 +218,7 @@ describe("DialogueOrchestrator", () => {
       expect(response.agentResults).toBeUndefined();
     });
 
-    it("should fallback to LLM when codeAgent throws", async () => {
+    it("should reject an ungrounded LLM fallback when codeAgent throws", async () => {
       const recognizer = makeMockRecognizer("CODE_SUBMISSION", {
         codeSnippet: "int *p = null;",
         language: "cpp",
@@ -239,7 +239,7 @@ describe("DialogueOrchestrator", () => {
       });
 
       expect(mockLlm.chatCompletion).toHaveBeenCalled();
-      expect(response.reply).toBe("LLM reply");
+      expect(response.reply).toContain("可靠证据");
     });
   });
 
