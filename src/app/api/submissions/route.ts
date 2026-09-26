@@ -7,6 +7,10 @@ import {
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { evaluateSubmissionInsidePlatform } from "@/server/model/pipeline/submission-evaluation-service";
+import {
+  EvaluationPlatformError,
+  classifyEvaluationError,
+} from "@/server/model/pipeline/evaluation-failure";
 
 export async function POST(req: NextRequest) {
   try {
@@ -129,27 +133,32 @@ export async function POST(req: NextRequest) {
     });
 
     try {
-      await evaluateSubmissionInsidePlatform(codeSubmission.id);
+      const result = await evaluateSubmissionInsidePlatform(codeSubmission.id, {
+        traceId: req.headers.get("x-trace-id") ?? undefined,
+      });
 
       return NextResponse.json({
         submissionId: codeSubmission.id,
+        evaluationRunId: result.evaluationRunId,
+        evaluationStatus: result.status,
         message: "Submission created and evaluated by internal pipeline",
       });
     } catch (error) {
-      await prisma.codeSubmission.update({
-        where: { id: codeSubmission.id },
-        data: {
-          codeEvaluationStatus: CodeEvaluationStatus.LLM_EVALUATION_FAILED,
-        },
-      });
-
       throw error;
     }
   } catch (error: any) {
     console.error("Error in submission:", error);
+    const failure = classifyEvaluationError(error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
-      { status: 500 },
+      {
+        error:
+          error instanceof EvaluationPlatformError
+            ? "Evaluation service is temporarily unavailable"
+            : error.message || "Internal server error",
+        failureKind: failure.kind,
+        retryable: failure.retryable,
+      },
+      { status: failure.retryable ? 503 : 500 },
     );
   }
 }
