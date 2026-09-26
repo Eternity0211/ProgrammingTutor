@@ -6,6 +6,18 @@ import type { EvalRunner } from "@/server/model/dialogue/eval/eval-runner";
 import type { EvalTestCase } from "@/server/model/dialogue/eval/eval-types";
 import type { KnowledgeTrace } from "@/lib/services/graph-service";
 
+export class McpToolTimeoutError extends Error {
+  readonly retryable = true;
+
+  constructor(
+    readonly toolName: string,
+    readonly timeoutMs: number,
+  ) {
+    super(`MCP tool ${toolName} timed out after ${timeoutMs}ms`);
+    this.name = "McpToolTimeoutError";
+  }
+}
+
 const knowledgeInput = z.object({ question: z.string().trim().min(1).max(4000) });
 
 function createKnowledgeTool(rag: RagEngine): TutorTool<z.infer<typeof knowledgeInput>> {
@@ -139,7 +151,24 @@ export class TutorToolRegistry {
   async callTool(name: string, input: unknown): Promise<TutorToolResult> {
     const tool = this.tools.get(name);
     if (!tool) throw new Error(`Unknown MCP tool: ${name}`);
-    return tool.execute(tool.input.parse(input));
+    const timeoutMs = Math.max(
+      100,
+      Number(process.env.MCP_TOOL_TIMEOUT_MS ?? 30_000),
+    );
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        tool.execute(tool.input.parse(input)),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new McpToolTimeoutError(name, timeoutMs)),
+            timeoutMs,
+          );
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
 }
 

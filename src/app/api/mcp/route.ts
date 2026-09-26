@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { TutorToolRegistry } from "@/server/model/mcp";
 import { createCoreTutorTools } from "@/server/model/mcp";
+import { McpToolTimeoutError } from "@/server/model/mcp/tool-registry";
 import { RagEngine } from "@/server/model/dialogue/rag";
 import { Judge0RuntimeHarness } from "@/server/model/pipeline/runtime-harness";
 import { getAggregatedKnowledgeContext } from "@/lib/services/graph-service";
@@ -53,8 +54,21 @@ async function handlePost(req: NextRequest) {
       if (body.method === "tools/call") {
         const params = body.params ?? {};
         const name = typeof params.name === "string" ? params.name : "";
-        const result = await registry.callTool(name, params.arguments);
-        return NextResponse.json(jsonRpcResult(body.id, result));
+        try {
+          const result = await registry.callTool(name, params.arguments);
+          return NextResponse.json(jsonRpcResult(body.id, result));
+        } catch (error) {
+          const timeout = error instanceof McpToolTimeoutError;
+          return NextResponse.json(
+            jsonRpcError(
+              body.id,
+              timeout ? -32001 : -32602,
+              timeout ? "Tool execution timed out" : "Tool execution failed",
+              { retryable: timeout },
+            ),
+            { status: timeout ? 504 : 200 },
+          );
+        }
       }
       return NextResponse.json(jsonRpcError(body.id, -32601, `Method not found: ${body.method}`), { status: 200 });
     }
@@ -63,7 +77,11 @@ async function handlePost(req: NextRequest) {
     return NextResponse.json(await registry.callTool(body.name, body.arguments));
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid tool request";
-    return NextResponse.json({ error: message }, { status: 400 });
+    const timeout = error instanceof McpToolTimeoutError;
+    return NextResponse.json(
+      { error: timeout ? "Tool execution timed out" : message, retryable: timeout },
+      { status: timeout ? 504 : 400 },
+    );
   }
 }
 

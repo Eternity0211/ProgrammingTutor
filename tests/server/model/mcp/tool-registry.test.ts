@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createCoreTutorTools, defineTutorTool, TutorToolRegistry } from "@/server/model/mcp";
+import { McpToolTimeoutError } from "@/server/model/mcp/tool-registry";
 
 describe("TutorToolRegistry", () => {
   it("lists the knowledge tool", () => {
@@ -45,5 +46,24 @@ describe("TutorToolRegistry", () => {
     expect(runtime.execute).not.toHaveBeenCalled();
     await registry.callTool("knowledge_graph_context", { conceptIds: ["arrays"] });
     expect(graph).toHaveBeenCalledWith(["arrays"]);
+  });
+});
+
+describe("MCP tool timeout", () => {
+  const originalTimeout = process.env.MCP_TOOL_TIMEOUT_MS;
+
+  afterAll(() => {
+    if (originalTimeout === undefined) delete process.env.MCP_TOOL_TIMEOUT_MS;
+    else process.env.MCP_TOOL_TIMEOUT_MS = originalTimeout;
+  });
+
+  it("stops waiting for a stalled tool", async () => {
+    process.env.MCP_TOOL_TIMEOUT_MS = "100";
+    const registry = new TutorToolRegistry({
+      answer: () => new Promise(() => undefined),
+    } as never);
+    await expect(
+      registry.callTool("knowledge_answer", { question: "pointer" }),
+    ).rejects.toBeInstanceOf(McpToolTimeoutError);
   });
 });
