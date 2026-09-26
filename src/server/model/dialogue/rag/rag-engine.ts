@@ -1,7 +1,11 @@
 import { randomUUID } from "crypto";
 import type { KnowledgeDocument, RagResponse, RetrievalResult } from "../types";
 import { DialogueLlmClient } from "../shared/llm-client";
-import { KnowledgeStore, type KnowledgeFilters } from "./knowledge-store";
+import {
+  KnowledgeStore,
+  type KnowledgeFilters,
+  type RagRetrievalMode,
+} from "./knowledge-store";
 import { scanMdDirectory } from "./rag‑parser";
 
 export class RagEngine {
@@ -14,6 +18,7 @@ export class RagEngine {
     store?: KnowledgeStore;
     llm?: DialogueLlmClient;
     scoreThreshold?: number;
+    retrievalMode?: RagRetrievalMode;
     autoLoad?: boolean;
     persistDocuments?: boolean;
   }) {
@@ -22,6 +27,7 @@ export class RagEngine {
       options?.store ??
       new KnowledgeStore(this.llm, {
         persistDocuments: options?.persistDocuments,
+        retrievalMode: options?.retrievalMode,
       });
     this.scoreThreshold = options?.scoreThreshold ?? 0.3;
     if (options?.autoLoad) {

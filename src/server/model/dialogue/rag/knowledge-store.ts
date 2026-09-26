@@ -14,6 +14,27 @@ export type KnowledgeFilters = Partial<{
   topic: string;
 }>;
 
+export type RagRetrievalMode = "keyword" | "vector" | "hybrid";
+
+function tokenize(text: string): Set<string> {
+  const normalized = text.toLocaleLowerCase();
+  const terms = normalized.match(/[a-z0-9_]+|[\u3400-\u9fff]/gi) ?? [];
+  return new Set(terms);
+}
+
+function keywordScore(query: string, document: KnowledgeDocument): number {
+  const queryTerms = tokenize(query);
+  if (queryTerms.size === 0) return 0;
+  const contentTerms = tokenize(`${document.title ?? ""} ${document.content}`);
+  let overlap = 0;
+  for (const term of queryTerms) {
+    if (contentTerms.has(term)) overlap += 1;
+  }
+  const titleTerms = tokenize(document.title ?? "");
+  const titleBoost = [...queryTerms].some((term) => titleTerms.has(term)) ? 0.15 : 0;
+  return Math.min(1, overlap / queryTerms.size + titleBoost);
+}
+
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length || a.length === 0) return 0;
 
@@ -36,19 +57,38 @@ export class KnowledgeStore {
   private embeddings: Map<string, number[]> = new Map();
   private llm: DialogueLlmClient;
   private persistDocuments: boolean;
+  private retrievalMode: RagRetrievalMode;
 
-  constructor(llm?: DialogueLlmClient, options?: { persistDocuments?: boolean }) {
+  constructor(
+    llm?: DialogueLlmClient,
+    options?: { persistDocuments?: boolean; retrievalMode?: RagRetrievalMode },
+  ) {
     this.llm = llm ?? DialogueLlmClient.getInstance();
     this.persistDocuments = options?.persistDocuments ?? false;
+    this.retrievalMode =
+      options?.retrievalMode ??
+      (process.env.RAG_RETRIEVAL_MODE as RagRetrievalMode | undefined) ??
+      "keyword";
   }
 
   async addDocument(document: KnowledgeDocumentInput): Promise<void> {
-    const embedding = await this.llm.createEmbedding(document.content);
+    let embedding: number[] = [];
+    if (this.retrievalMode !== "keyword") {
+      try {
+        embedding = await this.llm.createEmbedding(document.content);
+      } catch (error) {
+        if (this.retrievalMode === "vector") throw error;
+        console.warn("[KnowledgeStore] Embedding unavailable, using keyword retrieval:", error);
+      }
+    }
     const contentHash = createHash("sha256").update(document.content).digest("hex");
     const metadata = {
       ...(document.metadata && typeof document.metadata === "object" ? document.metadata : {}),
       contentHash,
-      embeddingModel: process.env.EMBEDDING_MODEL ?? "default",
+      embeddingModel:
+        embedding.length > 0
+          ? process.env.EMBEDDING_MODEL ?? "default"
+          : "keyword",
       version: 1,
     };
     const storedDocument = { ...document, metadata, embedding };
@@ -89,7 +129,7 @@ export class KnowledgeStore {
     for (const doc of dbDocs) {
       if (this.embeddings.has(doc.id)) continue;
       const embedding = Array.isArray(doc.embedding) ? doc.embedding : [];
-      if (embedding.length === 0) {
+      if (embedding.length === 0 && this.retrievalMode === "vector") {
         console.warn(`[KnowledgeStore] 跳过没有 embedding 的文档 id=${doc.id}`);
         continue;
       }
@@ -120,13 +160,28 @@ export class KnowledgeStore {
     });
     if (filteredDocuments.length === 0) return [];
 
-    const queryEmbedding = await this.llm.createEmbedding(query);
-
-    const scores = filteredDocuments.map((doc) => {
-      const docEmbedding = this.embeddings.get(doc.id)!;
-      const score = cosineSimilarity(queryEmbedding, docEmbedding);
-      return { document: this.toPublicDocument(doc), score };
-    });
+    let scores: Array<{ document: RetrievalResult["document"]; score: number }>;
+    if (this.retrievalMode === "keyword") {
+      scores = filteredDocuments.map((doc) => ({
+        document: this.toPublicDocument(doc),
+        score: keywordScore(query, doc),
+      }));
+    } else {
+      try {
+        const queryEmbedding = await this.llm.createEmbedding(query);
+        scores = filteredDocuments.map((doc) => ({
+          document: this.toPublicDocument(doc),
+          score: cosineSimilarity(queryEmbedding, this.embeddings.get(doc.id) ?? []),
+        }));
+      } catch (error) {
+        if (this.retrievalMode === "vector") throw error;
+        console.warn("[KnowledgeStore] Vector retrieval unavailable, using keyword retrieval:", error);
+        scores = filteredDocuments.map((doc) => ({
+          document: this.toPublicDocument(doc),
+          score: keywordScore(query, doc),
+        }));
+      }
+    }
 
     scores.sort((a, b) => b.score - a.score);
     return scores.slice(0, topK) as RetrievalResult[];

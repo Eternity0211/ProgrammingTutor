@@ -48,7 +48,7 @@ describe("KnowledgeStore", () => {
       if (text.includes("递归")) return [0, 1, 0];
       return [0, 0, 1];
     });
-    store = new KnowledgeStore(mockLlm);
+    store = new KnowledgeStore(mockLlm, { retrievalMode: "vector" });
   });
 
   it("should add document and generate embedding", async () => {
@@ -193,5 +193,24 @@ describe("KnowledgeStore", () => {
 
     const results = await store.search("向量");
     expect(results[0].document).not.toHaveProperty("embedding");
+  });
+
+  it("should support keyword retrieval without an embedding provider", async () => {
+    mockLlm.createEmbedding.mockRejectedValue(new Error("embedding unavailable"));
+    const keywordStore = new KnowledgeStore(mockLlm, { retrievalMode: "keyword" });
+
+    await keywordStore.addDocument({
+      id: "doc-keyword",
+      title: "悬空指针",
+      content: "释放内存后继续使用指针会产生悬空指针问题。",
+      metadata: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const results = await keywordStore.search("什么是悬空指针");
+    expect(results[0].document.id).toBe("doc-keyword");
+    expect(results[0].score).toBeGreaterThan(0);
+    expect(mockLlm.createEmbedding).not.toHaveBeenCalled();
   });
 });

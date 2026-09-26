@@ -22,7 +22,7 @@ describe("RagEngine", () => {
       if (text.includes("递归")) return [0, 1, 0];
       return [0, 0, 1];
     });
-    engine = new RagEngine({ llm: mockLlm, scoreThreshold: 0.3 });
+    engine = new RagEngine({ llm: mockLlm, scoreThreshold: 0.3, retrievalMode: "vector" });
   });
 
   it("should answer with knowledge base when retrieval is good", async () => {
@@ -114,6 +114,7 @@ describe("RagEngine", () => {
     const strictEngine = new RagEngine({
       llm: mockLlm,
       scoreThreshold: 1.01,
+      retrievalMode: "vector",
     });
     await strictEngine.addKnowledge("指针", "指针是变量的内存地址");
     mockLlm.chatCompletion.mockResolvedValue("degraded answer");
