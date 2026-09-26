@@ -175,6 +175,14 @@ export function recordAgentOutputValidation(
   );
 }
 
+export function recordPromptInvocation(promptId: string, version: string): void {
+  incrementCounter(
+    "programming_tutor_prompt_invocations_total",
+    "Total prompt invocations by registered prompt and version.",
+    { prompt_id: promptId, version },
+  );
+}
+
 export function recordDependencyCall(
   dependency: string,
   outcome: string,

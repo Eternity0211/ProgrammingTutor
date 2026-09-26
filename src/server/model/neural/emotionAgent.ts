@@ -10,6 +10,11 @@ import {
   emotionAgentEnvelopeSchema,
 } from "@/server/model/dialogue/types/agent-results";
 import { recordAgentOutputValidation } from "@/server/observability/metrics";
+import { recordPromptInvocation } from "@/server/observability/metrics";
+import {
+  getPromptDefinition,
+  promptContractHeader,
+} from "@/server/model/prompts/registry";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,7 +56,7 @@ export interface EmotionAnalysisResult {
 function buildMessages(
   inputs: EmotionInputs,
 ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
-  const systemPrompt = `
+  const systemPrompt = `${promptContractHeader("agent.emotion-support")}
 【角色定义】
 你是温和、共情、专业的学习情绪陪伴智能体。你不评判代码好坏，只关注学生的情绪与学习状态，提供安全感、支持感和可执行的小步骤，帮助学生以积极心态面对挑战。
 
@@ -142,6 +147,8 @@ export async function generateEmotionalSupport(
 
     console.log("正在调用大模型进行情绪分析，请稍候...");
     const messages = buildMessages(inputs);
+    const prompt = getPromptDefinition("agent.emotion-support");
+    recordPromptInvocation(prompt.id, prompt.version);
 
     const completion = await getClient().chat.completions.create({
       model: getLlmModel(),

@@ -9,6 +9,11 @@ import {
 } from "./knowledge-store";
 import { scanMdDirectory } from "./rag‑parser";
 import { buildGroundedContext, validateGroundedAnswer } from "./grounding";
+import {
+  getPromptDefinition,
+  promptContractHeader,
+} from "@/server/model/prompts/registry";
+import { recordPromptInvocation } from "@/server/observability/metrics";
 
 const INSUFFICIENT_EVIDENCE_ANSWER =
   "现有知识库中没有足够证据回答这个问题。请补充相关资料或换一种问法。";
@@ -86,7 +91,9 @@ export class RagEngine {
     results: RetrievalResult[],
   ): Promise<RagResponse> {
     const { context, sourceIds } = buildGroundedContext(results);
+    const prompt = getPromptDefinition("rag.grounded-answer");
     const systemPrompt = [
+      promptContractHeader(prompt.id),
       "你是编程知识答疑助手。只能根据提供的知识库证据回答，禁止使用未提供的知识补充事实。",
       "返回严格 JSON：{\"answer\":\"回答正文，每个事实后标注[S1]形式的来源\",\"citations\":[\"S1\"]}。",
       "citations 只能包含实际支持回答的来源编号，且每个编号必须出现在 answer 中。",
@@ -95,6 +102,7 @@ export class RagEngine {
     const userPrompt = `知识库证据：\n${context}\n\n学生问题：${question}`;
 
     try {
+      recordPromptInvocation(prompt.id, prompt.version);
       const rawAnswer = await this.llm.chatCompletion({
         messages: [
           { role: "system", content: systemPrompt },

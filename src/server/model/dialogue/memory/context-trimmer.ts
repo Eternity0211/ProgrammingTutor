@@ -1,5 +1,10 @@
 import { DialogueLlmClient } from "../shared/llm-client";
 import type { ChatMessage } from "../types";
+import {
+  getPromptDefinition,
+  promptContractHeader,
+} from "@/server/model/prompts/registry";
+import { recordPromptInvocation } from "@/server/observability/metrics";
 
 export interface TrimOptions {
   maxMessages: number;
@@ -179,11 +184,14 @@ export class ContextTrimmer {
       .map((m) => `${m.role}: ${m.content}`)
       .join("\n");
 
+    const prompt = getPromptDefinition("dialogue.session-summary");
+    recordPromptInvocation(prompt.id, prompt.version);
     const result = await this.llm.chatCompletion({
       messages: [
         {
           role: "system",
           content:
+            `${promptContractHeader(prompt.id)}\n` +
             "你是对话摘要助手。请将以下对话摘要为不超过200字的中文，保留关键信息（代码问题、情绪状态、知识点、学习路径需求）。",
         },
         {

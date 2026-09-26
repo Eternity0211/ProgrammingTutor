@@ -5,6 +5,11 @@ import type {
   ExtractedEntities,
   IntentRecognitionResult,
 } from "../types";
+import {
+  getPromptDefinition,
+  promptContractHeader,
+} from "@/server/model/prompts/registry";
+import { recordPromptInvocation } from "@/server/observability/metrics";
 
 const EMOTION_KEYWORDS = [
   "挫败", "焦虑", "迷茫", "沮丧", "不行", "太难", "放弃", "崩溃",
@@ -88,10 +93,15 @@ export class IntentRecognizer {
     context?: ChatMessage[],
   ): Promise<IntentRecognitionResult> {
     const userPrompt = this.buildUserPrompt(message, context);
+    const prompt = getPromptDefinition("dialogue.intent-classification");
+    recordPromptInvocation(prompt.id, prompt.version);
 
     const content = await this.llm.chatCompletion({
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        {
+          role: "system",
+          content: `${promptContractHeader(prompt.id)}\n${SYSTEM_PROMPT}`,
+        },
         { role: "user", content: userPrompt },
       ],
       jsonMode: true,

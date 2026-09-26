@@ -25,6 +25,7 @@ import {
   navigationAgentEnvelopeSchema,
 } from "@/server/model/dialogue/types/agent-results";
 import { recordAgentOutputValidation } from "@/server/observability/metrics";
+import { promptTraceAttributes } from "@/server/model/prompts/registry";
 
 const runtimeHarness = new Judge0RuntimeHarness();
 
@@ -259,6 +260,7 @@ export async function evaluateSubmissionInsidePlatform(
         recordAgentOutputValidation("navigation-pipeline", "invalid");
       }
       traceLogger.endSpan(navigationSpan, {
+        ...promptTraceAttributes("agent.learning-navigation"),
         available: Boolean(navigation),
         valid: validatedNavigation.success,
       });
@@ -280,7 +282,11 @@ export async function evaluateSubmissionInsidePlatform(
         );
       }
       recordAgentOutputValidation("code-review-pipeline", "valid");
-      traceLogger.endSpan(codeReviewSpan, { blocking: true, valid: true });
+      traceLogger.endSpan(codeReviewSpan, {
+        ...promptTraceAttributes("agent.code-review"),
+        blocking: true,
+        valid: true,
+      });
 
       aiFeedback = { branch: "code-review-agent", ...validatedCodeReview.data };
       const navigationSpan = traceLogger.startSpan("agent.navigation", evaluationSpan);
@@ -297,6 +303,7 @@ export async function evaluateSubmissionInsidePlatform(
         recordAgentOutputValidation("navigation-pipeline", "invalid");
       }
       traceLogger.endSpan(navigationSpan, {
+        ...promptTraceAttributes("agent.learning-navigation"),
         available: Boolean(navigation),
         valid: validatedNavigation.success,
       });
@@ -315,6 +322,7 @@ export async function evaluateSubmissionInsidePlatform(
       recordAgentOutputValidation("emotion-pipeline", "invalid");
     }
     traceLogger.endSpan(emotionSpan, {
+      ...promptTraceAttributes("agent.emotion-support"),
       available: Boolean(emotion),
       valid: validatedEmotion.success,
     });

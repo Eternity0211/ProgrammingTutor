@@ -11,6 +11,11 @@ import {
   navigationAgentEnvelopeSchema,
 } from "@/server/model/dialogue/types/agent-results";
 import { recordAgentOutputValidation } from "@/server/observability/metrics";
+import { recordPromptInvocation } from "@/server/observability/metrics";
+import {
+  getPromptDefinition,
+  promptContractHeader,
+} from "@/server/model/prompts/registry";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -99,7 +104,7 @@ function buildMessages(
   inputs: NavigatorInputs,
 ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
   const leetCodeQuestions = loadLeetCodeQuestions();
-  const systemPrompt = `
+  const systemPrompt = `${promptContractHeader("agent.learning-navigation")}
 【角色定义】
 你是精准、科学、循序渐进的编程学习导航智能体。根据代码审查中发现的问题，结合知识图谱，为学生规划个性化的学习路径和推荐针对性的练习题目，帮助学生填补知识 gaps，培养良好的编程习惯和工程规范。
 
@@ -206,6 +211,8 @@ export async function generateLearningNavigation(
 
     console.log("正在调用大模型生成学习路径，请稍候...");
     const messages = buildMessages(inputs);
+    const prompt = getPromptDefinition("agent.learning-navigation");
+    recordPromptInvocation(prompt.id, prompt.version);
 
     const completion = await getClient().chat.completions.create({
       model: getLlmModel(),

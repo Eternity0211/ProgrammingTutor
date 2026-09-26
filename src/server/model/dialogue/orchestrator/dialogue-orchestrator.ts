@@ -45,6 +45,12 @@ import {
   PrismaEvaluationEvidenceStore,
   type EvaluationEvidenceStore,
 } from "@/server/model/pipeline/evaluation-evidence-store";
+import {
+  getPromptDefinition,
+  promptContractHeader,
+  promptTraceAttributes,
+} from "@/server/model/prompts/registry";
+import { recordPromptInvocation } from "@/server/observability/metrics";
 
 interface OrchestratorOptions {
   sessionStore?: SessionStore;
@@ -428,6 +434,7 @@ export class DialogueOrchestrator {
           throw new Error("codeReviewAgent returned an invalid result");
         }
         ctx.traceLogger.endSpan(codeSpan, {
+          ...promptTraceAttributes("agent.code-review"),
           confidence: validatedCodeReview.data.confidence,
           suggestions: validatedCodeReview.data.suggestions.length,
         });
@@ -449,7 +456,10 @@ export class DialogueOrchestrator {
             );
             if (validatedEmotion.success) emotion = validatedEmotion.data;
           }
-          ctx.traceLogger.endSpan(emotionSpan, { available: Boolean(emotion) });
+          ctx.traceLogger.endSpan(emotionSpan, {
+            ...promptTraceAttributes("agent.emotion-support"),
+            available: Boolean(emotion),
+          });
         } catch (error) {
           console.warn(
             "[DialogueOrchestrator] emotionAgent failed, skipping:",
@@ -526,7 +536,10 @@ export class DialogueOrchestrator {
           );
           if (validatedEmotion.success) emotion = validatedEmotion.data;
         }
-        ctx.traceLogger.endSpan(emotionSpan, { available: Boolean(emotion) });
+        ctx.traceLogger.endSpan(emotionSpan, {
+          ...promptTraceAttributes("agent.emotion-support"),
+          available: Boolean(emotion),
+        });
       } catch (error) {
         console.warn(
           "[DialogueOrchestrator] emotionAgent failed, using LLM fallback:",
@@ -591,6 +604,7 @@ export class DialogueOrchestrator {
           if (validatedNavigation.success) navigation = validatedNavigation.data;
         }
         ctx.traceLogger.endSpan(navigationSpan, {
+          ...promptTraceAttributes("agent.learning-navigation"),
           available: Boolean(navigation),
           pathSteps: navigation?.learning_path.length ?? 0,
         });
@@ -628,6 +642,7 @@ export class DialogueOrchestrator {
         ? await this.ragEngine.answer(request.message, request.context.ragFilters)
         : await this.ragEngine.answer(request.message);
       ctx.traceLogger.endSpan(ragSpan, {
+        ...promptTraceAttributes("rag.grounded-answer"),
         degraded: ragResponse.degraded,
         grounded: ragResponse.grounded,
         groundingReason: ragResponse.groundingReason,
@@ -702,7 +717,9 @@ export class DialogueOrchestrator {
       }
     }
 
+    const prompt = getPromptDefinition("dialogue.reply");
     const systemPrompt =
+      `${promptContractHeader(prompt.id)}\n` +
       `你是编程教学助手。请根据以下信息回答学生的问题，语气亲切、鼓励。\n` +
       (contextParts.length > 0
         ? contextParts.join("\n")
@@ -710,6 +727,7 @@ export class DialogueOrchestrator {
 
     try {
       const llmSpan = traceLogger?.startSpan("llm.reply", parentSpanId);
+      recordPromptInvocation(prompt.id, prompt.version);
       const reply = await this.llm.chatCompletion({
         messages: [
           { role: "system", content: systemPrompt },
@@ -717,7 +735,14 @@ export class DialogueOrchestrator {
         ],
         temperature: 0.7,
       });
-      if (llmSpan) traceLogger?.endSpan(llmSpan, { model: "dialogue" });
+      if (llmSpan) {
+        traceLogger?.endSpan(llmSpan, {
+          model: "dialogue",
+          promptId: prompt.id,
+          promptVersion: prompt.version,
+          promptFingerprint: prompt.fingerprint,
+        });
+      }
       return reply;
     } catch (error) {
       const llmSpan = traceLogger
@@ -741,11 +766,14 @@ export class DialogueOrchestrator {
 
   private async generateSessionTitle(message: string): Promise<string> {
     try {
+      const prompt = getPromptDefinition("dialogue.session-title");
+      recordPromptInvocation(prompt.id, prompt.version);
       const title = await this.llm.chatCompletion({
         messages: [
           {
             role: "system",
             content:
+              `${promptContractHeader(prompt.id)}\n` +
               "请根据学生的提问生成一个简短的会话标题，不超过20个字，只输出标题文本，不要加引号或其他标点。",
           },
           { role: "user", content: message },

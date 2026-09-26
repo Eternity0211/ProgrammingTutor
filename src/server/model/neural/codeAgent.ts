@@ -9,6 +9,11 @@ import {
   codeReviewAgentResultSchema,
 } from "@/server/model/dialogue/types/agent-results";
 import { recordAgentOutputValidation } from "@/server/observability/metrics";
+import { recordPromptInvocation } from "@/server/observability/metrics";
+import {
+  getPromptDefinition,
+  promptContractHeader,
+} from "@/server/model/prompts/registry";
 
 export interface CodeReviewAgentInput {
   code: string;
@@ -70,7 +75,7 @@ function buildCodeReviewPrompt(input: CodeReviewAgentInput): string {
 
   const neuralMetadata = loadNeuralMetadataContext();
 
-  return `You are a code review agent for a programming tutor platform.
+  return `${promptContractHeader("agent.code-review")}\nYou are a code review agent for a programming tutor platform.
 
 Task:
 1. Use symbolic diagnostics as high-priority evidence.
@@ -156,6 +161,8 @@ export async function runCodeReviewAgent(
   try {
     const client = createLlmClient();
     const prompt = buildCodeReviewPrompt(input);
+    const promptDefinition = getPromptDefinition("agent.code-review");
+    recordPromptInvocation(promptDefinition.id, promptDefinition.version);
 
     const completion = await client.chat.completions.create({
       model: getLlmModel(),
