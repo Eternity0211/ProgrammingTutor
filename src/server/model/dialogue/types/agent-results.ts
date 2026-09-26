@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export class AgentOutputValidationError extends Error {
+  constructor(agent: string, details: string) {
+    super(`${agent} returned invalid output: ${details}`);
+    this.name = "AgentOutputValidationError";
+  }
+}
+
 const chatMessageSchema = z.object({
   role: z.enum(["user", "assistant", "system"]),
   content: z.string(),
@@ -42,6 +49,10 @@ export const emotionAgentResultSchema = z.object({
   supportive_guidance: z.string().min(1),
 });
 
+export const emotionAgentEnvelopeSchema = z.object({
+  emotion_analysis: emotionAgentResultSchema,
+});
+
 export const navigationAgentResultSchema = z.object({
   weaknesses: z.array(z.string()),
   learning_path: z.array(
@@ -61,4 +72,8 @@ export const navigationAgentResultSchema = z.object({
       url: z.string(),
     }),
   ),
+});
+
+export const navigationAgentEnvelopeSchema = z.object({
+  learning_navigation: navigationAgentResultSchema,
 });

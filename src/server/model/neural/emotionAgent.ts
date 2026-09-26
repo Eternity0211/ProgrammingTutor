@@ -5,6 +5,11 @@ import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
 import { recordLlmUsage } from "@/server/model/shared/llm-usage-recorder";
+import {
+  AgentOutputValidationError,
+  emotionAgentEnvelopeSchema,
+} from "@/server/model/dialogue/types/agent-results";
+import { recordAgentOutputValidation } from "@/server/observability/metrics";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -130,10 +135,9 @@ export async function generateEmotionalSupport(
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
-      console.warn(
-        "⚠️  DEEPSEEK_API_KEY not set, returning default emotion analysis",
-      );
-      return getDefaultEmotionalSupport();
+      console.warn("⚠️  DEEPSEEK_API_KEY not set, skipping emotion analysis");
+      recordAgentOutputValidation("emotion", "unavailable");
+      return null;
     }
 
     console.log("正在调用大模型进行情绪分析，请稍候...");
@@ -157,7 +161,13 @@ export async function generateEmotionalSupport(
     recordLlmUsage(completion.usage, { agent: "emotion", model: getLlmModel() });
 
     // 解析 JSON
-    const parsedData = JSON.parse(answerContent) as EmotionAnalysisResult;
+    const parsed = emotionAgentEnvelopeSchema.safeParse(JSON.parse(answerContent));
+    if (!parsed.success) {
+      recordAgentOutputValidation("emotion", "invalid");
+      throw new AgentOutputValidationError("EmotionAgent", parsed.error.message);
+    }
+    const parsedData: EmotionAnalysisResult = parsed.data;
+    recordAgentOutputValidation("emotion", "valid");
 
     // 保存文件
     saveResultToJson(parsedData);
@@ -165,23 +175,11 @@ export async function generateEmotionalSupport(
     return parsedData;
   } catch (error) {
     console.error(`❌ 情绪分析失败：`, error);
-    return getDefaultEmotionalSupport();
+    if (!(error instanceof AgentOutputValidationError)) {
+      recordAgentOutputValidation("emotion", "unavailable");
+    }
+    return null;
   }
-}
-
-/**
- * 返回默认的情绪支持结果（当 API 不可用时）
- */
-function getDefaultEmotionalSupport(): EmotionAnalysisResult {
-  return {
-    emotion_analysis: {
-      detected_emotion: "平静",
-      intensity: "弱",
-      reason: "代码执行过程顺利",
-      supportive_guidance:
-        "很好！继续保持这样的学习态度，每次提交都是进步。如果遇到问题，先查看错误信息，逐一解决。",
-    },
-  };
 }
 
 // ================= 测试运行 =================

@@ -4,6 +4,11 @@ import OpenAI from "openai";
 import { SymbolicResult } from "@/lib/types/symbolic-types";
 import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
 import { recordLlmUsage } from "@/server/model/shared/llm-usage-recorder";
+import {
+  AgentOutputValidationError,
+  codeReviewAgentResultSchema,
+} from "@/server/model/dialogue/types/agent-results";
+import { recordAgentOutputValidation } from "@/server/observability/metrics";
 
 export interface CodeReviewAgentInput {
   code: string;
@@ -163,21 +168,20 @@ export async function runCodeReviewAgent(
     if (!answerContent) throw new Error("API returned empty content");
     recordLlmUsage(completion.usage, { agent: "code-review", model: getLlmModel() });
 
-    const parsed = JSON.parse(answerContent);
-
-    return {
-      reviewSummary: parsed.reviewSummary || "Analysis completed.",
-      causalAnalysis: parsed.causalAnalysis || "No causal analysis.",
-      suggestions: parsed.suggestions || [],
-      confidence: parsed.confidence ?? 0.8,
-    };
+    const parsed = codeReviewAgentResultSchema.safeParse(JSON.parse(answerContent));
+    if (!parsed.success) {
+      recordAgentOutputValidation("code-review", "invalid");
+      throw new AgentOutputValidationError("CodeReviewAgent", parsed.error.message);
+    }
+    recordAgentOutputValidation("code-review", "valid");
+    return parsed.data;
   } catch (error) {
     console.error("❌ CodeReviewAgent Error:", error);
-    return {
-      reviewSummary: "Fallback mode activated.",
-      causalAnalysis: "An error occurred during AI analysis.",
-      suggestions: ["Check symbolic errors manually."],
-      confidence: 0.5,
-    };
+    if (!(error instanceof AgentOutputValidationError)) {
+      recordAgentOutputValidation("code-review", "unavailable");
+    }
+    throw new Error("Code review model output is unavailable or invalid", {
+      cause: error,
+    });
   }
 }

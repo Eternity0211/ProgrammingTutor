@@ -173,4 +173,54 @@ describe("submission evaluation fact pipeline", () => {
       data: { codeEvaluationStatus: "PENDING" },
     });
   });
+
+  it("drops invalid optional agent outputs instead of persisting them", async () => {
+    (generateLearningNavigation as jest.Mock).mockResolvedValue({
+      learning_navigation: { weaknesses: "not-an-array" },
+    });
+    (generateEmotionalSupport as jest.Mock).mockResolvedValue({
+      emotion_analysis: { intensity: "unknown" },
+    });
+
+    const result = await evaluateSubmissionInsidePlatform("code-1");
+
+    expect(result.status).toBe("COMPLETED");
+    expect(prisma.evaluationRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          hasNavigation: false,
+          hasEmotion: false,
+          payload: expect.objectContaining({ navigation: null, emotion: null }),
+        }),
+      }),
+    );
+  });
+
+  it("marks an invalid required code-review output as retryable platform failure", async () => {
+    (analyzeCode as jest.Mock).mockResolvedValue({
+      errors: [{ severity: "High", knowledge_concept: "pointer" }],
+      warnings: [],
+      metadata: { parseTime: 1 },
+    });
+    (runCodeReviewAgent as jest.Mock).mockResolvedValue({
+      reviewSummary: "",
+      causalAnalysis: "",
+      suggestions: "not-an-array",
+      confidence: 4,
+    });
+
+    await expect(evaluateSubmissionInsidePlatform("code-1")).rejects.toMatchObject({
+      message: "Code review model returned invalid output",
+      retryable: true,
+    });
+    expect(prisma.evaluationRun.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "FAILED_RETRYABLE",
+          failureKind: "invalid_model_output",
+          failureScope: "platform",
+        }),
+      }),
+    );
+  });
 });

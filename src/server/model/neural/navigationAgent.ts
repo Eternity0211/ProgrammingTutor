@@ -6,6 +6,11 @@ import { fileURLToPath } from "url";
 import { runCodeReviewAgent, CodeReviewAgentInput } from "@/server/model/neural/codeAgent";
 import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
 import { recordLlmUsage } from "@/server/model/shared/llm-usage-recorder";
+import {
+  AgentOutputValidationError,
+  navigationAgentEnvelopeSchema,
+} from "@/server/model/dialogue/types/agent-results";
+import { recordAgentOutputValidation } from "@/server/observability/metrics";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -194,10 +199,9 @@ export async function generateLearningNavigation(
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
-      console.warn(
-        "⚠️  DEEPSEEK_API_KEY not set, returning default learning navigation",
-      );
-      return getDefaultLearningNavigation();
+      console.warn("⚠️  DEEPSEEK_API_KEY not set, skipping learning navigation");
+      recordAgentOutputValidation("navigation", "unavailable");
+      return null;
     }
 
     console.log("正在调用大模型生成学习路径，请稍候...");
@@ -222,7 +226,13 @@ export async function generateLearningNavigation(
     recordLlmUsage(completion.usage, { agent: "navigation", model: getLlmModel() });
 
     // 解析 JSON
-    const parsedData = JSON.parse(answerContent) as LearningNavigationResult;
+    const parsed = navigationAgentEnvelopeSchema.safeParse(JSON.parse(answerContent));
+    if (!parsed.success) {
+      recordAgentOutputValidation("navigation", "invalid");
+      throw new AgentOutputValidationError("NavigationAgent", parsed.error.message);
+    }
+    const parsedData: LearningNavigationResult = parsed.data;
+    recordAgentOutputValidation("navigation", "valid");
 
     // 保存文件
     saveResultToJson(parsedData);
@@ -230,7 +240,10 @@ export async function generateLearningNavigation(
     return parsedData;
   } catch (error) {
     console.error(`❌ 分析失败：`, error);
-    return getDefaultLearningNavigation();
+    if (!(error instanceof AgentOutputValidationError)) {
+      recordAgentOutputValidation("navigation", "unavailable");
+    }
+    return null;
   }
 }
 
@@ -312,29 +325,6 @@ ${weakTopics.map(t => `- ${t}`).join("\n")}
   });
 
   return nav?.learning_navigation.recommended_exercises || [];
-}
-
-/**
- * 返回默认的学习导航结果（当 API 不可用时）
- */
-function getDefaultLearningNavigation(): LearningNavigationResult {
-  return {
-    learning_navigation: {
-      weaknesses: ["代码质量分析待完善"],
-      learning_path: [
-        { step: 1, topic: "基础语法复习", duration: "1-2 小时", resources: ["C++ 官方文档"] },
-      ],
-      recommended_exercises: [
-        {
-          id: "lc509",
-          title: "斐波那契数",
-          difficulty: "入门",
-          purpose: "练习递归边界条件与基本递归思想",
-          url: "https://leetcode.cn/problems/fibonacci-number",
-        },
-      ],
-    },
-  };
 }
 
 // ================= 测试运行 =================

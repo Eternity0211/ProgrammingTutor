@@ -19,6 +19,12 @@ import {
   TraceLogger,
 } from "@/server/model/dialogue/shared/trace-logger";
 import { recordEvaluationOutcome } from "@/server/observability/metrics";
+import {
+  codeReviewAgentResultSchema,
+  emotionAgentEnvelopeSchema,
+  navigationAgentEnvelopeSchema,
+} from "@/server/model/dialogue/types/agent-results";
+import { recordAgentOutputValidation } from "@/server/observability/metrics";
 
 const runtimeHarness = new Judge0RuntimeHarness();
 
@@ -240,12 +246,22 @@ export async function evaluateSubmissionInsidePlatform(
         ),
       };
       const navigationSpan = traceLogger.startSpan("agent.navigation", evaluationSpan);
-      navigation = await generateLearningNavigation({
+      const navigationResult = await generateLearningNavigation({
         codeReviewResult: JSON.stringify(aiFeedback),
         knowledgeGraph: JSON.stringify(knowledgeContext),
         studentHistory: "",
       });
-      traceLogger.endSpan(navigationSpan, { available: Boolean(navigation) });
+      const validatedNavigation = navigationAgentEnvelopeSchema.safeParse(navigationResult);
+      if (validatedNavigation.success) {
+        navigation = validatedNavigation.data;
+        recordAgentOutputValidation("navigation-pipeline", "valid");
+      } else if (navigationResult !== null) {
+        recordAgentOutputValidation("navigation-pipeline", "invalid");
+      }
+      traceLogger.endSpan(navigationSpan, {
+        available: Boolean(navigation),
+        valid: validatedNavigation.success,
+      });
     } else {
       const codeReviewSpan = traceLogger.startSpan("agent.codeReview", evaluationSpan);
       const codeReviewResult = await runCodeReviewAgent({
@@ -254,24 +270,54 @@ export async function evaluateSubmissionInsidePlatform(
         symbolic,
         testSummary: { total: totalCount, passed: 0, failed: totalCount },
       });
-      traceLogger.endSpan(codeReviewSpan, { blocking: true });
+      const validatedCodeReview = codeReviewAgentResultSchema.safeParse(codeReviewResult);
+      if (!validatedCodeReview.success) {
+        recordAgentOutputValidation("code-review-pipeline", "invalid");
+        throw new EvaluationPlatformError(
+          "Code review model returned invalid output",
+          "invalid_model_output",
+          true,
+        );
+      }
+      recordAgentOutputValidation("code-review-pipeline", "valid");
+      traceLogger.endSpan(codeReviewSpan, { blocking: true, valid: true });
 
-      aiFeedback = { branch: "code-review-agent", ...codeReviewResult };
+      aiFeedback = { branch: "code-review-agent", ...validatedCodeReview.data };
       const navigationSpan = traceLogger.startSpan("agent.navigation", evaluationSpan);
-      navigation = await generateLearningNavigation({
-        codeReviewResult: codeReviewResult.causalAnalysis,
+      const navigationResult = await generateLearningNavigation({
+        codeReviewResult: validatedCodeReview.data.causalAnalysis,
         knowledgeGraph: JSON.stringify(knowledgeContext),
         studentHistory: "",
       });
-      traceLogger.endSpan(navigationSpan, { available: Boolean(navigation) });
+      const validatedNavigation = navigationAgentEnvelopeSchema.safeParse(navigationResult);
+      if (validatedNavigation.success) {
+        navigation = validatedNavigation.data;
+        recordAgentOutputValidation("navigation-pipeline", "valid");
+      } else if (navigationResult !== null) {
+        recordAgentOutputValidation("navigation-pipeline", "invalid");
+      }
+      traceLogger.endSpan(navigationSpan, {
+        available: Boolean(navigation),
+        valid: validatedNavigation.success,
+      });
       score = 0;
     }
 
     const emotionSpan = traceLogger.startSpan("agent.emotion", evaluationSpan);
-    emotion = await generateEmotionalSupport({
+    const emotionResult = await generateEmotionalSupport({
       codeReviewResult: isAllTestsPassed ? "表现优异" : "再接再厉",
     });
-    traceLogger.endSpan(emotionSpan, { available: Boolean(emotion) });
+    const validatedEmotion = emotionAgentEnvelopeSchema.safeParse(emotionResult);
+    if (validatedEmotion.success) {
+      emotion = validatedEmotion.data;
+      recordAgentOutputValidation("emotion-pipeline", "valid");
+    } else if (emotionResult !== null) {
+      recordAgentOutputValidation("emotion-pipeline", "invalid");
+    }
+    traceLogger.endSpan(emotionSpan, {
+      available: Boolean(emotion),
+      valid: validatedEmotion.success,
+    });
 
     const branch = blocking ? "code-review-agent" : "general-llm";
     const feedback = {

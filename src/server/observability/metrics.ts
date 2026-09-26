@@ -164,6 +164,17 @@ export function recordEvaluationOutcome(
   );
 }
 
+export function recordAgentOutputValidation(
+  agent: string,
+  outcome: "valid" | "invalid" | "unavailable",
+): void {
+  incrementCounter(
+    "programming_tutor_agent_output_validation_total",
+    "Total agent outputs by validation outcome.",
+    { agent, outcome },
+  );
+}
+
 export function recordDependencyCall(
   dependency: string,
   outcome: string,

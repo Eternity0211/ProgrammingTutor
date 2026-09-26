@@ -7,6 +7,7 @@ export type EvaluationFailureKind =
   | "timeout"
   | "judge0_unavailable"
   | "llm_unavailable"
+  | "invalid_model_output"
   | "database_unavailable"
   | "graph_unavailable"
   | "configuration"
