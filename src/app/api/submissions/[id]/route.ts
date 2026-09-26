@@ -32,6 +32,18 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
       },
       include: {
         submission: true,
+        evaluationRuns: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            id: true,
+            status: true,
+            retryable: true,
+            attempt: true,
+            failureKind: true,
+            traceId: true,
+          },
+        },
         testCaseResults: true,
         question: {
           include: {
@@ -138,6 +150,7 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
       navigation: parsedFeedback?.navigation || null,
       emotion: parsedFeedback?.emotion || null,
       symbolicOutput: parsedFeedback?.symbolic || null,
+      latestEvaluation: submission.evaluationRuns[0] ?? null,
     });
   } catch (error: any) {
     console.error("Error fetching submission:", error);

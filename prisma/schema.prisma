@@ -208,6 +208,8 @@ model EvaluationRun {
   failureKind          String?
   errorMessage         String?
   retryable            Boolean             @default(false)
+  attempt              Int                 @default(1)
+  retryOfRunId         String?
   traceId              String?
   startedAt            DateTime            @default(now())
   completedAt          DateTime?
@@ -218,6 +220,7 @@ model EvaluationRun {
   @@index([submissionId])
   @@index([questionId])
   @@index([status, retryable])
+  @@index([retryOfRunId])
 }
 
 enum EvaluationRunStatus {

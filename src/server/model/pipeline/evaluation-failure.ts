@@ -29,6 +29,17 @@ export class EvaluationPlatformError extends Error {
   }
 }
 
+export class EvaluationRunPlatformError extends EvaluationPlatformError {
+  constructor(
+    source: EvaluationPlatformError,
+    readonly evaluationRunId: string,
+    readonly codeSubmissionId: string,
+  ) {
+    super(source.message, source.kind, source.retryable, { cause: source });
+    this.name = "EvaluationRunPlatformError";
+  }
+}
+
 export function classifyEvaluationError(error: unknown): {
   scope: EvaluationFailureScope;
   kind: EvaluationFailureKind;

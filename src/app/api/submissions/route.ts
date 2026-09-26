@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { evaluateSubmissionInsidePlatform } from "@/server/model/pipeline/submission-evaluation-service";
 import {
   EvaluationPlatformError,
+  EvaluationRunPlatformError,
   classifyEvaluationError,
 } from "@/server/model/pipeline/evaluation-failure";
 import { observeRoute } from "@/server/observability/http";
@@ -183,6 +184,12 @@ async function handlePost(req: NextRequest) {
             : error.message || "Internal server error",
         failureKind: failure.kind,
         retryable: failure.retryable,
+        ...(error instanceof EvaluationRunPlatformError
+          ? {
+              submissionId: error.codeSubmissionId,
+              evaluationRunId: error.evaluationRunId,
+            }
+          : {}),
       },
       { status: failure.retryable ? 503 : 500 },
     );

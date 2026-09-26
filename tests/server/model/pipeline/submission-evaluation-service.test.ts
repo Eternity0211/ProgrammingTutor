@@ -150,9 +150,12 @@ describe("submission evaluation fact pipeline", () => {
   it("keeps the previous score when Judge0 is unavailable", async () => {
     execute.mockRejectedValue(new Error("connection refused"));
 
-    await expect(evaluateSubmissionInsidePlatform("code-1")).rejects.toThrow(
-      "Judge0 execution service is unavailable",
-    );
+    await expect(evaluateSubmissionInsidePlatform("code-1")).rejects.toMatchObject({
+      message: "Judge0 execution service is unavailable",
+      evaluationRunId: "run-1",
+      codeSubmissionId: "code-1",
+      retryable: true,
+    });
 
     expect(prisma.evaluationRun.update).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -10,6 +10,7 @@ import { generateLearningNavigation } from "@/server/model/neural/navigationAgen
 import { analyzeCode } from "@/server/model/symbolic/service";
 import {
   EvaluationPlatformError,
+  EvaluationRunPlatformError,
   classifyEvaluationError,
 } from "./evaluation-failure";
 import { Judge0RuntimeHarness } from "./runtime-harness";
@@ -31,7 +32,11 @@ function hasSymbolicBlockingIssues(
 
 export async function evaluateSubmissionInsidePlatform(
   codeSubmissionId: string,
-  options: { traceId?: string } = {},
+  options: {
+    traceId?: string;
+    retryOfRunId?: string;
+    attempt?: number;
+  } = {},
 ) {
   const codeSubmission = await prisma.codeSubmission.findUnique({
     where: { id: codeSubmissionId },
@@ -58,6 +63,8 @@ export async function evaluateSubmissionInsidePlatform(
       branch: "pending",
       traceId: options.traceId,
       status: "RUNNING",
+      retryOfRunId: options.retryOfRunId,
+      attempt: options.attempt ?? 1,
     },
   });
   const traceLogger = new TraceLogger(
@@ -356,6 +363,13 @@ export async function evaluateSubmissionInsidePlatform(
       }),
     ]);
 
+    if (error instanceof EvaluationPlatformError) {
+      throw new EvaluationRunPlatformError(
+        error,
+        evaluationRun.id,
+        codeSubmissionId,
+      );
+    }
     throw error;
   } finally {
     traceLogger.endSpan(evaluationSpan, {
