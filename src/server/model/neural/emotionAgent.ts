@@ -4,6 +4,7 @@ import * as path from "path";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
+import { recordLlmUsage } from "@/server/model/shared/llm-usage-recorder";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -153,6 +154,7 @@ export async function generateEmotionalSupport(
 
     console.log("\n" + "=".repeat(20) + " Token 消耗 " + "=".repeat(20));
     console.log(completion.usage);
+    recordLlmUsage(completion.usage, { agent: "emotion", model: getLlmModel() });
 
     // 解析 JSON
     const parsedData = JSON.parse(answerContent) as EmotionAnalysisResult;

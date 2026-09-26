@@ -1,0 +1,56 @@
+{
+  "instructions": "请由人工审核者依据代码、测试结果和学生上下文填写；不要参考 Agent 输出后再修改标准答案。完成后保存为 benefit-annotations.json。",
+  "scenarios": [
+    {
+      "id": "logic-average",
+      "review": {
+        "rootCauseRuleIds": ["CPP_LOGIC_WRONG_CONDITION_OPERATOR"],
+        "severity": "High",
+        "fixRequired": true
+      },
+      "navigation": {
+        "requiredTopics": ["运算符优先级", "整数/浮点除法"],
+        "acceptableFirstStep": "解释表达式优先级并给出带括号的修复方向"
+      },
+      "emotion": {
+        "expectedEmotion": "沮丧",
+        "acceptableEmotions": ["沮丧", "挫败"],
+        "expectedIntensity": "中"
+      }
+    },
+    {
+      "id": "memory-leak",
+      "review": {
+        "rootCauseRuleIds": ["CPP_MEMORY_LEAK"],
+        "severity": "High",
+        "fixRequired": true
+      },
+      "navigation": {
+        "requiredTopics": ["内存释放", "RAII/智能指针"],
+        "acceptableFirstStep": "指出 new 对应的释放责任并建议 RAII"
+      },
+      "emotion": {
+        "expectedEmotion": "焦虑",
+        "acceptableEmotions": ["焦虑", "沮丧", "迷茫"],
+        "expectedIntensity": "中"
+      }
+    },
+    {
+      "id": "clean-loop",
+      "review": {
+        "rootCauseRuleIds": [],
+        "severity": "None",
+        "fixRequired": false
+      },
+      "navigation": {
+        "requiredTopics": ["时间复杂度", "整数溢出边界"],
+        "acceptableFirstStep": "确认代码基本正确，再提出进阶改进"
+      },
+      "emotion": {
+        "expectedEmotion": "自信",
+        "acceptableEmotions": ["自信", "成就感", "平静"],
+        "expectedIntensity": "弱"
+      }
+    }
+  ]
+}

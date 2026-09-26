@@ -3,6 +3,7 @@ import path from "path";
 import OpenAI from "openai";
 import { SymbolicResult } from "@/lib/types/symbolic-types";
 import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
+import { recordLlmUsage } from "@/server/model/shared/llm-usage-recorder";
 
 export interface CodeReviewAgentInput {
   code: string;
@@ -160,6 +161,7 @@ export async function runCodeReviewAgent(
 
     const answerContent = completion.choices[0]?.message?.content;
     if (!answerContent) throw new Error("API returned empty content");
+    recordLlmUsage(completion.usage, { agent: "code-review", model: getLlmModel() });
 
     const parsed = JSON.parse(answerContent);
 

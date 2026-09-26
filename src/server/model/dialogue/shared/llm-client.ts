@@ -4,6 +4,7 @@ import {
   getEmbeddingModel,
   getLlmModel,
 } from "@/server/model/shared/llm-provider";
+import { recordLlmUsage } from "@/server/model/shared/llm-usage-recorder";
 
 export class DialogueLlmClient {
   private static instance: DialogueLlmClient | null = null;
@@ -46,6 +47,10 @@ export class DialogueLlmClient {
       ...(params.jsonMode
         ? { response_format: { type: "json_object" as const } }
         : {}),
+    });
+    recordLlmUsage(completion.usage, {
+      agent: "dialogue",
+      model: params.model ?? getLlmModel(),
     });
     const content = completion.choices[0]?.message?.content;
     if (!content) throw new Error("LLM returned empty content");
