@@ -12,6 +12,8 @@ const requiredInProduction = [
   ["NEO4J_URI", "Neo4j URI"],
   ["NEO4J_USER", "Neo4j 用户名"],
   ["NEO4J_PASSWORD", "Neo4j 密码"],
+  ["METRICS_TOKEN", "指标端点访问令牌"],
+  ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "OTLP Trace 接收端点"],
 ] as const;
 
 export function checkProductionConfig(

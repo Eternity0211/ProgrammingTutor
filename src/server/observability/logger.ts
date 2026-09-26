@@ -1,5 +1,12 @@
 type LogLevel = "debug" | "info" | "warn" | "error";
 
+const LEVEL_PRIORITY: Record<LogLevel, number> = {
+  debug: 10,
+  info: 20,
+  warn: 30,
+  error: 40,
+};
+
 const SENSITIVE_KEY =
   /(^|[_-])(authorization|cookie|password|secret|token|api[-_]?key|source[-_]?code|code)($|[_-])/i;
 
@@ -31,6 +38,9 @@ export function log(
   message: string,
   fields: Record<string, unknown> = {},
 ): void {
+  const configured = (process.env.LOG_LEVEL?.toLowerCase() ?? "info") as LogLevel;
+  const minimum = LEVEL_PRIORITY[configured] ?? LEVEL_PRIORITY.info;
+  if (LEVEL_PRIORITY[level] < minimum) return;
   const sanitizedFields = sanitize(fields);
   const payload = JSON.stringify({
     timestamp: new Date().toISOString(),

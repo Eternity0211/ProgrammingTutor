@@ -1,0 +1,47 @@
+groups:
+  - name: programming-tutor
+    rules:
+      - alert: ProgrammingTutorRequiredDependencyDown
+        expr: programming_tutor_dependency_ready{required="true"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ProgrammingTutor required dependency is unavailable"
+          description: "{{ $labels.dependency }} has failed readiness checks for two minutes."
+
+      - alert: ProgrammingTutorHighHttpErrorRate
+        expr: |
+          sum(rate(programming_tutor_http_requests_total{status=~"5.."}[10m]))
+          /
+          clamp_min(sum(rate(programming_tutor_http_requests_total[10m])), 0.001)
+          > 0.05
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ProgrammingTutor HTTP 5xx rate is above 5%"
+
+      - alert: ProgrammingTutorEvaluationFailureRate
+        expr: |
+          sum(rate(programming_tutor_evaluation_runs_total{status=~"FAILED_.*"}[15m]))
+          /
+          clamp_min(sum(rate(programming_tutor_evaluation_runs_total[15m])), 0.001)
+          > 0.10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ProgrammingTutor evaluation failures are above 10%"
+
+      - alert: ProgrammingTutorDialogueLatencyHigh
+        expr: |
+          sum(rate(programming_tutor_http_request_duration_seconds_sum{route="/api/dialogue"}[10m]))
+          /
+          clamp_min(sum(rate(programming_tutor_http_request_duration_seconds_count{route="/api/dialogue"}[10m])), 0.001)
+          > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ProgrammingTutor dialogue average latency is above 5 seconds"

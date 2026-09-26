@@ -19,6 +19,8 @@ describe("production config", () => {
       "NEO4J_URI",
       "NEO4J_USER",
       "NEO4J_PASSWORD",
+      "METRICS_TOKEN",
+      "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
     ]);
     expect(() => assertProductionConfig({ NODE_ENV: "production" })).toThrow(
       "生产环境配置不完整",
