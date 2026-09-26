@@ -76,7 +76,8 @@ export function rateLimitForUser(
   scope: "dialogue" | "submission" | "mcp",
   userId: string,
 ): RateLimitDecision {
-  const fallback = Number(process.env.RATE_LIMIT_MAX ?? 25);
+  const rawFallback = Number(process.env.RATE_LIMIT_MAX ?? 25);
+  const fallback = Number.isFinite(rawFallback) && rawFallback > 0 ? rawFallback : 25;
   const configured = Number(
     process.env[`${scope.toUpperCase()}_RATE_LIMIT_MAX`] ?? fallback,
   );

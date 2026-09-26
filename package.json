@@ -15,6 +15,7 @@
     "test": "jest",
     "test:integration:external": "cross-env RUN_EXTERNAL_INTEGRATION=1 jest tests/integration/external-services.integration.test.ts --runInBand",
     "test:observability": "jest tests/server/observability tests/server/config/production-config.test.ts tests/integration/metrics-api.test.ts --runInBand",
+    "test:resilience": "jest tests/server/resilience tests/integration/submission-retry-api.test.ts tests/server/model/pipeline/evaluation-failure.test.ts tests/server/model/mcp/tool-registry.test.ts --runInBand",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "validate:dataset": "node scripts/validate-neural-dataset.mjs",

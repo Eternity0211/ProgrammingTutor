@@ -151,10 +151,11 @@ export class TutorToolRegistry {
   async callTool(name: string, input: unknown): Promise<TutorToolResult> {
     const tool = this.tools.get(name);
     if (!tool) throw new Error(`Unknown MCP tool: ${name}`);
-    const timeoutMs = Math.max(
-      100,
-      Number(process.env.MCP_TOOL_TIMEOUT_MS ?? 30_000),
-    );
+    const configuredTimeout = Number(process.env.MCP_TOOL_TIMEOUT_MS ?? 30_000);
+    const timeoutMs =
+      Number.isFinite(configuredTimeout) && configuredTimeout >= 100
+        ? configuredTimeout
+        : 30_000;
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       return await Promise.race([

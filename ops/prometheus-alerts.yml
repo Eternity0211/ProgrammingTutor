@@ -45,3 +45,32 @@ groups:
           severity: warning
         annotations:
           summary: "ProgrammingTutor dialogue average latency is above 5 seconds"
+
+      - alert: ProgrammingTutorDependencyCircuitOpen
+        expr: sum(rate(programming_tutor_dependency_calls_total{outcome="circuit_open"}[5m])) by (dependency) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ProgrammingTutor dependency circuit is rejecting calls"
+          description: "{{ $labels.dependency }} is still unavailable after circuit protection activated."
+
+      - alert: ProgrammingTutorBulkheadSaturated
+        expr: sum(rate(programming_tutor_dependency_calls_total{outcome="bulkhead_full"}[5m])) by (dependency) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ProgrammingTutor dependency concurrency queue is full"
+
+      - alert: ProgrammingTutorRateLimitHigh
+        expr: |
+          sum(rate(programming_tutor_rate_limit_decisions_total{outcome="rejected"}[10m])) by (scope)
+          /
+          clamp_min(sum(rate(programming_tutor_rate_limit_decisions_total[10m])) by (scope), 0.001)
+          > 0.20
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ProgrammingTutor is rate-limiting more than 20% of requests"

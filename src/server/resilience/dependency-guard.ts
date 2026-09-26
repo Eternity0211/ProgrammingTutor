@@ -239,19 +239,23 @@ export function dependencyPolicy(
     judge0: { timeout: 20_000, concurrent: 8, queue: 50 },
     neo4j: { timeout: 5_000, concurrent: 16, queue: 50 },
   }[dependency];
+  const positiveNumber = (key: string, fallback: number): number => {
+    const value = Number(process.env[key] ?? fallback);
+    return Number.isFinite(value) && value > 0 ? value : fallback;
+  };
   return {
     dependency,
-    timeoutMs: Number(process.env[`${prefix}_TIMEOUT_MS`] ?? defaults.timeout),
-    failureThreshold: Number(
-      process.env[`${prefix}_CIRCUIT_FAILURE_THRESHOLD`] ?? 5,
+    timeoutMs: positiveNumber(`${prefix}_TIMEOUT_MS`, defaults.timeout),
+    failureThreshold: positiveNumber(
+      `${prefix}_CIRCUIT_FAILURE_THRESHOLD`,
+      5,
     ),
-    resetAfterMs: Number(
-      process.env[`${prefix}_CIRCUIT_RESET_MS`] ?? 30_000,
+    resetAfterMs: positiveNumber(`${prefix}_CIRCUIT_RESET_MS`, 30_000),
+    maxConcurrent: positiveNumber(
+      `${prefix}_MAX_CONCURRENCY`,
+      defaults.concurrent,
     ),
-    maxConcurrent: Number(
-      process.env[`${prefix}_MAX_CONCURRENCY`] ?? defaults.concurrent,
-    ),
-    maxQueue: Number(process.env[`${prefix}_MAX_QUEUE`] ?? defaults.queue),
+    maxQueue: positiveNumber(`${prefix}_MAX_QUEUE`, defaults.queue),
   };
 }
 

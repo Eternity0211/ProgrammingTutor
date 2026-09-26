@@ -25,6 +25,7 @@ jobs:
       - run: npm run validate:dataset:strict
       - run: npm run typecheck
       - run: npm run test:observability
+      - run: npm run test:resilience
       - run: npm test -- --runInBand
       - run: npm run build
         env:
