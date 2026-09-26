@@ -5,6 +5,7 @@ import { Button } from "@/app/_components/ui/button";
 import { Textarea } from "@/app/_components/ui/textarea";
 import { Badge } from "@/app/_components/ui/badge";
 import { cn } from "@/lib/utils";
+import { readEvaluationReference } from "@/lib/evaluation-reference";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/_components/ui/popover";
 import {
   Dialog,
@@ -155,6 +156,7 @@ export default function ChatPanel() {
     }
 
     try {
+      const evaluationReference = readEvaluationReference(window.localStorage);
       // 调用对话后端接口获取AI回复（orchestrator 自动保存消息到数据库）
       const res = await fetch("/api/dialogue", {
         method: "POST",
@@ -162,6 +164,9 @@ export default function ChatPanel() {
         body: JSON.stringify({
           message: trimmed,
           sessionId,
+          ...(evaluationReference
+            ? { context: evaluationReference }
+            : {}),
         }),
       });
 

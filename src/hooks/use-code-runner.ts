@@ -1,6 +1,7 @@
 import { CodeRunner, SymbolicResult, AIFeedback } from "@/lib/types/code-types";
 import { useState } from "react";
 import { toast } from "sonner";
+import { saveEvaluationReference } from "@/lib/evaluation-reference";
 
 import { LearningNavigationResult } from "@/server/model/neural/navigationAgent";
 import { EmotionAnalysisResult } from "@/server/model/neural/emotionAgent";
@@ -137,6 +138,12 @@ export function useCodeRunner({
 
       const data = await response.json();
       const submissionId = data.submissionId;
+      if (data.evaluationRunId && submissionId) {
+        saveEvaluationReference(window.localStorage, {
+          evaluationRunId: data.evaluationRunId,
+          codeSubmissionId: submissionId,
+        });
+      }
 
       setCodeStatus("Running test cases...");
       toast.success("Running test cases...");
