@@ -12,20 +12,45 @@ import {
   classifyEvaluationError,
 } from "@/server/model/pipeline/evaluation-failure";
 import { observeRoute } from "@/server/observability/http";
+import {
+  rateLimitForUser,
+  rateLimitRejected,
+  rejectOversizedRequest,
+} from "@/server/resilience/rate-limiter";
 
 async function handlePost(req: NextRequest) {
   try {
+    const oversized = rejectOversizedRequest(req, 256 * 1024);
+    if (oversized) return oversized;
     const session = await auth();
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const userId = session.user.id;
+    const rateLimit = rateLimitForUser("submission", userId);
+    if (!rateLimit.allowed) return rateLimitRejected(rateLimit);
     const { code, questionId, language } = await req.json();
     if (!code || !questionId || !language) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 },
+      );
+    }
+    if (
+      typeof code !== "string" ||
+      typeof questionId !== "string" ||
+      typeof language !== "string"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid submission payload" },
+        { status: 400 },
+      );
+    }
+    if (code.length > 200_000) {
+      return NextResponse.json(
+        { error: "Submission code is too large" },
+        { status: 413 },
       );
     }
 

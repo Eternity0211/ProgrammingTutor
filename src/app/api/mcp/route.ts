@@ -7,6 +7,11 @@ import { Judge0RuntimeHarness } from "@/server/model/pipeline/runtime-harness";
 import { getAggregatedKnowledgeContext } from "@/lib/services/graph-service";
 import { jsonRpcError, jsonRpcResult, type McpJsonRpcRequest } from "@/server/model/mcp/protocol";
 import { observeRoute } from "@/server/observability/http";
+import {
+  rateLimitForUser,
+  rateLimitRejected,
+  rejectOversizedRequest,
+} from "@/server/resilience/rate-limiter";
 
 const rag = new RagEngine({ autoLoad: true, persistDocuments: true });
 const registry = new TutorToolRegistry(rag, createCoreTutorTools({
@@ -18,12 +23,18 @@ const registry = new TutorToolRegistry(rag, createCoreTutorTools({
 async function handleGet() {
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const rateLimit = rateLimitForUser("mcp", user.id);
+  if (!rateLimit.allowed) return rateLimitRejected(rateLimit);
   return NextResponse.json({ tools: registry.listTools() });
 }
 
 async function handlePost(req: NextRequest) {
+  const oversized = rejectOversizedRequest(req, 256 * 1024);
+  if (oversized) return oversized;
   const user = await getAuthenticatedUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const rateLimit = rateLimitForUser("mcp", user.id);
+  if (!rateLimit.allowed) return rateLimitRejected(rateLimit);
   try {
     const body = (await req.json()) as { name?: string; arguments?: unknown } & Partial<McpJsonRpcRequest>;
 
