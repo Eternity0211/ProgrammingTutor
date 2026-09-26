@@ -1,12 +1,25 @@
 import { randomUUID } from "crypto";
 import type { KnowledgeDocument, RagResponse, RetrievalResult } from "../types";
 import { DialogueLlmClient } from "../shared/llm-client";
+import { incrementCounter } from "@/server/observability/metrics";
 import {
   KnowledgeStore,
   type KnowledgeFilters,
   type RagRetrievalMode,
 } from "./knowledge-store";
 import { scanMdDirectory } from "./rag‑parser";
+import { buildGroundedContext, validateGroundedAnswer } from "./grounding";
+
+const INSUFFICIENT_EVIDENCE_ANSWER =
+  "现有知识库中没有足够证据回答这个问题。请补充相关资料或换一种问法。";
+
+function recordGrounding(outcome: string): void {
+  incrementCounter(
+    "programming_tutor_rag_answers_total",
+    "Total RAG answers by grounding outcome.",
+    { outcome },
+  );
+}
 
 export class RagEngine {
   private store: KnowledgeStore;
@@ -43,59 +56,84 @@ export class RagEngine {
       const results = await this.store.search(question, 3, filters);
 
       if (results.length === 0 || results[0].score < this.scoreThreshold) {
-        return await this.answerWithLlm(question, [], true);
+        recordGrounding("insufficient_evidence");
+        return this.safeResponse("insufficient_evidence");
       }
 
-      return await this.answerWithLlm(question, results, false);
+      return await this.answerWithEvidence(question, results);
     } catch (error) {
-      console.warn(
-        "[RagEngine] Retrieval failed, using LLM native knowledge:",
-        error,
-      );
-      return await this.answerWithLlm(question, [], true);
+      console.warn("[RagEngine] Retrieval failed:", error);
+      recordGrounding("retrieval_unavailable");
+      return this.safeResponse("retrieval_unavailable");
     }
   }
 
-  private async answerWithLlm(
+  private safeResponse(
+    groundingReason: "insufficient_evidence" | "retrieval_unavailable",
+  ): RagResponse {
+    return {
+      answer: INSUFFICIENT_EVIDENCE_ANSWER,
+      sources: [],
+      citations: [],
+      grounded: false,
+      groundingReason,
+      degraded: true,
+    };
+  }
+
+  private async answerWithEvidence(
     question: string,
     results: RetrievalResult[],
-    degraded: boolean,
   ): Promise<RagResponse> {
-    let systemPrompt: string;
-    let userPrompt: string;
-
-    if (degraded || results.length === 0) {
-      systemPrompt =
-        "你是编程知识答疑助手。请用你的原生知识回答学生的编程问题，简洁、准确、易懂。";
-      userPrompt = `请回答以下问题：\n${question}`;
-    } else {
-      const context = results
-        .map((r) => `【${r.document.title}】\n${r.document.content}`)
-        .join("\n\n");
-      systemPrompt =
-        "你是编程知识答疑助手。请基于以下知识库内容回答学生的问题。如果知识库内容不足以完整回答，可以补充你自己的知识。";
-      userPrompt = `知识库内容：\n${context}\n\n学生问题：${question}`;
-    }
+    const { context, sourceIds } = buildGroundedContext(results);
+    const systemPrompt = [
+      "你是编程知识答疑助手。只能根据提供的知识库证据回答，禁止使用未提供的知识补充事实。",
+      "返回严格 JSON：{\"answer\":\"回答正文，每个事实后标注[S1]形式的来源\",\"citations\":[\"S1\"]}。",
+      "citations 只能包含实际支持回答的来源编号，且每个编号必须出现在 answer 中。",
+      "如果证据不足，不要猜测；返回简短说明，并引用最相关的证据。",
+    ].join("\n");
+    const userPrompt = `知识库证据：\n${context}\n\n学生问题：${question}`;
 
     try {
-      const answer = await this.llm.chatCompletion({
+      const rawAnswer = await this.llm.chatCompletion({
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.3,
+        temperature: 0,
+        jsonMode: true,
       });
+      const validated = validateGroundedAnswer(rawAnswer, sourceIds);
+      if (!validated) {
+        recordGrounding("invalid_model_output");
+        return {
+          answer: "知识库已检索到相关资料，但模型未能生成可验证的引用回答。请稍后再试。",
+          sources: [],
+          citations: [],
+          grounded: false,
+          groundingReason: "invalid_model_output",
+          degraded: true,
+        };
+      }
 
+      recordGrounding("supported");
       return {
-        answer,
-        sources: degraded ? [] : results.map((r) => r.document),
-        degraded,
+        answer: validated.answer,
+        sources: validated.citedResults.map((result) => result.document),
+        citations: validated.citations,
+        grounded: true,
+        groundingReason: "supported",
+        degraded: false,
       };
     } catch (error) {
       console.warn("[RagEngine] LLM answer generation failed:", error);
+      recordGrounding("llm_unavailable");
       return {
         answer: "抱歉，我暂时无法回答这个问题。请稍后再试。",
         sources: [],
+        citations: [],
+        grounded: false,
+        groundingReason: "llm_unavailable",
         degraded: true,
       };
     }

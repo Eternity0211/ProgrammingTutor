@@ -51,7 +51,14 @@ function makeMockRecognizer(intent: string, entities: Record<string, unknown> = 
 
 function makeMockRagEngine(answer: string, degraded = false): RagEngine {
   return {
-    answer: jest.fn().mockResolvedValue({ answer, sources: [], degraded }),
+    answer: jest.fn().mockResolvedValue({
+      answer,
+      sources: [],
+      degraded,
+      grounded: !degraded,
+      citations: [],
+      groundingReason: degraded ? "insufficient_evidence" : "supported",
+    }),
     addKnowledge: jest.fn(),
     getStore: jest.fn().mockReturnValue({ size: jest.fn().mockReturnValue(0) }),
   } as unknown as RagEngine;

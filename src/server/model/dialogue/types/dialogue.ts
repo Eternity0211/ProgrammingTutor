@@ -1,7 +1,7 @@
 import type { SymbolicResult } from "@/lib/types/symbolic-types";
 import { DialogueIntent } from "./intent";
 import { AgentResultSnapshot } from "./session";
-import type { KnowledgeDocument } from "./rag";
+import type { RagResponse } from "./rag";
 
 export interface DialogueRequestContext {
   evaluationRunId?: string;
@@ -34,11 +34,7 @@ export interface DialogueAgentResults {
   codeReview?: AgentResultSnapshot["codeReview"];
   emotion?: AgentResultSnapshot["emotion"];
   navigation?: AgentResultSnapshot["navigation"];
-  rag?: {
-    answer: string;
-    sources: KnowledgeDocument[];
-    degraded: boolean;
-  };
+  rag?: RagResponse;
 }
 
 export interface DialogueResponse {

@@ -46,6 +46,9 @@ describe("EvalRunner.runSingle", () => {
           answer: "指针是变量的内存地址",
           sources: [],
           degraded: false,
+          grounded: true,
+          citations: [],
+          groundingReason: "supported",
         },
       },
     });
@@ -123,6 +126,9 @@ describe("EvalRunner.runSingle", () => {
           answer: "answer",
           sources: [],
           degraded: false,
+          grounded: true,
+          citations: [],
+          groundingReason: "supported",
         },
       },
     });
@@ -247,6 +253,9 @@ describe("EvalRunner.runAll", () => {
           answer: "answer",
           sources: [],
           degraded: true,
+          grounded: false,
+          citations: [],
+          groundingReason: "insufficient_evidence",
         },
       },
     });

@@ -629,17 +629,16 @@ export class DialogueOrchestrator {
         : await this.ragEngine.answer(request.message);
       ctx.traceLogger.endSpan(ragSpan, {
         degraded: ragResponse.degraded,
+        grounded: ragResponse.grounded,
+        groundingReason: ragResponse.groundingReason,
+        citationCount: ragResponse.citations.length,
         sourceCount: ragResponse.sources.length,
       });
 
       return {
         reply: ragResponse.answer,
         agentResults: {
-          rag: {
-            answer: ragResponse.answer,
-            sources: ragResponse.sources,
-            degraded: ragResponse.degraded,
-          },
+          rag: ragResponse,
         },
       };
     } catch (error) {
