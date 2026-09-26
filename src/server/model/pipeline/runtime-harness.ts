@@ -5,6 +5,9 @@ import {
   type NormalizedRuntimeResult,
 } from "./runtime-result";
 import type { TraceLogger } from "@/server/model/dialogue/shared/trace-logger";
+import { createResilientFetch } from "@/server/resilience/dependency-guard";
+
+const judge0Fetch = createResilientFetch("judge0");
 
 export interface RuntimeHarnessRequest {
   code: string;
@@ -40,7 +43,7 @@ export class Judge0RuntimeHarness implements RuntimeHarness {
       headers["X-RapidAPI-Host"] = apiHost;
     }
     try {
-      const response = await fetch(
+      const response = await judge0Fetch(
         `${EXTERNAL_JUDGE0_API}/submissions?base64_encoded=true&wait=true`,
         { method: "POST", headers, body: JSON.stringify(payload) },
       );

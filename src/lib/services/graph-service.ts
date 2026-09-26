@@ -2,6 +2,10 @@ import { TestCase } from "@/lib/types/assignment-tyes";
 import OpenAI from "openai";
 import { getNeo4jSession } from "@/lib/neo4j";
 import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
+import {
+  dependencyPolicy,
+  runWithDependencyGuard,
+} from "@/server/resilience/dependency-guard";
 
 export function buildTestCaseGenerationPrompt(
   title: string,
@@ -85,7 +89,10 @@ export async function traceKnowledgeDependencies(
   `;
 
   try {
-    const result = await session.run(cypher, { conceptId });
+    const result = await runWithDependencyGuard(
+      dependencyPolicy("neo4j"),
+      () => session.run(cypher, { conceptId }),
+    );
 
     if (result.records.length === 0 || !result.records[0].get("target").id) {
       return null;

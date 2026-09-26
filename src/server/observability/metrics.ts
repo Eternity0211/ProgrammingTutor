@@ -164,6 +164,30 @@ export function recordEvaluationOutcome(
   );
 }
 
+export function recordDependencyCall(
+  dependency: string,
+  outcome: string,
+  durationMs: number,
+): void {
+  const labels = { dependency, outcome };
+  incrementCounter(
+    "programming_tutor_dependency_calls_total",
+    "Total external dependency calls by outcome.",
+    labels,
+  );
+  incrementCounter(
+    "programming_tutor_dependency_call_duration_seconds_sum",
+    "Accumulated external dependency call duration in seconds.",
+    labels,
+    durationMs / 1_000,
+  );
+  incrementCounter(
+    "programming_tutor_dependency_call_duration_seconds_count",
+    "Number of observed external dependency call durations.",
+    labels,
+  );
+}
+
 function escapeLabel(value: string): string {
   return value.replaceAll("\\", "\\\\").replaceAll("\n", "\\n").replaceAll('"', '\\"');
 }

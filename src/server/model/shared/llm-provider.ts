@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { createResilientFetch } from "@/server/resilience/dependency-guard";
 
 const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
 const DEFAULT_DEEPSEEK_MODEL = "deepseek-flash";
@@ -17,6 +18,9 @@ export function createLlmClient(): OpenAI {
   return new OpenAI({
     apiKey: clean(apiKey),
     baseURL: process.env.DEEPSEEK_BASE_URL?.trim() || DEFAULT_DEEPSEEK_BASE_URL,
+    timeout: Number(process.env.DEEPSEEK_TIMEOUT_MS ?? 30_000),
+    maxRetries: Number(process.env.DEEPSEEK_MAX_RETRIES ?? 2),
+    fetch: createResilientFetch("deepseek"),
   });
 }
 
@@ -41,6 +45,9 @@ export function createEmbeddingClient(): OpenAI {
     baseURL:
       process.env.EMBEDDING_BASE_URL?.trim() ||
       "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    timeout: Number(process.env.EMBEDDING_TIMEOUT_MS ?? 15_000),
+    maxRetries: Number(process.env.EMBEDDING_MAX_RETRIES ?? 1),
+    fetch: createResilientFetch("embedding"),
   });
 }
 

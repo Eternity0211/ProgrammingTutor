@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import {
+  createLlmClient,
   createEmbeddingClient,
   getEmbeddingModel,
   getLlmModel,
@@ -11,16 +12,7 @@ export class DialogueLlmClient {
   private client: OpenAI;
 
   private constructor() {
-    const apiKey = process.env.DEEPSEEK_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "Missing DEEPSEEK_API_KEY. Please set the environment variable.",
-      );
-    }
-    this.client = new OpenAI({
-      apiKey: apiKey.trim().replace(/^['"]|['"]$/g, ""),
-      baseURL: "https://api.deepseek.com/v1",
-    });
+    this.client = createLlmClient();
   }
 
   static getInstance(): DialogueLlmClient {

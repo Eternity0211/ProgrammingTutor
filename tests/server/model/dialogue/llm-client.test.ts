@@ -34,10 +34,12 @@ describe("DialogueLlmClient", () => {
   it("should configure OpenAI with DeepSeek auth and baseURL", () => {
     process.env.DEEPSEEK_API_KEY = '"test-key-with-quotes"';
     DialogueLlmClient.getInstance();
-    expect(OpenAI).toHaveBeenCalledWith({
+    expect(OpenAI).toHaveBeenCalledWith(expect.objectContaining({
       apiKey: "test-key-with-quotes",
       baseURL: "https://api.deepseek.com/v1",
-    });
+      timeout: 30_000,
+      maxRetries: 2,
+    }));
   });
 
   it("should call chat completions with correct params", async () => {
