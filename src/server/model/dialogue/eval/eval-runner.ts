@@ -24,6 +24,9 @@ export class EvalRunner {
         degraded: response.agentResults?.rag?.degraded === true,
         qualityScore: 0,
         ragSourceCount: response.agentResults?.rag?.sources.length ?? 0,
+        ragAttempted: response.agentResults?.rag !== undefined,
+        ragGrounded: response.agentResults?.rag?.grounded === true,
+        ragCitationCount: response.agentResults?.rag?.citations.length ?? 0,
       };
     } catch (error) {
       actual = {
@@ -36,6 +39,9 @@ export class EvalRunner {
         error: error instanceof Error ? error.message : String(error),
         qualityScore: 0,
         ragSourceCount: 0,
+        ragAttempted: false,
+        ragGrounded: false,
+        ragCitationCount: 0,
       };
     }
 
@@ -76,8 +82,12 @@ export class EvalRunner {
     const averageQualityScore = totalCases > 0
       ? results.reduce((sum, result) => sum + result.actual.qualityScore, 0) / totalCases
       : 0;
-    const ragCases = results.filter((result) => result.actual.hasAgentResults);
+    const ragCases = results.filter((result) => result.actual.ragAttempted);
     const ragHitCases = results.filter((result) => result.actual.ragSourceCount > 0);
+    const groundedCases = ragCases.filter((result) => result.actual.ragGrounded);
+    const unsupportedCases = ragCases.filter(
+      (result) => !result.actual.ragGrounded && !result.actual.degraded,
+    );
     const averageDurationMs = totalCases > 0
       ? results.reduce((sum, result) => sum + result.durationMs, 0) / totalCases
       : 0;
@@ -91,8 +101,13 @@ export class EvalRunner {
       averageQualityScore,
       ragHitRate: totalCases > 0 ? ragHitCases.length / totalCases : 0,
       citationCoverageRate: ragCases.length > 0
-        ? ragHitCases.length / ragCases.length
+        ? groundedCases.filter((result) => result.actual.ragCitationCount > 0).length /
+          ragCases.length
         : 0,
+      groundedAnswerRate:
+        ragCases.length > 0 ? groundedCases.length / ragCases.length : 0,
+      unsupportedAnswerRate:
+        ragCases.length > 0 ? unsupportedCases.length / ragCases.length : 0,
       averageDurationMs,
       failureRate: totalCases > 0
         ? results.filter((result) => Boolean(result.actual.error)).length / totalCases
@@ -126,6 +141,17 @@ export class EvalRunner {
     }
     if (expected.minSourceCount !== undefined && actual.ragSourceCount < expected.minSourceCount) {
       failures.push(`minSourceCount: expected >= ${expected.minSourceCount}, got ${actual.ragSourceCount}`);
+    }
+    if (
+      expected.minCitationCount !== undefined &&
+      actual.ragCitationCount < expected.minCitationCount
+    ) {
+      failures.push(
+        `minCitationCount: expected >= ${expected.minCitationCount}, got ${actual.ragCitationCount}`,
+      );
+    }
+    if (expected.grounded !== undefined && actual.ragGrounded !== expected.grounded) {
+      failures.push(`grounded: expected ${expected.grounded}, got ${actual.ragGrounded}`);
     }
     if (
       expected.replyNotContains !== undefined &&

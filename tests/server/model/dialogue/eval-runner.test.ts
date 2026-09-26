@@ -272,6 +272,45 @@ describe("EvalRunner.runAll", () => {
     const report = await runner.runAll(cases);
 
     expect(report.degradationRate).toBe(5 / 5);
+    expect(report.unsupportedAnswerRate).toBe(0);
+  });
+
+  it("should measure grounded citation coverage instead of generic agent presence", async () => {
+    const orchestrator = makeMockOrchestrator({
+      intent: "KNOWLEDGE_QUESTION",
+      reply: "指针保存地址 [S1]",
+      agentResults: {
+        rag: {
+          answer: "指针保存地址 [S1]",
+          sources: [
+            {
+              id: "doc-1",
+              title: "指针",
+              content: "指针保存地址",
+              metadata: null,
+              createdAt: new Date(0),
+              updatedAt: new Date(0),
+            },
+          ],
+          degraded: false,
+          grounded: true,
+          citations: [{ sourceId: "S1", documentId: "doc-1", title: "指针" }],
+          groundingReason: "supported",
+        },
+      },
+    });
+    const runner = new EvalRunner(orchestrator);
+
+    const report = await runner.runAll([
+      makeTestCase("g1", "什么是指针", {
+        grounded: true,
+        minCitationCount: 1,
+      }),
+    ]);
+
+    expect(report.groundedAnswerRate).toBe(1);
+    expect(report.citationCoverageRate).toBe(1);
+    expect(report.unsupportedAnswerRate).toBe(0);
   });
 
   it("should collect multiple failures for one case", async () => {

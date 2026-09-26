@@ -40,6 +40,9 @@ function createKnowledgeTool(rag: RagEngine): TutorTool<z.infer<typeof knowledge
         structuredContent: {
           sources: result.sources,
           degraded: result.degraded,
+          grounded: result.grounded,
+          citations: result.citations,
+          groundingReason: result.groundingReason,
         },
       };
     },
@@ -177,4 +180,7 @@ export const mcpToolDefinitions = new TutorToolRegistry({ answer: async () => ({
   answer: "",
   sources: [],
   degraded: false,
+  grounded: true,
+  citations: [],
+  groundingReason: "supported",
 }) } as unknown as RagEngine).listTools();

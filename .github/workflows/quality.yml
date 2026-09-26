@@ -26,6 +26,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:observability
       - run: npm run test:resilience
+      - run: npm run test:ai-quality
       - run: npm test -- --runInBand
       - run: npm run build
         env:

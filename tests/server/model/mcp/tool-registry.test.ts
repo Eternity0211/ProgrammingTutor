@@ -9,6 +9,42 @@ describe("TutorToolRegistry", () => {
     ]);
   });
 
+  it("keeps the public MCP contract explicit and read-only", () => {
+    const definitions = new TutorToolRegistry({} as never).listTools();
+    expect(definitions).toEqual([
+      expect.objectContaining({
+        name: "knowledge_answer",
+        readOnly: true,
+        inputSchema: expect.objectContaining({
+          type: "object",
+          required: ["question"],
+        }),
+      }),
+    ]);
+  });
+
+  it("returns grounding evidence in the knowledge tool result", async () => {
+    const answer = jest.fn().mockResolvedValue({
+      answer: "指针保存地址 [S1]",
+      sources: [{ id: "doc-1" }],
+      degraded: false,
+      grounded: true,
+      citations: [{ sourceId: "S1", documentId: "doc-1", title: "指针" }],
+      groundingReason: "supported",
+    });
+    const registry = new TutorToolRegistry({ answer } as never);
+
+    await expect(
+      registry.callTool("knowledge_answer", { question: "什么是指针" }),
+    ).resolves.toMatchObject({
+      structuredContent: {
+        grounded: true,
+        groundingReason: "supported",
+        citations: [{ sourceId: "S1" }],
+      },
+    });
+  });
+
   it("validates tool names and arguments", async () => {
     const registry = new TutorToolRegistry({ answer: jest.fn() } as never);
     await expect(registry.callTool("missing", {})).rejects.toThrow("Unknown MCP tool");
