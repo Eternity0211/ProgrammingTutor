@@ -14,6 +14,7 @@ export interface TraceSpan {
   startTime: number;
   endTime?: number;
   durationMs?: number;
+  status?: "ok" | "error";
   attributes?: Record<string, unknown>;
 }
 

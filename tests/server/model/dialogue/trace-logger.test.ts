@@ -36,6 +36,7 @@ describe("TraceLogger", () => {
     expect(ctx.spans[0].endTime).toBeDefined();
     expect(ctx.spans[0].durationMs).toBeGreaterThanOrEqual(0);
     expect(ctx.spans[0].attributes).toEqual({ result: "ok" });
+    expect(ctx.spans[0].status).toBe("ok");
   });
 
   it("should record events", () => {
@@ -93,6 +94,22 @@ describe("TraceLogger", () => {
   it("should not crash when ending unknown span", () => {
     const logger = new TraceLogger();
     expect(() => logger.endSpan("nonexistent-id")).not.toThrow();
+  });
+
+  it("marks exceptions as errors and records an event", () => {
+    const logger = new TraceLogger();
+    const spanId = logger.startSpan("failing-span");
+    logger.recordException(spanId, new TypeError("boom"));
+
+    const ctx = logger.getContext();
+    expect(ctx.spans[0]).toMatchObject({
+      status: "error",
+      attributes: { error: "boom", errorType: "TypeError" },
+    });
+    expect(ctx.events[0]).toMatchObject({
+      level: "error",
+      message: "exception",
+    });
   });
 
   it("should return a copy of context (immutability)", () => {

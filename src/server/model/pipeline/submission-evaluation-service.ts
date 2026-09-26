@@ -13,6 +13,10 @@ import {
   classifyEvaluationError,
 } from "./evaluation-failure";
 import { Judge0RuntimeHarness } from "./runtime-harness";
+import {
+  createConfiguredTraceSink,
+  TraceLogger,
+} from "@/server/model/dialogue/shared/trace-logger";
 
 const runtimeHarness = new Judge0RuntimeHarness();
 
@@ -55,9 +59,28 @@ export async function evaluateSubmissionInsidePlatform(
       status: "RUNNING",
     },
   });
+  const traceLogger = new TraceLogger(
+    options.traceId ?? evaluationRun.traceId ?? undefined,
+    undefined,
+    codeSubmission.submission.studentId,
+    createConfiguredTraceSink(),
+  );
+  const evaluationSpan = traceLogger.startSpan("evaluation.run");
+  let finalStatus = "RUNNING";
+  let finalFailureKind: string | undefined;
+  let finalError: string | undefined;
+  traceLogger.logEvent("info", "evaluation.started", {
+    evaluationRunId: evaluationRun.id,
+    codeSubmissionId,
+  });
 
   try {
+    const symbolicSpan = traceLogger.startSpan("evaluation.symbolic", evaluationSpan);
     const symbolic = await analyzeCode(codeSubmission.code);
+    traceLogger.endSpan(symbolicSpan, {
+      errors: symbolic.errors.length,
+      warnings: symbolic.warnings.length,
+    });
     const blocking = hasSymbolicBlockingIssues(symbolic.errors);
     let testCaseScore = 0;
     let passedCount = 0;
@@ -77,6 +100,7 @@ export async function evaluateSubmissionInsidePlatform(
           : mappedLanguageId;
 
       if (languageId) {
+        const runtimeSpan = traceLogger.startSpan("evaluation.runtime", evaluationSpan);
         const results = await Promise.all(
           codeSubmission.question.testCases.map(async (testCase) => {
             try {
@@ -85,6 +109,8 @@ export async function evaluateSubmissionInsidePlatform(
                 input: testCase.input,
                 expectedOutput: testCase.expectedOutput,
                 languageId,
+                traceLogger,
+                parentSpanId: runtimeSpan,
               });
               const status =
                 execution.status.toUpperCase() as TestCaseStatus;
@@ -119,6 +145,10 @@ export async function evaluateSubmissionInsidePlatform(
         passedCount = results.reduce<number>((sum, passed) => sum + passed, 0);
         testCaseScore =
           totalCount > 0 ? (passedCount / totalCount) * 100 : 0;
+        traceLogger.endSpan(runtimeSpan, {
+          total: totalCount,
+          passed: passedCount,
+        });
       }
     }
 
@@ -132,13 +162,19 @@ export async function evaluateSubmissionInsidePlatform(
     let knowledgeContext: unknown = {};
 
     try {
+      const graphSpan = traceLogger.startSpan("evaluation.knowledgeGraph", evaluationSpan);
       const concepts = [...symbolic.errors, ...symbolic.warnings]
         .map((issue) => issue.knowledge_concept)
         .filter(Boolean);
       if (concepts.length > 0) {
         knowledgeContext = await getAggregatedKnowledgeContext(concepts);
       }
-    } catch {
+      traceLogger.endSpan(graphSpan, { concepts: concepts.length });
+    } catch (error) {
+      const graphSpan = traceLogger
+        .getContext()
+        .spans.find((span) => span.name === "evaluation.knowledgeGraph" && !span.endTime);
+      if (graphSpan) traceLogger.recordException(graphSpan.spanId, error, { degraded: true });
       console.warn("Neo4j 服务不可用，跳过图谱关联分析");
     }
 
@@ -153,6 +189,7 @@ export async function evaluateSubmissionInsidePlatform(
 
       if (assignmentMetrics.length > 0) {
         try {
+          const metricSpan = traceLogger.startSpan("evaluation.llmMetrics", evaluationSpan);
           const llmResult = await evaluateCodeWithLLM({
             code: codeSubmission.code,
             language: codeSubmission.language,
@@ -161,6 +198,7 @@ export async function evaluateSubmissionInsidePlatform(
             metrics: assignmentMetrics,
           });
           evaluations = llmResult.evaluations;
+          traceLogger.endSpan(metricSpan, { evaluations: evaluations.length });
         } catch (error) {
           throw new EvaluationPlatformError(
             "LLM metric evaluation is unavailable",
@@ -193,31 +231,39 @@ export async function evaluateSubmissionInsidePlatform(
           (evaluation) => `${evaluation.metricName}: ${evaluation.feedback}`,
         ),
       };
+      const navigationSpan = traceLogger.startSpan("agent.navigation", evaluationSpan);
       navigation = await generateLearningNavigation({
         codeReviewResult: JSON.stringify(aiFeedback),
         knowledgeGraph: JSON.stringify(knowledgeContext),
         studentHistory: "",
       });
+      traceLogger.endSpan(navigationSpan, { available: Boolean(navigation) });
     } else {
+      const codeReviewSpan = traceLogger.startSpan("agent.codeReview", evaluationSpan);
       const codeReviewResult = await runCodeReviewAgent({
         code: codeSubmission.code,
         language: codeSubmission.language,
         symbolic,
         testSummary: { total: totalCount, passed: 0, failed: totalCount },
       });
+      traceLogger.endSpan(codeReviewSpan, { blocking: true });
 
       aiFeedback = { branch: "code-review-agent", ...codeReviewResult };
+      const navigationSpan = traceLogger.startSpan("agent.navigation", evaluationSpan);
       navigation = await generateLearningNavigation({
         codeReviewResult: codeReviewResult.causalAnalysis,
         knowledgeGraph: JSON.stringify(knowledgeContext),
         studentHistory: "",
       });
+      traceLogger.endSpan(navigationSpan, { available: Boolean(navigation) });
       score = 0;
     }
 
+    const emotionSpan = traceLogger.startSpan("agent.emotion", evaluationSpan);
     emotion = await generateEmotionalSupport({
       codeReviewResult: isAllTestsPassed ? "表现优异" : "再接再厉",
     });
+    traceLogger.endSpan(emotionSpan, { available: Boolean(emotion) });
 
     const branch = blocking ? "code-review-agent" : "general-llm";
     const feedback = {
@@ -231,6 +277,7 @@ export async function evaluateSubmissionInsidePlatform(
       navigation,
       emotion,
     };
+    const persistSpan = traceLogger.startSpan("database.evaluation.commit", evaluationSpan);
     await prisma.$transaction([
       prisma.codeSubmission.update({
         where: { id: codeSubmissionId },
@@ -261,8 +308,10 @@ export async function evaluateSubmissionInsidePlatform(
         },
       }),
     ]);
+    traceLogger.endSpan(persistSpan, { status: blocking ? "BLOCKED" : "COMPLETED" });
 
     await updateSubmissionStatus(codeSubmission.submissionId);
+    finalStatus = blocking ? "BLOCKED" : "COMPLETED";
 
     return {
       success: true,
@@ -272,6 +321,15 @@ export async function evaluateSubmissionInsidePlatform(
     };
   } catch (error) {
     const failure = classifyEvaluationError(error);
+    finalStatus = failure.retryable ? "FAILED_RETRYABLE" : "FAILED_TERMINAL";
+    finalFailureKind = failure.kind;
+    finalError = failure.message;
+    traceLogger.logEvent("error", "evaluation.failed", {
+      evaluationRunId: evaluationRun.id,
+      failureKind: failure.kind,
+      failureScope: failure.scope,
+      retryable: failure.retryable,
+    });
     const codeEvaluationStatus =
       failure.kind === "llm_unavailable"
         ? CodeEvaluationStatus.LLM_EVALUATION_FAILED
@@ -296,5 +354,15 @@ export async function evaluateSubmissionInsidePlatform(
     ]);
 
     throw error;
+  } finally {
+    traceLogger.endSpan(evaluationSpan, {
+      evaluationRunId: evaluationRun.id,
+      status: finalStatus,
+      ...(finalFailureKind ? { failureKind: finalFailureKind } : {}),
+      ...(finalError ? { error: finalError } : {}),
+    });
+    await traceLogger.persist().catch((error) => {
+      console.warn("评测 Trace 持久化失败:", error);
+    });
   }
 }

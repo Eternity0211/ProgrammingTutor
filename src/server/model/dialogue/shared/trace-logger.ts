@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
-import { appendFile } from "fs/promises";
+import { appendFile, mkdir } from "fs/promises";
+import { dirname } from "path";
 import type {
   TraceContext,
   TraceEvent,
@@ -23,22 +24,71 @@ export class JsonlTraceSink implements TraceSink {
   constructor(private readonly filePath: string) {}
 
   async write(context: TraceContext): Promise<void> {
+    await mkdir(dirname(this.filePath), { recursive: true });
     await appendFile(this.filePath, `${JSON.stringify(context)}\n`, "utf8");
   }
 }
 
 /** Minimal OTLP/HTTP exporter without forcing an observability SDK dependency. */
 export class OtlpTraceSink implements TraceSink {
-  constructor(private readonly endpoint: string, private readonly headers: Record<string, string> = {}) {}
+  constructor(
+    private readonly endpoint: string,
+    private readonly headers: Record<string, string> = {},
+    private readonly timeoutMs = Number(process.env.OTEL_EXPORTER_TIMEOUT_MS ?? 5_000),
+  ) {}
 
   async write(context: TraceContext): Promise<void> {
     const response = await fetch(this.endpoint, {
       method: "POST",
       headers: { "content-type": "application/json", ...this.headers },
-      body: JSON.stringify({ resourceSpans: [{ resource: { attributes: [{ key: "service.name", value: { stringValue: "programming-tutor" } }] }, scopeSpans: [{ spans: context.spans.map((span) => ({ traceId: context.traceId.replaceAll("-", ""), spanId: span.spanId.replaceAll("-", "").slice(0, 16), name: span.name, startTimeUnixNano: String(span.startTime * 1_000_000), endTimeUnixNano: String((span.endTime ?? span.startTime) * 1_000_000), attributes: Object.entries(span.attributes ?? {}).map(([key, value]) => ({ key, value: { stringValue: String(value) } })) })) }] }] }),
+      signal: AbortSignal.timeout(this.timeoutMs),
+      body: JSON.stringify({ resourceSpans: [{ resource: { attributes: [
+        { key: "service.name", value: { stringValue: process.env.OTEL_SERVICE_NAME ?? "programming-tutor" } },
+        { key: "service.version", value: { stringValue: process.env.OTEL_SERVICE_VERSION ?? "unknown" } },
+        { key: "deployment.environment", value: { stringValue: process.env.NODE_ENV ?? "development" } },
+      ] }, scopeSpans: [{ spans: context.spans.map((span) => ({
+        traceId: context.traceId.replaceAll("-", ""),
+        spanId: span.spanId.replaceAll("-", "").slice(0, 16),
+        ...(span.parentSpanId
+          ? { parentSpanId: span.parentSpanId.replaceAll("-", "").slice(0, 16) }
+          : {}),
+        name: span.name,
+        startTimeUnixNano: String(span.startTime * 1_000_000),
+        endTimeUnixNano: String((span.endTime ?? span.startTime) * 1_000_000),
+        status: { code: span.status === "error" ? 2 : 1 },
+        attributes: Object.entries(span.attributes ?? {}).map(([key, value]) => ({ key, value: { stringValue: String(value) } })),
+      })) }] }] }),
     });
     if (!response.ok) throw new Error(`OTLP exporter returned HTTP ${response.status}`);
   }
+}
+
+function parseOtlpHeaders(value: string | undefined): Record<string, string> {
+  if (!value) return {};
+  return Object.fromEntries(
+    value
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+      .map((entry) => {
+        const separator = entry.indexOf("=");
+        return separator < 0
+          ? [entry, ""]
+          : [entry.slice(0, separator).trim(), entry.slice(separator + 1).trim()];
+      }),
+  );
+}
+
+export function createConfiguredTraceSink(): TraceSink | undefined {
+  if (process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT) {
+    return new OtlpTraceSink(
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT,
+      parseOtlpHeaders(process.env.OTEL_EXPORTER_OTLP_HEADERS),
+    );
+  }
+  return process.env.TRACE_LOG_PATH
+    ? new JsonlTraceSink(process.env.TRACE_LOG_PATH)
+    : undefined;
 }
 
 export class TraceLogger {
@@ -83,6 +133,20 @@ export class TraceLogger {
     if (attributes) {
       span.attributes = { ...span.attributes, ...attributes };
     }
+    span.status =
+      span.status === "error" || (attributes && "error" in attributes)
+        ? "error"
+        : "ok";
+  }
+
+  recordException(spanId: string, error: unknown, attributes?: Record<string, unknown>): void {
+    const message = error instanceof Error ? error.message : String(error);
+    this.endSpan(spanId, {
+      ...attributes,
+      error: message,
+      ...(error instanceof Error && error.name ? { errorType: error.name } : {}),
+    });
+    this.logEvent("error", "exception", { spanId, error: message });
   }
 
   logEvent(

@@ -16,7 +16,7 @@ import { InMemorySessionStore } from "../memory";
 import { createChatMessage } from "../memory";
 import type { SessionStore } from "../memory";
 import { DialogueLlmClient } from "../shared/llm-client";
-import { JsonlTraceSink, OtlpTraceSink, TraceLogger, type TraceSink } from "../shared/trace-logger";
+import { createConfiguredTraceSink, TraceLogger, type TraceSink } from "../shared/trace-logger";
 import type {
   AgentResultSnapshot,
   ChatMessage,
@@ -68,6 +68,7 @@ interface HandlerContext {
   profile: StudentProfile | null;
   intent: IntentRecognitionResult;
   traceLogger: TraceLogger;
+  parentSpanId: string;
 }
 
 interface HandlerResult {
@@ -136,11 +137,7 @@ export class DialogueOrchestrator {
     this.contextTrimmer = options?.contextTrimmer ?? new ContextTrimmer();
     this.evaluationEvidenceStore =
       options?.evaluationEvidenceStore ?? new PrismaEvaluationEvidenceStore();
-    this.traceSink = options?.traceSink ?? (process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-      ? new OtlpTraceSink(process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT)
-      : process.env.TRACE_LOG_PATH
-        ? new JsonlTraceSink(process.env.TRACE_LOG_PATH)
-        : undefined);
+    this.traceSink = options?.traceSink ?? createConfiguredTraceSink();
   }
 
   async chat(request: DialogueRequest): Promise<DialogueResponse> {
@@ -215,6 +212,7 @@ export class DialogueOrchestrator {
         };
       }
 
+      const handlerSpan = traceLogger.startSpan(`handler.${intent.intent}`, spanId);
       const ctx: HandlerContext = {
         request,
         sessionId,
@@ -224,11 +222,11 @@ export class DialogueOrchestrator {
         profile,
         intent,
         traceLogger,
+        parentSpanId: handlerSpan,
       };
 
       state = transition(state, "handler");
       let result: HandlerResult;
-      const handlerSpan = traceLogger.startSpan(`handler.${intent.intent}`, spanId);
       try {
         switch (intent.intent) {
           case "CODE_SUBMISSION":
@@ -366,7 +364,7 @@ export class DialogueOrchestrator {
     const { request, trimmed, profileSummary, intent } = ctx;
     const evidenceSpan = ctx.traceLogger.startSpan(
       "evaluation.evidence.load",
-      undefined,
+      ctx.parentSpanId,
     );
     const evidence = await this.evaluationEvidenceStore.getByReference(
       request.userId,
@@ -387,6 +385,7 @@ export class DialogueOrchestrator {
         trimmed.summary,
         evidence.agentResults,
         ctx.traceLogger,
+        ctx.parentSpanId,
       );
       return {
         reply,
@@ -412,7 +411,7 @@ export class DialogueOrchestrator {
 
     if (symbolic && testSummary && code) {
       try {
-        const codeSpan = ctx.traceLogger.startSpan("agent.codeReview", undefined);
+        const codeSpan = ctx.traceLogger.startSpan("agent.codeReview", ctx.parentSpanId);
         const codeReviewInput = codeReviewAgentInputSchema.parse({
           code,
           language,
@@ -435,7 +434,7 @@ export class DialogueOrchestrator {
 
         let emotion: AgentResultSnapshot["emotion"] | undefined;
         try {
-          const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", undefined);
+          const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", codeSpan);
           const emotionInput = emotionAgentInputSchema.parse({
             codeReviewResult: validatedCodeReview.data.reviewSummary,
             studentProfileSummary: profileSummary,
@@ -469,6 +468,7 @@ export class DialogueOrchestrator {
           trimmed.summary,
           agentResults,
           ctx.traceLogger,
+          ctx.parentSpanId,
         );
 
         return {
@@ -494,6 +494,7 @@ export class DialogueOrchestrator {
       trimmed.summary,
       undefined,
       ctx.traceLogger,
+      ctx.parentSpanId,
     );
     return { reply };
   }
@@ -510,7 +511,7 @@ export class DialogueOrchestrator {
     let emotion: AgentResultSnapshot["emotion"] | undefined;
     if (codeReviewResult) {
       try {
-        const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", undefined);
+        const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", ctx.parentSpanId);
         const emotionInput = emotionAgentInputSchema.parse({
           codeReviewResult,
           studentProfileSummary: profileSummary,
@@ -544,6 +545,7 @@ export class DialogueOrchestrator {
       trimmed.summary,
       agentResults,
       ctx.traceLogger,
+      ctx.parentSpanId,
     );
 
     return { reply, agentResults };
@@ -561,7 +563,7 @@ export class DialogueOrchestrator {
     let navigation: AgentResultSnapshot["navigation"] | undefined;
     if (codeReviewResult) {
       try {
-        const graphSpan = ctx.traceLogger.startSpan("knowledgeGraph.navigationContext", undefined);
+        const graphSpan = ctx.traceLogger.startSpan("knowledgeGraph.navigationContext", ctx.parentSpanId);
         const conceptIds = Array.isArray(request.context?.knowledgeConcepts)
           ? request.context.knowledgeConcepts.filter((id): id is string => typeof id === "string")
           : [];
@@ -571,7 +573,7 @@ export class DialogueOrchestrator {
           resolvedConcepts: knowledgeGraphContext.length,
           degraded: conceptIds.length > 0 && knowledgeGraphContext.length === 0,
         });
-        const navigationSpan = ctx.traceLogger.startSpan("agent.navigation", undefined);
+        const navigationSpan = ctx.traceLogger.startSpan("agent.navigation", ctx.parentSpanId);
         const navigationInput = navigationAgentInputSchema.parse({
           codeReviewResult,
           knowledgeGraph: JSON.stringify(knowledgeGraphContext),
@@ -610,6 +612,7 @@ export class DialogueOrchestrator {
       trimmed.summary,
       agentResults,
       ctx.traceLogger,
+      ctx.parentSpanId,
     );
 
     return { reply, agentResults };
@@ -619,7 +622,7 @@ export class DialogueOrchestrator {
     ctx: HandlerContext,
   ): Promise<HandlerResult> {
     const { request } = ctx;
-    const ragSpan = ctx.traceLogger.startSpan("rag.answer", undefined);
+    const ragSpan = ctx.traceLogger.startSpan("rag.answer", ctx.parentSpanId);
     try {
       const ragResponse = request.context?.ragFilters
         ? await this.ragEngine.answer(request.message, request.context.ragFilters)
@@ -657,6 +660,7 @@ export class DialogueOrchestrator {
       trimmed.summary,
       undefined,
       ctx.traceLogger,
+      ctx.parentSpanId,
     );
     return { reply };
   }
@@ -667,6 +671,7 @@ export class DialogueOrchestrator {
     contextSummary: string | undefined,
     agentResults?: DialogueAgentResults,
     traceLogger?: TraceLogger,
+    parentSpanId?: string,
   ): Promise<string> {
     const contextParts: string[] = [];
     if (profileSummary && profileSummary !== "暂无学生画像数据") {
@@ -705,7 +710,7 @@ export class DialogueOrchestrator {
         : "暂无额外上下文。");
 
     try {
-      const llmSpan = traceLogger?.startSpan("llm.reply", undefined);
+      const llmSpan = traceLogger?.startSpan("llm.reply", parentSpanId);
       const reply = await this.llm.chatCompletion({
         messages: [
           { role: "system", content: systemPrompt },
@@ -716,6 +721,10 @@ export class DialogueOrchestrator {
       if (llmSpan) traceLogger?.endSpan(llmSpan, { model: "dialogue" });
       return reply;
     } catch (error) {
+      const llmSpan = traceLogger
+        ?.getContext()
+        .spans.find((span) => span.name === "llm.reply" && !span.endTime);
+      if (llmSpan) traceLogger?.recordException(llmSpan.spanId, error);
       console.warn(
         "[DialogueOrchestrator] LLM reply generation failed:",
         error,
