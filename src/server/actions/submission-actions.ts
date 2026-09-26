@@ -6,10 +6,6 @@ import {
   CodeEvaluationStatus,
   SubmissionStatus,
 } from "@prisma/client";
-import {
-  evaluateSubmissionMetrics,
-  evaluateSubmissionTestCases,
-} from "./grading-actions";
 import { cookies } from "next/headers";
 import { judgeResult } from "@/lib/types/code-types";
 
@@ -123,28 +119,13 @@ export async function updateCodeSubmissionStatus(codeSubmissionId: string) {
     );
 
     if (allProcessed) {
-      await evaluateSubmissionTestCases(codeSubmissionId);
-
-      console.log("All test cases processed, grading submission");
-
-      const updatedCodeSubmission = await prisma.codeSubmission.updateMany({
-        where: {
-          id: codeSubmissionId,
-          codeEvaluationStatus: "TEST_CASES_EVALUATION_COMPLETE",
-        },
-        data: {
-          codeEvaluationStatus: "LLM_EVALUATION_IN_PROGRESS",
-        },
-      });
-
-      if (updatedCodeSubmission.count > 0) {
-        evaluateSubmissionMetrics(codeSubmissionId).catch((error) => {
-          console.error("Background LLM evaluation failed:", error);
-        });
-        console.log("LLM evaluation triggered in background");
-      } else {
-        console.log("LLM evaluation already in progress or completed");
-      }
+      // Legacy Judge0 webhooks now enter the same EvaluationRun pipeline as
+      // synchronous submissions. Dynamic import avoids a module cycle because
+      // the pipeline calls updateSubmissionStatus after committing its result.
+      const { evaluateSubmissionInsidePlatform } = await import(
+        "@/server/model/pipeline/submission-evaluation-service"
+      );
+      await evaluateSubmissionInsidePlatform(codeSubmissionId);
     }
   } catch (error) {
     console.error(
