@@ -13,6 +13,7 @@ import { getNavigationConfig } from "@/config/navigation";
 import { isUserOnboarded } from "@/server/actions/utility-actions";
 import { DraggableFloatChat } from "@/app/_components/draggable‑float‑chat";
 import { prisma } from "@/lib/prisma";
+import type { NavGroupInterface } from "@/lib/types/config-types";
 
 export default async function DashboardLayout({
   children,
@@ -20,7 +21,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const sessionData = await auth();
-  let navGroups: any = [];
+  let navGroups: NavGroupInterface[] = [];
   let isoOnboarded = false;
   let userRole: string | null = null;
 

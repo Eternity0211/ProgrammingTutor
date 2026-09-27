@@ -113,7 +113,7 @@ export const createAssignment = async (formData: AssignmentSchema) => {
       },
     });
 
-    const submissions = await prisma.submission.createMany({
+    await prisma.submission.createMany({
       data: students.map((student) => {
         return {
           studentId: student.id,

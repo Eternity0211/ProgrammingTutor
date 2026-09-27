@@ -6,7 +6,11 @@ import { Textarea } from "@/app/_components/ui/textarea";
 import { Badge } from "@/app/_components/ui/badge";
 import { cn } from "@/lib/utils";
 import { readEvaluationReference } from "@/lib/evaluation-reference";
-import { Popover, PopoverContent, PopoverTrigger } from "@/app/_components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/app/_components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -94,29 +98,32 @@ export default function ChatPanel() {
   }, [fetchAllSessions, updateUrlSession]);
 
   // ✅修正接口路径：加载历史会话 GET /api/dialogue/{sid}
-  const loadHistory = useCallback(async (sid: string): Promise<boolean> => {
-    try {
-      const res = await fetch(`/api/dialogue/${sid}`);
-      if (!res.ok) return false;
-      const json = await res.json();
-      setSessionId(sid);
-      localStorage.setItem(STORAGE_SESSION_ID, sid);
-      updateUrlSession(sid);
-      if (json.messages) {
-        const mapped: ChatMessage[] = json.messages.map((m: any) => ({
-          role: m.role,
-          content: m.content,
-        }));
-        setMessages(mapped);
-      } else {
-        setMessages([]);
+  const loadHistory = useCallback(
+    async (sid: string): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/dialogue/${sid}`);
+        if (!res.ok) return false;
+        const json = await res.json();
+        setSessionId(sid);
+        localStorage.setItem(STORAGE_SESSION_ID, sid);
+        updateUrlSession(sid);
+        if (json.messages) {
+          const mapped: ChatMessage[] = json.messages.map((m: ChatMessage) => ({
+            role: m.role,
+            content: m.content,
+          }));
+          setMessages(mapped);
+        } else {
+          setMessages([]);
+        }
+        return true;
+      } catch (err) {
+        console.error("加载会话历史失败", err);
+        return false;
       }
-      return true;
-    } catch (err) {
-      console.error("加载会话历史失败", err);
-      return false;
-    }
-  }, [updateUrlSession]);
+    },
+    [updateUrlSession],
+  );
 
   useEffect(() => {
     const init = async () => {
@@ -164,9 +171,7 @@ export default function ChatPanel() {
         body: JSON.stringify({
           message: trimmed,
           sessionId,
-          ...(evaluationReference
-            ? { context: evaluationReference }
-            : {}),
+          ...(evaluationReference ? { context: evaluationReference } : {}),
         }),
       });
 
@@ -197,7 +202,7 @@ export default function ChatPanel() {
     } finally {
       setLoading(false);
     }
-  }, [input, loading, sessionId, scrollBottom, fetchAllSessions]);
+  }, [input, loading, sessionId, fetchAllSessions]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -221,7 +226,9 @@ export default function ChatPanel() {
   const handleDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
-      const res = await fetch(`/api/dialogue/${deleteTarget.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/dialogue/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("删除失败");
       setDeleteTarget(null);
       await fetchAllSessions();
@@ -245,7 +252,10 @@ export default function ChatPanel() {
                 <span className="text-base">历史记录</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 max-h-[400px] overflow-y-auto p-2">
+            <PopoverContent
+              align="end"
+              className="w-72 max-h-[400px] overflow-y-auto p-2"
+            >
               <p className="text-sm text-muted-foreground pb-2">会话列表</p>
               {sessionList.length === 0 ? (
                 <p className="text-sm">暂无会话</p>
@@ -297,7 +307,7 @@ export default function ChatPanel() {
             key={i}
             className={cn(
               "flex flex-col gap-1",
-              msg.role === "user" ? "items-end" : "items-start"
+              msg.role === "user" ? "items-end" : "items-start",
             )}
           >
             {isDev && msg.intent && msg.role === "assistant" && (
@@ -310,7 +320,7 @@ export default function ChatPanel() {
                 "max-w-[80%] rounded-lg px-3 py-2 text-sm break-words",
                 msg.role === "user"
                   ? "bg-primary text-primary-foreground whitespace-pre-wrap"
-                  : "bg-muted text-foreground"
+                  : "bg-muted text-foreground",
               )}
             >
               {msg.role === "assistant" ? (
@@ -365,8 +375,18 @@ export default function ChatPanel() {
             <div className="bg-muted text-muted-foreground rounded-lg px-3 py-2 text-sm">
               <span className="inline-flex gap-1">
                 <span className="animate-bounce">·</span>
-                <span className="animate-bounce" style={{ animationDelay: "0.1s" }}>·</span>
-                <span className="animate-bounce" style={{ animationDelay: "0.2s" }}>·</span>
+                <span
+                  className="animate-bounce"
+                  style={{ animationDelay: "0.1s" }}
+                >
+                  ·
+                </span>
+                <span
+                  className="animate-bounce"
+                  style={{ animationDelay: "0.2s" }}
+                >
+                  ·
+                </span>
               </span>
             </div>
           </div>
@@ -390,12 +410,18 @@ export default function ChatPanel() {
           disabled={loading || !sessionId}
           className="flex-1 resize-none min-h-[40px] max-h-[120px]"
         />
-        <Button onClick={handleSend} disabled={loading || !input.trim() || !sessionId}>
+        <Button
+          onClick={handleSend}
+          disabled={loading || !input.trim() || !sessionId}
+        >
           发送
         </Button>
       </div>
 
-      <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>确认删除</DialogTitle>

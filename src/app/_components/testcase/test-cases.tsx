@@ -19,7 +19,7 @@ interface TestCasesProps {
   results: TestResult[];
 }
 
-export function TestCases({ testCases, results }: TestCasesProps) {
+export function TestCases({ results }: TestCasesProps) {
   return (
     <div className="h-80 overflow-y-auto border-t border-border bg-background">
       <div className="sticky top-0 border-b border-border bg-background px-4 py-3">

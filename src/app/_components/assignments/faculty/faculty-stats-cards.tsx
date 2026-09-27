@@ -37,7 +37,7 @@ function StatCard({
   const percentage = total > 0 ? (value / total) * 100 : 0;
 
   return (
-    <Card className="rounded-2xl border-border">
+    <Card className={`rounded-2xl border-border ${className ?? ""}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           {icon}

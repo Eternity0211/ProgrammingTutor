@@ -15,13 +15,31 @@ function formatConfidence(value: number | undefined) {
   return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`;
 }
 
-export function EvaluationPanel({ submission }: { submission: any }) {
+interface EvaluationPanelSubmission {
+  score: number;
+  aiFeedback?: {
+    noCustomMetrics?: boolean;
+    branch?: string;
+    message?: string;
+    reviewSummary?: string;
+    causalAnalysis?: string;
+    confidence?: number;
+    suggestions?: string[];
+  };
+  emotion?: {
+    supportMessage?: string;
+    content?: string;
+    emotion_analysis?: { supportive_guidance?: string };
+  };
+  navigation?: { learningPath?: string; nextSteps?: string[] };
+}
+
+export function EvaluationPanel({
+  submission,
+}: {
+  submission: EvaluationPanelSubmission;
+}) {
   const noCustomMetrics = Boolean(submission.aiFeedback?.noCustomMetrics);
-  const branch = submission.aiFeedback?.branch;
-  const branchLabel =
-    branch === "code-review-agent"
-      ? "深度审查模式（Code Review Agent）"
-      : "通用评估模式（General LLM）";
   const confidenceText = noCustomMetrics
     ? null
     : formatConfidence(submission.aiFeedback?.confidence);
@@ -40,7 +58,9 @@ export function EvaluationPanel({ submission }: { submission: any }) {
           <>
             <div className="rounded-lg border border-sky-200 bg-sky-50/70 p-3">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold text-sky-700">评测结果得分</p>
+                <p className="text-xs font-semibold text-sky-700">
+                  评测结果得分
+                </p>
                 <Badge className="bg-sky-500 text-white border-none">
                   {submission.score} 分
                 </Badge>
@@ -51,7 +71,10 @@ export function EvaluationPanel({ submission }: { submission: any }) {
               <div className="rounded-lg border border-pink-100 bg-pink-50/50 p-3 flex items-start gap-3">
                 <Heart className="h-4 w-4 text-pink-500 mt-1 flex-shrink-0" />
                 <p className="text-sm text-pink-700 italic">
-                  {submission.emotion.supportMessage || submission.emotion.content || "正在为你加油！"}
+                  {submission.emotion.supportMessage ||
+                    submission.emotion.content ||
+                    submission.emotion.emotion_analysis?.supportive_guidance ||
+                    "正在为你加油！"}
                 </p>
               </div>
             )}
@@ -108,15 +131,22 @@ export function EvaluationPanel({ submission }: { submission: any }) {
                 </h4>
                 <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
                   <p className="text-sm text-blue-800 leading-relaxed">
-                    {submission.navigation.learningPath || "基于当前的掌握情况，建议按以下步骤进阶："}
+                    {submission.navigation.learningPath ||
+                      "基于当前的掌握情况，建议按以下步骤进阶："}
                   </p>
                   {submission.navigation.nextSteps && (
                     <div className="flex flex-wrap gap-2 mt-2">
-                      {submission.navigation.nextSteps.map((step: string, idx: number) => (
-                        <Badge key={idx} variant="outline" className="bg-white text-blue-600 border-blue-200">
-                          {step}
-                        </Badge>
-                      ))}
+                      {submission.navigation.nextSteps.map(
+                        (step: string, idx: number) => (
+                          <Badge
+                            key={idx}
+                            variant="outline"
+                            className="bg-white text-blue-600 border-blue-200"
+                          >
+                            {step}
+                          </Badge>
+                        ),
+                      )}
                     </div>
                   )}
                 </div>

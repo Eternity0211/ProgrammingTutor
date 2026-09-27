@@ -11,7 +11,11 @@ export const metadata: Metadata = {
   description: "Create a new coding assignment for your class",
 };
 
-export default async function CreateAssignmentPage({ params }: any) {
+export default async function CreateAssignmentPage({
+  params,
+}: {
+  params: Promise<{ classCode: string }>;
+}) {
   const { classCode } = await params;
   const session = await auth();
   if (!session?.user) {

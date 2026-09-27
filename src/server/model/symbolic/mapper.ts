@@ -17,7 +17,18 @@ import {
 
 /** 内部使用的 JSON 定义文件结构 */
 interface DefinitionFile {
-  definitions: Record<string, any>;
+  definitions: Record<string, SymbolicDefinition>;
+}
+
+interface SymbolicDefinition {
+  severity?: SymbolicSeverity;
+  display_name?: string;
+  message?: string;
+  pedagogical_label?: string;
+  knowledge_concept?: string;
+  description?: string;
+  remediation?: string;
+  remediation_code?: string;
 }
 
 // =============================================================================
@@ -29,7 +40,9 @@ interface DefinitionFile {
  * @param filename - 配置文件名 (例如 'cpp-errors.json')
  * @returns 返回定义的规则字典，若文件不存在则返回空对象
  */
-function loadDefinitionFile(filename: string): Record<string, any> {
+function loadDefinitionFile(
+  filename: string,
+): Record<string, SymbolicDefinition> {
   const filePath = path.resolve(
     process.cwd(),
     "data/symbolic/definitions",
@@ -93,7 +106,7 @@ export function mapIssues(
    */
   function mapOne(
     raw: RawIssue,
-    definitions: Record<string, any>,
+    definitions: Record<string, SymbolicDefinition>,
   ): SymbolicIssue | null {
     const def = definitions[raw.ruleId];
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SubmissionStatus } from "@prisma/client";
 import { AssignmentById, StudentProgress } from "@/lib/types/assignment-tyes";
 import { getStudentAssignmentProgress } from "@/server/actions/submission-actions";
@@ -23,24 +23,20 @@ export function FacultyView({
 }: FacultyViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [students, setStudents] = useState<StudentProgress[]>(initialStudents);
-  const [loading, setLoading] = useState(false);
 
   // Load student progress data
-  const loadStudentProgress = async () => {
+  const loadStudentProgress = useCallback(async () => {
     try {
-      setLoading(true);
       const data = await getStudentAssignmentProgress(assignment.id, classCode);
       setStudents(data);
     } catch (error) {
       console.error("Failed to load student progress:", error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [assignment.id, classCode]);
 
   useEffect(() => {
     loadStudentProgress();
-  }, [assignment.id, classCode]);
+  }, [loadStudentProgress]);
 
   const totalStudents = students.length;
   const completedCount = students.filter(
@@ -72,7 +68,6 @@ export function FacultyView({
 
       <div className="mt-8">
         <StudentProgressSection
-          students={students}
           filteredStudents={filteredStudents}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}

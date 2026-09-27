@@ -8,15 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/_components/ui/dropdown-menu";
-import {
-  GradingTableData,
-  GradingTableStudent,
-} from "@/lib/types/assignment-tyes";
+import { GradingTableStudent } from "@/lib/types/assignment-tyes";
 
 interface GradingTableActionsProps {
   selectedStudents: Set<string>;
   filteredData: GradingTableStudent[];
-  data: GradingTableData;
   onBulkAction?: (action: string, studentIds: string[]) => void;
   onExport: () => void;
   onRefresh?: () => void;
@@ -27,7 +23,6 @@ interface GradingTableActionsProps {
 export function GradingTableActions({
   selectedStudents,
   filteredData,
-  data,
   onBulkAction,
   onExport,
   onRefresh,

@@ -12,7 +12,7 @@ export default function StatsSection() {
           <div className="mx-auto max-w-5xl">
             <div className="rounded-2xl border border-main-300 bg-main-300/30 p-12 shadow-lg backdrop-blur-md transition-all">
               <div className="grid gap-10 md:grid-cols-4">
-                {stats.map((stat: any, index: number) => (
+                {stats.map((stat, index) => (
                   <StaggeredItem key={index} index={index}>
                     <motion.span
                       initial={{ opacity: 0, y: 10 }}

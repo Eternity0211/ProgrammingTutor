@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import type { StudentProfile } from "../types";
+import type {
+  CodeSubmissionRecord,
+  EmotionStat,
+  StudentProfile,
+} from "../types";
 import type { ProfileStore } from "./profile-store";
+import type { StudentProfile as DbStudentProfile } from "@prisma/client";
 
 export class DbProfileStore implements ProfileStore {
   async getProfile(userId: string): Promise<StudentProfile | null> {
@@ -92,12 +97,16 @@ export class DbProfileStore implements ProfileStore {
     }
   }
 
-  private mapProfile(db: any): StudentProfile {
+  private mapProfile(db: DbStudentProfile): StudentProfile {
     return {
       userId: db.userId,
-      codeSubmissionRecords: db.codeSubmissionRecords ?? [],
+      codeSubmissionRecords: Array.isArray(db.codeSubmissionRecords)
+        ? (db.codeSubmissionRecords as unknown as CodeSubmissionRecord[])
+        : [],
       weakKnowledgePoints: db.weakKnowledgePoints ?? [],
-      emotionStats: db.emotionStats ?? [],
+      emotionStats: Array.isArray(db.emotionStats)
+        ? (db.emotionStats as unknown as EmotionStat[])
+        : [],
       updatedAt:
         db.updatedAt instanceof Date
           ? db.updatedAt.getTime()

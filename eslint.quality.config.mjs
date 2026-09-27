@@ -9,12 +9,19 @@ const qualityConfig = [
   {
     ignores: [
       ".next/**",
+      "next-env.d.ts",
       "node_modules/**",
       "coverage/**",
       "src/server/model/result/**",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    files: ["jest.config.js"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ];
 
 export default qualityConfig;

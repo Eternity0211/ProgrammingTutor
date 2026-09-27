@@ -1,8 +1,10 @@
 import fs from "fs";
 import path from "path";
-import OpenAI from "openai";
 import { SymbolicResult } from "@/lib/types/symbolic-types";
-import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
+import {
+  createLlmClient,
+  getLlmModel,
+} from "@/server/model/shared/llm-provider";
 import { recordLlmUsage } from "@/server/model/shared/llm-usage-recorder";
 import {
   AgentOutputValidationError,
@@ -173,12 +175,20 @@ export async function runCodeReviewAgent(
 
     const answerContent = completion.choices[0]?.message?.content;
     if (!answerContent) throw new Error("API returned empty content");
-    recordLlmUsage(completion.usage, { agent: "code-review", model: getLlmModel() });
+    recordLlmUsage(completion.usage, {
+      agent: "code-review",
+      model: getLlmModel(),
+    });
 
-    const parsed = codeReviewAgentResultSchema.safeParse(JSON.parse(answerContent));
+    const parsed = codeReviewAgentResultSchema.safeParse(
+      JSON.parse(answerContent),
+    );
     if (!parsed.success) {
       recordAgentOutputValidation("code-review", "invalid");
-      throw new AgentOutputValidationError("CodeReviewAgent", parsed.error.message);
+      throw new AgentOutputValidationError(
+        "CodeReviewAgent",
+        parsed.error.message,
+      );
     }
     recordAgentOutputValidation("code-review", "valid");
     return parsed.data;

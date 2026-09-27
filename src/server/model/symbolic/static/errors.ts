@@ -83,7 +83,6 @@ type Validator = (captures: Record<string, SyntaxNode>) => string | null;
 const VALIDATORS: Record<string, Validator> = {
   // 针对 CPP_ARRAY_OOB_LITERAL 的数值比对逻辑
   CPP_ARRAY_OOB_LITERAL: (captures) => {
-    const name = captures["def_name"]?.text || "unknown_array";
     // 1. 获取定义大小
     const defSizeNode = captures["def_size"];
     // 2. 获取使用索引
@@ -102,7 +101,7 @@ const VALIDATORS: Record<string, Validator> = {
       if (index >= size) {
         return "__no_message__"; // 仅表示验证失败，但使用默认消息模板，无需覆盖
       }
-    } catch (e) {
+    } catch {
       return null;
     }
 
@@ -129,7 +128,7 @@ const VALIDATORS: Record<string, Validator> = {
     return null;
   },
 
-  KEY: (captures) => {
+  KEY: () => {
     return "some dynamic message";
   },
 };

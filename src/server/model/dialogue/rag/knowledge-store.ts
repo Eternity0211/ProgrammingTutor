@@ -31,7 +31,9 @@ function keywordScore(query: string, document: KnowledgeDocument): number {
     if (contentTerms.has(term)) overlap += 1;
   }
   const titleTerms = tokenize(document.title ?? "");
-  const titleBoost = [...queryTerms].some((term) => titleTerms.has(term)) ? 0.15 : 0;
+  const titleBoost = [...queryTerms].some((term) => titleTerms.has(term))
+    ? 0.15
+    : 0;
   return Math.min(1, overlap / queryTerms.size + titleBoost);
 }
 
@@ -78,16 +80,23 @@ export class KnowledgeStore {
         embedding = await this.llm.createEmbedding(document.content);
       } catch (error) {
         if (this.retrievalMode === "vector") throw error;
-        console.warn("[KnowledgeStore] Embedding unavailable, using keyword retrieval:", error);
+        console.warn(
+          "[KnowledgeStore] Embedding unavailable, using keyword retrieval:",
+          error,
+        );
       }
     }
-    const contentHash = createHash("sha256").update(document.content).digest("hex");
+    const contentHash = createHash("sha256")
+      .update(document.content)
+      .digest("hex");
     const metadata = {
-      ...(document.metadata && typeof document.metadata === "object" ? document.metadata : {}),
+      ...(document.metadata && typeof document.metadata === "object"
+        ? document.metadata
+        : {}),
       contentHash,
       embeddingModel:
         embedding.length > 0
-          ? process.env.EMBEDDING_MODEL ?? "default"
+          ? (process.env.EMBEDDING_MODEL ?? "default")
           : "keyword",
       version: 1,
     };
@@ -115,9 +124,15 @@ export class KnowledgeStore {
     }
     this.documents = this.documents.filter((doc) => {
       const existingMetadata = doc.metadata;
-      return doc.id !== document.id &&
-        !(existingMetadata && typeof existingMetadata === "object" &&
-          "contentHash" in existingMetadata && existingMetadata.contentHash === contentHash);
+      return (
+        doc.id !== document.id &&
+        !(
+          existingMetadata &&
+          typeof existingMetadata === "object" &&
+          "contentHash" in existingMetadata &&
+          existingMetadata.contentHash === contentHash
+        )
+      );
     });
     this.documents.push(storedDocument);
     this.embeddings.set(document.id, embedding);
@@ -142,7 +157,6 @@ export class KnowledgeStore {
     );
   }
 
-
   async search(
     query: string,
     topK: number = 3,
@@ -154,8 +168,10 @@ export class KnowledgeStore {
       if (!filters || Object.keys(filters).length === 0) return true;
       const metadata = doc.metadata;
       if (!metadata || typeof metadata !== "object") return false;
-      return Object.entries(filters).every(([key, value]) =>
-        value === undefined || (metadata as Record<string, unknown>)[key] === value,
+      return Object.entries(filters).every(
+        ([key, value]) =>
+          value === undefined ||
+          (metadata as Record<string, unknown>)[key] === value,
       );
     });
     if (filteredDocuments.length === 0) return [];
@@ -171,11 +187,17 @@ export class KnowledgeStore {
         const queryEmbedding = await this.llm.createEmbedding(query);
         scores = filteredDocuments.map((doc) => ({
           document: this.toPublicDocument(doc),
-          score: cosineSimilarity(queryEmbedding, this.embeddings.get(doc.id) ?? []),
+          score: cosineSimilarity(
+            queryEmbedding,
+            this.embeddings.get(doc.id) ?? [],
+          ),
         }));
       } catch (error) {
         if (this.retrievalMode === "vector") throw error;
-        console.warn("[KnowledgeStore] Vector retrieval unavailable, using keyword retrieval:", error);
+        console.warn(
+          "[KnowledgeStore] Vector retrieval unavailable, using keyword retrieval:",
+          error,
+        );
         scores = filteredDocuments.map((doc) => ({
           document: this.toPublicDocument(doc),
           score: keywordScore(query, doc),
@@ -200,8 +222,16 @@ export class KnowledgeStore {
     return this.documents.map((document) => this.toPublicDocument(document));
   }
 
-  private toPublicDocument(document: KnowledgeDocument): KnowledgeDocumentInput {
-    const { embedding: _embedding, ...publicDocument } = document;
-    return publicDocument;
+  private toPublicDocument(
+    document: KnowledgeDocument,
+  ): KnowledgeDocumentInput {
+    return {
+      id: document.id,
+      title: document.title,
+      content: document.content,
+      metadata: document.metadata,
+      createdAt: document.createdAt,
+      updatedAt: document.updatedAt,
+    };
   }
 }

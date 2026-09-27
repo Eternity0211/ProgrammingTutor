@@ -62,6 +62,8 @@ describe("Symbolic Parser (Infrastructure Layer)", () => {
     const tree = parser.parse(testCode);
 
     // A successful 'translation_unit' confirms the C++ grammar is active.
+    expect(tree).not.toBeNull();
+    if (!tree) throw new Error("Parser returned no syntax tree");
     expect(tree.rootNode.type).toBe("translation_unit");
   });
 

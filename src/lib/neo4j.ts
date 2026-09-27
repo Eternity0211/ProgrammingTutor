@@ -21,7 +21,7 @@ if (process.env.NODE_ENV !== "production") {
 
 export async function runCypherQuery(
   cypher: string,
-  params: Record<string, any> = {},
+  params: Record<string, unknown> = {},
 ): Promise<QueryResult> {
   const session = neo4jDriver.session();
   try {

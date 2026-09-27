@@ -76,7 +76,8 @@ export function useGradingTableSorting({
     if (!sortConfig) return students;
 
     return [...students].sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number = 0;
+      let bValue: string | number = 0;
 
       if (sortConfig.key === "student") {
         aValue = a.name.toLowerCase();

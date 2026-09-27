@@ -31,7 +31,7 @@ export default function WorkflowSection() {
           </AnimatedSection>
 
           <div className="grid gap-6 md:grid-cols-3 mx-auto max-w-5xl">
-            {educatorSteps.map((step: any, index: number) => (
+            {educatorSteps.map((step, index) => (
               <StaggeredItem key={index} index={index}>
                 <ProcessStep
                   number={step.number}
@@ -54,7 +54,7 @@ export default function WorkflowSection() {
           </AnimatedSection>
 
           <div className="grid gap-6 md:grid-cols-3 mx-auto max-w-5xl">
-            {studentSteps.map((step: any, index: number) => (
+            {studentSteps.map((step, index) => (
               <StaggeredItem key={index} index={index}>
                 <ProcessStep
                   number={step.number}

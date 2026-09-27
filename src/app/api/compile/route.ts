@@ -4,9 +4,7 @@ import { checkProductionConfig } from "@/server/config";
 import { prisma } from "@/lib/prisma";
 import { LANGUAGE_ID_MAP } from "@/config/constants";
 import { analyzeCode } from "@/server/model/symbolic/service";
-import {
-  type NormalizedRuntimeResult,
-} from "@/server/model/pipeline/runtime-result";
+import { type NormalizedRuntimeResult } from "@/server/model/pipeline/runtime-result";
 import { Judge0RuntimeHarness } from "@/server/model/pipeline/runtime-harness";
 
 const runtimeHarness = new Judge0RuntimeHarness();
@@ -57,8 +55,10 @@ function toRunResult(params: {
   expectedOutput?: string;
 }): RunCaseResult {
   const normalized = params.execution;
-  const runtime = normalized.runtimeMs === null ? "N/A" : `${normalized.runtimeMs}ms`;
-  const memory = normalized.memoryKb === null ? "N/A" : `${normalized.memoryKb} KB`;
+  const runtime =
+    normalized.runtimeMs === null ? "N/A" : `${normalized.runtimeMs}ms`;
+  const memory =
+    normalized.memoryKb === null ? "N/A" : `${normalized.memoryKb} KB`;
 
   if (normalized.status === "error" || normalized.error) {
     return {
@@ -81,7 +81,7 @@ function toRunResult(params: {
       isCustom: true,
       input: params.input,
       expectedOutput: null,
-       output: normalized.output,
+      output: normalized.output,
       error: "",
       status: "executed",
       runtime,
@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
       symbolic,
       results: [...customResult, ...sampleResults],
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("Error running code:", e);
     return NextResponse.json(
       {
@@ -242,7 +242,10 @@ export async function POST(req: NextRequest) {
             memory: "N/A",
             status: "failed",
             output: "",
-            error: e?.message || "Failed to run code. Please try again.",
+            error:
+              e instanceof Error
+                ? e.message
+                : "Failed to run code. Please try again.",
             hidden: false,
           },
         ],

@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import type { ChatMessage, ChatSession, SessionState } from "../types";
 import type { SessionStore } from "./session-store";
+import type {
+  ChatMessage as DbChatMessage,
+  ChatSession as DbChatSession,
+} from "@prisma/client";
 
 export class DbSessionStore implements SessionStore {
   async createSession(userId: string): Promise<ChatSession> {
@@ -100,12 +104,15 @@ export class DbSessionStore implements SessionStore {
     }
   }
 
-  private mapSession(db: any, dbMessages: any[]): ChatSession {
+  private mapSession(
+    db: DbChatSession,
+    dbMessages: DbChatMessage[],
+  ): ChatSession {
     return {
       sessionId: db.id,
       userId: db.userId,
       title: db.title ?? undefined,
-      messages: dbMessages.map((m: any) => this.mapMessage(m)),
+      messages: dbMessages.map((m) => this.mapMessage(m)),
       createdAt:
         db.createdAt instanceof Date
           ? db.createdAt.getTime()
@@ -118,7 +125,7 @@ export class DbSessionStore implements SessionStore {
     };
   }
 
-  private mapMessage(db: any): ChatMessage {
+  private mapMessage(db: DbChatMessage): ChatMessage {
     return {
       id: db.id,
       role: db.role as ChatMessage["role"],
@@ -127,7 +134,9 @@ export class DbSessionStore implements SessionStore {
         db.timestamp instanceof Date
           ? db.timestamp.getTime()
           : Number(db.timestamp),
-      metadata: (db.metadata ?? undefined) as Record<string, unknown> | undefined,
+      metadata: (db.metadata ?? undefined) as
+        | Record<string, unknown>
+        | undefined,
     };
   }
 }

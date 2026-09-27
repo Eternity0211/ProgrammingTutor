@@ -10,12 +10,18 @@ interface Props {
   selectedIssueId?: string;
 }
 
+type EditorInstance = Parameters<OnMount>[0];
+type MonacoInstance = Parameters<OnMount>[1];
+
 export default function DiagnosticEditor({
   code,
   issues,
   selectedIssueId,
 }: Props) {
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<{
+    editor: EditorInstance;
+    monaco: MonacoInstance;
+  } | null>(null);
   const decorationsRef = useRef<string[]>([]);
 
   // 修复1：正确的 onMount 回调，保存 editor 实例

@@ -25,7 +25,6 @@ import {
 } from "@/app/_components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { Settings01Icon, UnfoldMoreIcon } from "hugeicons-react";
-import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 
 const NavUser = memo(function NavUser({

@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/app/_components/ui/textarea";
-import { TestCase } from "@/lib/types/assignment-tyes";
 import { Button } from "@/app/_components/ui/button";
 import {
   Accordion,

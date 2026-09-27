@@ -12,7 +12,10 @@ function buildBlockingErrorSummary(
     .join(" | ");
 }
 
-export async function GET(req: NextRequest, { params }: { params: any }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const session = await auth();
     if (!session || !session.user) {
@@ -104,7 +107,16 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
       };
     });
 
-    let parsedFeedback: any = null;
+    let parsedFeedback: {
+      evaluationTrace?: { branch?: string };
+      symbolic?: {
+        errors?: { ruleId: string; message: string }[];
+        metadata?: { parseTime?: number };
+      };
+      aiFeedback?: unknown;
+      navigation?: unknown;
+      emotion?: unknown;
+    } | null = null;
     try {
       parsedFeedback = submission.feedback
         ? JSON.parse(submission.feedback)
@@ -152,10 +164,12 @@ export async function GET(req: NextRequest, { params }: { params: any }) {
       symbolicOutput: parsedFeedback?.symbolic || null,
       latestEvaluation: submission.evaluationRuns[0] ?? null,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching submission:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
       { status: 500 },
     );
   }

@@ -203,9 +203,11 @@ export default function ProfileSettings({ user }: { user: User | undefined }) {
                 Profile Photo
               </FormLabel>
               <div className="w-full sm:w-1/2">
-                <img
+                <Image
                   src={profileImageUrl}
                   alt="Profile"
+                  width={64}
+                  height={64}
                   className="h-16 w-16 rounded-full border border-border"
                 />
               </div>

@@ -24,7 +24,7 @@ async function main() {
           headingPath: ck.headingPath,
           filePath: ck.filePath,
         },
-      } as any,
+      },
     });
   }
   console.log("✅全部导入完成，写入 knowledge_documents");

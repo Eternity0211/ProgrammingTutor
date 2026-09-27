@@ -20,9 +20,7 @@ describe("Dynamic Analysis - DFA Engine (Competition Level)", () => {
    * @returns 汇聚在执行终点 (Exit Block) 的符号环境账本
    */
   function getExitEnvironment(engine: AnalysisEngine): Environment {
-    const states = (engine as any).blockInStates as Map<string, Environment>;
-    const cfg = (engine as any).cfg;
-    const exitState = states.get(cfg.exit.id);
+    const exitState = engine.getExitEnvironment();
     if (!exitState)
       throw new Error(
         "Critical: Exit block state unresolved. DFA might have diverged or stalled.",

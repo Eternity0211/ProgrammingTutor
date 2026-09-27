@@ -1,6 +1,8 @@
 import { AssignmentMetric, EvaluationMetric } from "@prisma/client";
-import OpenAI from "openai";
-import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
+import {
+  createLlmClient,
+  getLlmModel,
+} from "@/server/model/shared/llm-provider";
 
 interface CodeEvaluationRequest {
   code: string;
@@ -109,7 +111,7 @@ export async function evaluateCodeWithLLM(
       let response;
       try {
         response = JSON.parse(answerContent);
-      } catch (parseError) {
+      } catch {
         console.error("Failed to parse LLM response as JSON:", answerContent);
         throw new Error("LLM returned invalid JSON format");
       }
@@ -145,18 +147,22 @@ export async function evaluateCodeWithLLM(
 }
 
 export function validateEvaluationResponse(
-  response: any,
+  response: unknown,
 ): response is CodeEvaluationResponse {
   if (!response || typeof response !== "object") return false;
-  if (!Array.isArray(response.evaluations)) return false;
+  const candidate = response as { evaluations?: unknown };
+  if (!Array.isArray(candidate.evaluations)) return false;
 
-  return response.evaluations.every(
-    (evaluation: any) =>
-      typeof evaluation.metricId === "string" &&
-      typeof evaluation.metricName === "string" &&
-      typeof evaluation.score === "number" &&
-      evaluation.score >= 0 &&
-      evaluation.score <= 100 &&
-      typeof evaluation.feedback === "string",
-  );
+  return candidate.evaluations.every((evaluation: unknown) => {
+    if (!evaluation || typeof evaluation !== "object") return false;
+    const item = evaluation as Record<string, unknown>;
+    return (
+      typeof item.metricId === "string" &&
+      typeof item.metricName === "string" &&
+      typeof item.score === "number" &&
+      item.score >= 0 &&
+      item.score <= 100 &&
+      typeof item.feedback === "string"
+    );
+  });
 }

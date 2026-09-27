@@ -31,12 +31,13 @@ export default function ParallaxImage({
   return (
     <div ref={ref} className={`relative overflow-hidden ${className}`}>
       <motion.div style={{ y }}>
-        <img
+        <Image
           src={src}
           width={width}
           height={height}
           alt={alt}
           className="w-full object-cover"
+          unoptimized
         />
       </motion.div>
     </div>

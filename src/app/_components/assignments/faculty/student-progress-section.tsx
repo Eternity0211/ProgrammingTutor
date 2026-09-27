@@ -11,7 +11,6 @@ import { FacultyActionsToolbar } from "./faculty-actions-toolbar";
 import { StudentListItem } from "./student-list-item";
 
 interface StudentProgressSectionProps {
-  students: StudentProgress[];
   filteredStudents: StudentProgress[];
   searchQuery: string;
   onSearchChange: (value: string) => void;
@@ -21,7 +20,6 @@ interface StudentProgressSectionProps {
 }
 
 export function StudentProgressSection({
-  students,
   filteredStudents,
   searchQuery,
   onSearchChange,

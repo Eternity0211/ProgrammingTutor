@@ -11,7 +11,7 @@
  */
 
 import { CFG, CFGNode } from "./cfg";
-import { Environment, Interval, InitState } from "./state";
+import { Environment, Interval } from "./state";
 import { SyntaxNode } from "../parser";
 import { RawIssue } from "../../../../lib/types/symbolic-types";
 
@@ -81,8 +81,7 @@ export class AnalysisEngine {
             count > this.WIDENING_THRESHOLD &&
             successor.id.includes("cond")
           ) {
-            const store = (merged as any).store;
-            for (const varName of store.keys()) {
+            for (const varName of merged.variableNames()) {
               const oldIntv = existingIn.getInterval(varName);
               const newIntv = merged.getInterval(varName);
               // 若边界呈现单调扩张趋势，则直接推向无穷
@@ -125,12 +124,16 @@ export class AnalysisEngine {
    * 递归提取当前树结构下所有匹配类型的节点
    */
   private findAllNodes(root: SyntaxNode, types: string[]): SyntaxNode[] {
-    let results: SyntaxNode[] = [];
+    const results: SyntaxNode[] = [];
     if (types.includes(root.type)) results.push(root);
     for (const child of root.namedChildren) {
       results.push(...this.findAllNodes(child, types));
     }
     return results;
+  }
+
+  public getExitEnvironment(): Environment | undefined {
+    return this.blockInStates.get(this.cfg.exit.id);
   }
 
   /**

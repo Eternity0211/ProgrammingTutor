@@ -24,7 +24,7 @@ interface TestCaseGenDialogProps {
   language: string;
   updateField: <K extends keyof Question>(field: K, value: Question[K]) => void;
   existingTestCases: TestCase[];
-  onGenerated?: (generatedCases: any[]) => void;
+  onGenerated?: (generatedCases: TestCase[]) => void;
 }
 
 export default function TestCaseGenarationDialog({
@@ -93,6 +93,7 @@ export default function TestCaseGenarationDialog({
       );
 
       updateField("testCases", [...existingTestCases, ...newTestCases]);
+      onGenerated?.(newTestCases);
 
       toast.success("Test cases generated successfully!");
       setOpen(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Beaker } from "lucide-react";
 import { Button } from "@/app/_components/ui/button";
@@ -8,7 +8,7 @@ import { Label } from "@/app/_components/ui/label";
 import { Textarea } from "@/app/_components/ui/textarea";
 import { Checkbox } from "@/app/_components/ui/checkbox";
 import { Card, CardContent } from "@/app/_components/ui/card";
-import { TestCase } from "@/lib/types/assignment-tyes";
+import { Question, TestCase } from "@/lib/types/assignment-tyes";
 import TestCaseGenarationDialog from "../../testcase/Test-Case-Gen-dialog";
 
 interface TestCasesListProps {
@@ -64,7 +64,11 @@ export function TestCasesList({
     }
   };
 
-  const updateTestCase = (index: number, field: keyof TestCase, value: any) => {
+  const updateTestCase = <K extends keyof TestCase>(
+    index: number,
+    field: K,
+    value: TestCase[K],
+  ) => {
     const newTestCases = [...testCases];
     newTestCases[index] = {
       ...newTestCases[index],
@@ -73,9 +77,12 @@ export function TestCasesList({
     onTestCasesChange(newTestCases);
   };
 
-  const updateField = (field: keyof any, value: any) => {
-    if (field === "testCases") {
-      onTestCasesChange(value);
+  const updateField = <K extends keyof Question>(
+    field: K,
+    value: Question[K],
+  ) => {
+    if (field === "testCases" && Array.isArray(value)) {
+      onTestCasesChange(value as TestCase[]);
     }
   };
 

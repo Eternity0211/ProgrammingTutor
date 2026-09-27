@@ -1,4 +1,4 @@
-import { SubmissionStatus } from "@prisma/client";
+import { CodeEvaluationStatus, SubmissionStatus } from "@prisma/client";
 
 export interface Question {
   id: string;
@@ -117,7 +117,14 @@ export interface StudentProgress {
   submittedAt: string | null;
   score: number;
   questionsCompleted: number;
-  submissions: any[]; // CodeSubmission array from Prisma
+  submissions: Array<{
+    id: string;
+    score: number;
+    testCaseScore: number;
+    codeEvaluationStatus: CodeEvaluationStatus;
+    createdAt: Date;
+    metricResults: Array<{ metricId: string; score: number }>;
+  }>;
 }
 
 // Transform function types

@@ -30,7 +30,7 @@ import { copyToClipboard } from "@/lib/utils";
 import { toast } from "sonner";
 import { Role } from "@prisma/client";
 import { deleteClass } from "@/server/actions/class-actions";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface ClassSettingsTabProps {
   classData: UserClassroom;

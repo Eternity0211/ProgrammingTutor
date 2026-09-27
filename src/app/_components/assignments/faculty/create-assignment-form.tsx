@@ -20,7 +20,6 @@ import { Question } from "@/lib/types/assignment-tyes";
 import type { AssignmentSchema } from "@/lib/validators/schema";
 import { toast } from "sonner";
 import { Switch } from "../../ui/switch";
-import { SymbolicRuleSelector } from "./symbolic-rule-selector";
 
 interface CreateAssignmentFormProps {
   classCode: string;
@@ -39,9 +38,6 @@ export function CreateAssignmentForm({
     useState<boolean>(false);
   const [fullScreenEnforcement, setFullScreenEnforcement] =
     useState<boolean>(false);
-  const [selectedRules, setSelectedRules] = useState<string[]>([
-    "CPP_ARRAY_OOB_LITERAL",
-  ]);
   const [metrics, setMetrics] = useState<EvaluationMetric[]>([]);
   const [testCaseWeight, setTestCaseWeight] = useState(60);
   const [metricsWeight, setMetricsWeight] = useState(40);

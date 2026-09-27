@@ -5,6 +5,7 @@ import { Code } from "lucide-react";
 import { LANGUAGE_ICONS, LANGUAGE_COLORS } from "@/config/constants";
 import { cn } from "@/lib/utils";
 import { Language } from "@/lib/types/config-types";
+import Image from "next/image";
 
 interface LanguageIconProps {
   language: Language;
@@ -33,12 +34,13 @@ export const LanguageIcon: React.FC<LanguageIconProps> = ({
       className={cn("flex items-center justify-center", className)}
       style={showColor ? { color } : undefined}
     >
-      <img
+      <Image
         src={iconPath}
         alt={`${language} logo`}
         width={size}
         height={size}
         className="object-contain"
+        unoptimized
       />
       {showText && <span className="ml-2">{language}</span>}
     </div>

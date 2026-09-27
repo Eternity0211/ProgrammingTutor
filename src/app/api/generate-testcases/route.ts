@@ -44,10 +44,15 @@ export async function POST(req: NextRequest) {
     const testCases: Omit<TestCase, "id">[] = await generateTestCases(prompt);
 
     return NextResponse.json({ testCases });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error generating test cases:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to generate test cases" },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate test cases",
+      },
       { status: 500 },
     );
   }

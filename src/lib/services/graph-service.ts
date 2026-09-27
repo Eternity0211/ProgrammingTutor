@@ -1,7 +1,9 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
-import OpenAI from "openai";
 import { getNeo4jSession } from "@/lib/neo4j";
-import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
+import {
+  createLlmClient,
+  getLlmModel,
+} from "@/server/model/shared/llm-provider";
 import {
   dependencyPolicy,
   runWithDependencyGuard,
@@ -89,9 +91,8 @@ export async function traceKnowledgeDependencies(
   `;
 
   try {
-    const result = await runWithDependencyGuard(
-      dependencyPolicy("neo4j"),
-      () => session.run(cypher, { conceptId }),
+    const result = await runWithDependencyGuard(dependencyPolicy("neo4j"), () =>
+      session.run(cypher, { conceptId }),
     );
 
     if (result.records.length === 0 || !result.records[0].get("target").id) {
@@ -103,12 +104,12 @@ export async function traceKnowledgeDependencies(
       target: record.get("target"),
       prerequisites: record
         .get("prerequisites")
-        .filter((p: any) => p && p.id !== null),
+        .filter((p: KnowledgeNode | null) => p?.id != null),
     };
   } catch (error) {
     // 【修改点】：仅记录日志，不再 throw，防止 pipeline 崩溃
     console.error("⚠️ Neo4j Trace Service Unavailable (Skipping):", error);
-    return null; 
+    return null;
   } finally {
     await session.close();
   }
@@ -121,7 +122,7 @@ export async function getAggregatedKnowledgeContext(
   conceptIds: string[],
 ): Promise<KnowledgeTrace[]> {
   if (!conceptIds || conceptIds.length === 0) return [];
-  
+
   const uniqueIds = Array.from(new Set(conceptIds));
   const traces = await Promise.all(
     uniqueIds.map((id) => traceKnowledgeDependencies(id)),
@@ -137,7 +138,7 @@ export async function generateTestCases(prompt: string) {
     const completion = await client.chat.completions.create({
       model: getLlmModel(),
       messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" }, 
+      response_format: { type: "json_object" },
       temperature: 0.3,
     });
 
@@ -147,10 +148,10 @@ export async function generateTestCases(prompt: string) {
     }
 
     const parsed = JSON.parse(answerContent);
-    const testCases: Omit<TestCase, "id">[] = Array.isArray(parsed) 
-      ? parsed 
-      : (parsed.testCases || []);
-      
+    const testCases: Omit<TestCase, "id">[] = Array.isArray(parsed)
+      ? parsed
+      : parsed.testCases || [];
+
     return testCases;
   } catch (error) {
     console.error("❌ LLM API Error:", error);

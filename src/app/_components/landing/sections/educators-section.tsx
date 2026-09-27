@@ -24,7 +24,7 @@ export default function EducatorsSection() {
               </p>
 
               <div className="space-y-6">
-                {educatorFeatures.map((feature: any, index: number) => (
+                {educatorFeatures.map((feature, index) => (
                   <StaggeredItem key={index} index={index}>
                     <FeatureHighlight
                       icon={feature.icon}

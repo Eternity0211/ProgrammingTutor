@@ -9,6 +9,20 @@ import {
 import { cookies } from "next/headers";
 import { judgeResult } from "@/lib/types/code-types";
 
+interface ParsedSubmissionFeedback {
+  aiFeedback?: unknown;
+  symbolic?: unknown;
+  emotion?: {
+    emotion_analysis?: { supportive_guidance?: string };
+  };
+  navigation?: {
+    learning_navigation?: {
+      learning_path?: Array<{ topic?: string }>;
+      recommended_exercises?: unknown[];
+    };
+  };
+}
+
 function getCodeSubmissionDisplayStatus(codeSubmission: {
   codeEvaluationStatus: CodeEvaluationStatus;
   testCaseResults: { status: TestCaseStatus }[];
@@ -296,7 +310,7 @@ export async function getSubmissionsById(codeSubmissionId: string) {
       };
     }
 
-    let parsedFeedback: any = null;
+    let parsedFeedback: ParsedSubmissionFeedback | null = null;
     try {
       parsedFeedback = codeSubmission.feedback
         ? JSON.parse(codeSubmission.feedback)
@@ -474,7 +488,7 @@ export async function getStudentFeedbackHistory() {
   });
 
   return submissions.map((sub) => {
-    let parsedFeedback: any = null;
+    let parsedFeedback: ParsedSubmissionFeedback | null = null;
 
     try {
       if (sub.feedback) {
@@ -484,7 +498,7 @@ export async function getStudentFeedbackHistory() {
       parsedFeedback = {
         emotion: {
           emotion_analysis: {
-            supportive_guidance: sub.feedback,
+            supportive_guidance: sub.feedback ?? undefined,
           },
         },
         navigation: {
@@ -517,11 +531,11 @@ export async function getStudentFeedbackHistory() {
 
 const skillTopicMap = {
   "指针/引用": "pointer",
-  "内存管理": "memory",
-  "STL容器": "stl",
-  "面向对象": "oop",
-  "递归算法": "recursion",
-  "异常处理": "exception",
+  内存管理: "memory",
+  STL容器: "stl",
+  面向对象: "oop",
+  递归算法: "recursion",
+  异常处理: "exception",
 } as const;
 
 export async function getWeakQuestionsFromDB(weakTopics: string[]) {

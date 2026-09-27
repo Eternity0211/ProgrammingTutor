@@ -173,7 +173,7 @@ async function handlePost(req: NextRequest) {
     } catch (error) {
       throw error;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in submission:", error);
     const failure = classifyEvaluationError(error);
     return NextResponse.json(
@@ -181,7 +181,9 @@ async function handlePost(req: NextRequest) {
         error:
           error instanceof EvaluationPlatformError
             ? "Evaluation service is temporarily unavailable"
-            : error.message || "Internal server error",
+            : error instanceof Error
+              ? error.message
+              : "Internal server error",
         failureKind: failure.kind,
         retryable: failure.retryable,
         ...(error instanceof EvaluationRunPlatformError

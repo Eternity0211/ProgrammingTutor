@@ -1,5 +1,5 @@
 import { Skeleton } from "@/app/_components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/app/_components/ui/card";
+import { Card, CardContent } from "@/app/_components/ui/card";
 
 export default function Loading() {
   return (

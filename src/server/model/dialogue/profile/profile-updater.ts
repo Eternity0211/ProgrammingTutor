@@ -1,13 +1,40 @@
 import type { AgentResultSnapshot, StudentProfile } from "../types";
 import type { ProfileStore } from "./profile-store";
 import { InMemoryProfileStore } from "./profile-store";
-import type { RagResponse } from "../types";
 
 const PROGRAMMING_CONCEPTS = [
-  "指针", "引用", "内存", "递归", "循环", "数组", "链表", "树", "图",
-  "排序", "查找", "动态规划", "贪心", "面向对象", "继承", "多态", "封装",
-  "异常", "模板", "STL", "容器", "迭代器", "lambda", "函数", "变量",
-  "作用域", "构造", "析构", "虚函数", "纯虚", "友元", "运算符重载",
+  "指针",
+  "引用",
+  "内存",
+  "递归",
+  "循环",
+  "数组",
+  "链表",
+  "树",
+  "图",
+  "排序",
+  "查找",
+  "动态规划",
+  "贪心",
+  "面向对象",
+  "继承",
+  "多态",
+  "封装",
+  "异常",
+  "模板",
+  "STL",
+  "容器",
+  "迭代器",
+  "lambda",
+  "函数",
+  "变量",
+  "作用域",
+  "构造",
+  "析构",
+  "虚函数",
+  "纯虚",
+  "友元",
+  "运算符重载",
 ];
 
 export class ProfileUpdater {
@@ -31,11 +58,8 @@ export class ProfileUpdater {
           agentResults.codeReview.causalAnalysis,
           ...agentResults.codeReview.suggestions,
         ].join(" ");
-        const concepts = PROGRAMMING_CONCEPTS.filter((c) =>
-          text.includes(c),
-        );
-        const score =
-          context.score ?? agentResults.codeReview.confidence * 100;
+        const concepts = PROGRAMMING_CONCEPTS.filter((c) => text.includes(c));
+        const score = context.score ?? agentResults.codeReview.confidence * 100;
 
         profile.codeSubmissionRecords.push({
           questionId: context.questionId,
@@ -73,9 +97,13 @@ export class ProfileUpdater {
       }
 
       if (agentResults.rag?.sources) {
-        const sourceText = agentResults.rag.sources.map((doc) => doc.content).join(" ");
+        const sourceText = agentResults.rag.sources
+          .map((doc) => doc.content)
+          .join(" ");
 
-        const ragConcepts = PROGRAMMING_CONCEPTS.filter((c) => sourceText.includes(c));
+        const ragConcepts = PROGRAMMING_CONCEPTS.filter((c) =>
+          sourceText.includes(c),
+        );
         for (const concept of ragConcepts) {
           if (!profile.weakKnowledgePoints.includes(concept)) {
             profile.weakKnowledgePoints.push(concept);

@@ -25,7 +25,6 @@ export default function OnboardingInitiator({
   onClose,
 }: OnboardingInitiatorProps) {
   const [role, setRole] = useState<Role | null>(null);
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { refreshSession } = useClientSession();
   const router = useRouter();
@@ -44,7 +43,6 @@ export default function OnboardingInitiator({
       onboardingUpdate.status === "success"
     ) {
       toast.success("身份确认完成！");
-      setIsOnboardingComplete(true);
       router.refresh();
       onClose();
     } else {

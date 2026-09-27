@@ -33,7 +33,7 @@ export function StepSlider({ options, value, onChange }: StepSliderProps) {
         <SliderPrimitive.Thumb className="block w-5 h-5 bg-white border-2 border-primary rounded-full focus:outline-none focus-visible:ring focus-visible:ring-primary focus-visible:ring-opacity-75" />
       </SliderPrimitive.Root>
       <div className="flex justify-between text-sm text-neutral-600 pt-4">
-        {options.map((mark, index) => (
+        {options.map((mark) => (
           <div key={mark} className="relative flex flex-col items-center">
             <span className="font-medium">
               {mark === 1000

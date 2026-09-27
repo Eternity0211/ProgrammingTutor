@@ -258,8 +258,8 @@ export function transformStudentDataForGrading(
         student.submissions?.reduce(
           (acc, curr) =>
             acc +
-            curr.metricResults.find((mr: any) => mr.metricId === metric.id)
-              ?.score,
+            (curr.metricResults.find((mr) => mr.metricId === metric.id)
+              ?.score ?? 0),
           0,
         ) / numberOfSubmissions || 0;
       return {
@@ -285,10 +285,20 @@ export function transformStudentDataForGrading(
         id: submission.id,
         studentId: student.id,
         testCaseScore: submission.testCaseScore,
-        metricScores: submission.metricResults,
+        metricScores: submission.metricResults.map((result) => {
+          const metric = assignmentData.metrics.find(
+            (item) => item.id === result.metricId,
+          );
+          return {
+            metricId: result.metricId,
+            metricName: metric?.name ?? result.metricId,
+            score: result.score,
+            weight: metric?.weight ?? 0,
+          };
+        }),
         totalScore: submission.score,
-        status: submission.codeEvaluationStatus,
-        submittedAt: submission.createdAt || undefined,
+        status: student.status,
+        submittedAt: submission.createdAt.toISOString(),
       }),
     );
 

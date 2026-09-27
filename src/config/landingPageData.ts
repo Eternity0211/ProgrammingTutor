@@ -1,5 +1,4 @@
 "use client";
-import { Bug01Icon } from "hugeicons-react";
 import {
   Code,
   CheckCircle,
@@ -8,15 +7,12 @@ import {
   BookOpen,
   FileCode,
   CheckSquare,
-  Sparkles,
   Brain,
   Lock,
   Zap,
-  BusIcon,
   Heart,
   Compass,
 } from "lucide-react";
-import { title } from "process";
 
 export const featureCards = [
   {

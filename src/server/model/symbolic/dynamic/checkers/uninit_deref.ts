@@ -9,7 +9,7 @@
  */
 
 import { SyntaxNode } from "../../parser";
-import { Environment, InitState, Interval } from "../state";
+import { Environment, InitState } from "../state";
 import { RawIssue } from "../../../../../lib/types/symbolic-types";
 import { Checker } from "./index";
 

@@ -55,7 +55,10 @@ export class RagEngine {
     }
   }
 
-  async answer(question: string, filters?: KnowledgeFilters): Promise<RagResponse> {
+  async answer(
+    question: string,
+    filters?: KnowledgeFilters,
+  ): Promise<RagResponse> {
     try {
       await this.loadPromise;
       const results = await this.store.search(question, 3, filters);
@@ -95,7 +98,7 @@ export class RagEngine {
     const systemPrompt = [
       promptContractHeader(prompt.id),
       "你是编程知识答疑助手。只能根据提供的知识库证据回答，禁止使用未提供的知识补充事实。",
-      "返回严格 JSON：{\"answer\":\"回答正文，每个事实后标注[S1]形式的来源\",\"citations\":[\"S1\"]}。",
+      '返回严格 JSON：{"answer":"回答正文，每个事实后标注[S1]形式的来源","citations":["S1"]}。',
       "citations 只能包含实际支持回答的来源编号，且每个编号必须出现在 answer 中。",
       "如果证据不足，不要猜测；返回简短说明，并引用最相关的证据。",
     ].join("\n");
@@ -115,7 +118,8 @@ export class RagEngine {
       if (!validated) {
         recordGrounding("invalid_model_output");
         return {
-          answer: "知识库已检索到相关资料，但模型未能生成可验证的引用回答。请稍后再试。",
+          answer:
+            "知识库已检索到相关资料，但模型未能生成可验证的引用回答。请稍后再试。",
           sources: [],
           citations: [],
           grounded: false,
@@ -147,10 +151,7 @@ export class RagEngine {
     }
   }
 
-  async addKnowledge(
-    title: string | null,
-    content: string,
-  ): Promise<void> {
+  async addKnowledge(title: string | null, content: string): Promise<void> {
     const now = new Date();
     const doc: KnowledgeDocument = {
       id: randomUUID(),
@@ -174,7 +175,7 @@ export class RagEngine {
         metadata: {
           headingPath: ck.headingPath,
           filePath: ck.filePath,
-        } as any,
+        },
         createdAt: now,
         updatedAt: now,
       };

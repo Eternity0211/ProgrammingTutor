@@ -33,7 +33,10 @@ async function handlePost(req: NextRequest) {
         { status: 400 },
       );
     }
-    if (message.length > 20_000 || JSON.stringify(context ?? {}).length > 40_000) {
+    if (
+      message.length > 20_000 ||
+      JSON.stringify(context ?? {}).length > 40_000
+    ) {
       return NextResponse.json(
         { error: "message or context is too large" },
         { status: 413 },
@@ -52,10 +55,12 @@ async function handlePost(req: NextRequest) {
     return NextResponse.json(response, {
       headers: { "x-trace-id": response.traceId },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API /dialogue] Error:", error);
     return NextResponse.json(
-      { error: error?.message || "Internal server error" },
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
       { status: 500 },
     );
   }

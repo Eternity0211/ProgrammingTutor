@@ -2,11 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { TestResults } from "@/lib/types/code-types";
-import {
-  TestCaseStatus,
-  CodeEvaluationStatus,
-  SubmissionStatus,
-} from "@prisma/client";
+import { TestCaseStatus, CodeEvaluationStatus } from "@prisma/client";
 import { evaluateCodeWithLLM } from "@/lib/services/code-evaluation-llm-service";
 import { updateSubmissionStatus } from "./submission-actions";
 import { revalidatePath } from "next/cache";
@@ -369,7 +365,12 @@ export const performBulkAction = async (
     switch (action) {
       case "export":
         // Handle export action
-        console.log("Exporting students:", studentIds);
+        console.log(
+          "Exporting students:",
+          studentIds,
+          "assignment:",
+          assignmentId,
+        );
         break;
       // case "comment":
       //   // Handle adding comments

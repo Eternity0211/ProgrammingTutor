@@ -8,7 +8,6 @@ import {
   Clock,
   AlertTriangle,
   BrainCircuit,
-  Activity,
   Lightbulb,
   Heart,
 } from "lucide-react";
@@ -23,10 +22,6 @@ import {
 import { Badge } from "@/app/_components/ui/badge";
 import { Progress } from "@/app/_components/ui/progress";
 import { cn } from "@/lib/utils";
-import {
-  getSubmissions,
-  // getSubmissionsById,
-} from "@/server/actions/submission-actions";
 import { LanguageIcon } from "@/app/_components/ui/language-icon";
 import { Language } from "@/lib/types/config-types";
 
@@ -410,7 +405,7 @@ export default async function SubmissionDetailPage({
             <EvaluationPanel submission={submission} />
 
             {/* 推荐题目（保持服务端渲染） */}
-            {(submission as any).recommendedQuestions && (
+            {submission.recommendedQuestions && (
               <Card className="mt-6 rounded-2xl">
                 <CardHeader>
                   <CardTitle className="text-sm flex items-center gap-2">
@@ -420,20 +415,18 @@ export default async function SubmissionDetailPage({
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-2 md:grid-cols-2">
-                    {(submission as any).recommendedQuestions.map(
-                      (q: any, i: number) => (
-                        <Link
-                          key={i}
-                          href={`/classes/${classCode}/${q.assignmentId}`}
-                          className="p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <p className="font-medium text-sm">{q.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            难度：{q.difficulty}
-                          </p>
-                        </Link>
-                      ),
-                    )}
+                    {submission.recommendedQuestions.map((q, i) => (
+                      <Link
+                        key={i}
+                        href={`/classes/${classCode}/${q.assignmentId}`}
+                        className="p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <p className="font-medium text-sm">{q.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          难度：{q.difficulty}
+                        </p>
+                      </Link>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -530,9 +523,9 @@ export default async function SubmissionDetailPage({
                 </div>
 
                 {/* 神经符号标记 */}
-                {(submission as any).aiFeedback && (
+                {submission.aiFeedback && (
                   <div className="pt-3 border-t">
-                    {(submission as any).aiFeedback.noCustomMetrics ? (
+                    {submission.aiFeedback.noCustomMetrics ? (
                       <>
                         <div className="flex items-center gap-2 text-amber-600 mb-1">
                           <AlertTriangle className="h-4 w-4" />
@@ -561,7 +554,7 @@ export default async function SubmissionDetailPage({
                 )}
 
                 {/* 情绪陪伴语 */}
-                {(submission as any).emotion && (
+                {submission.emotion && (
                   <div className="pt-3 border-t">
                     <div className="flex items-center gap-2 text-pink-600 mb-1">
                       <Heart className="h-4 w-4 fill-current" />
@@ -570,10 +563,10 @@ export default async function SubmissionDetailPage({
                       </span>
                     </div>
                     <p className="text-xs italic leading-relaxed text-pink-900 p-2 bg-pink-50/20 rounded-lg">
-                      "
-                      {(submission as any).emotion.emotion_analysis
+                      &ldquo;
+                      {submission.emotion.emotion_analysis
                         ?.supportive_guidance || "继续加油！"}
-                      "
+                      &rdquo;
                     </p>
                   </div>
                 )}

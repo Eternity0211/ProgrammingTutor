@@ -1,6 +1,8 @@
 import { TestCase } from "@/lib/types/assignment-tyes";
-import OpenAI from "openai";
-import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
+import {
+  createLlmClient,
+  getLlmModel,
+} from "@/server/model/shared/llm-provider";
 
 export function buildTestCaseGenerationPrompt(
   title: string,
@@ -87,8 +89,9 @@ export async function generateTestCases(prompt: string) {
 
     const parsedData = JSON.parse(content);
     // 确保返回数组格式
-    const cases: Omit<TestCase, "id">[] = parsedData.testCases || (Array.isArray(parsedData) ? parsedData : []);
-    
+    const cases: Omit<TestCase, "id">[] =
+      parsedData.testCases || (Array.isArray(parsedData) ? parsedData : []);
+
     return cases;
   } catch (error) {
     console.error("❌ TestCase Generation Error:", error);

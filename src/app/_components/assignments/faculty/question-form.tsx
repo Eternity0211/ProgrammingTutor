@@ -17,15 +17,16 @@ import { Language } from "@/lib/types/config-types";
 import { TestCasesList } from "./test-cases-list";
 import { SymbolicRuleSelector } from "./symbolic-rule-selector";
 
-import { ShieldCheck } from "lucide-react";
-
 interface QuestionFormProps {
   question: Question;
   onChange: (question: Question) => void;
 }
 
 export function QuestionForm({ question, onChange }: QuestionFormProps) {
-  const updateField = (field: keyof Question, value: any) => {
+  const updateField = <K extends keyof Question>(
+    field: K,
+    value: Question[K],
+  ) => {
     onChange({
       ...question,
       [field]: value,
@@ -111,7 +112,9 @@ export function QuestionForm({ question, onChange }: QuestionFormProps) {
             </Label>
             <Select
               value={question.cppStandard}
-              onValueChange={(value) => updateField("cppStandard", value)}
+              onValueChange={(value) =>
+                updateField("cppStandard", value as Question["cppStandard"])
+              }
             >
               <SelectTrigger
                 id={`question-${question.id}-standard`}

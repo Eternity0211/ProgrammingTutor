@@ -183,6 +183,10 @@ export class Environment {
     return this.store.get(name);
   }
 
+  public variableNames(): IterableIterator<string> {
+    return this.store.keys();
+  }
+
   /**
    * 生成互不干扰的环境副本，防止多分支数据污染。
    */

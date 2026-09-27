@@ -7,7 +7,6 @@ import { getUserRole } from "@/server/actions/user-actions";
 import { getAssignmentById } from "@/server/actions/assignment-actions";
 import { getStudentAssignmentProgress } from "@/server/actions/submission-actions";
 import { StudentProgress } from "@/lib/types/assignment-tyes";
-import AiCodeReview from "@/app/_components/ai-code-review/ai-code-review";
 
 export const metadata: Metadata = {
   title: "Assignment | gradeIT",

@@ -80,10 +80,7 @@ export function CodeEditor({
     setLiveCode(updatedCode);
   };
 
-  const onMount = (
-    editor: monaco.editor.IStandaloneCodeEditor,
-    monaco: typeof import("monaco-editor"),
-  ) => {
+  const onMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
     editorRef.current = editor;
     editor.focus();
 

@@ -1,4 +1,4 @@
-import { CodeRunner, SymbolicResult, AIFeedback } from "@/lib/types/code-types";
+import { CodeRunner, AIFeedback } from "@/lib/types/code-types";
 import { useState } from "react";
 import { toast } from "sonner";
 import { saveEvaluationReference } from "@/lib/evaluation-reference";
@@ -96,9 +96,11 @@ export function useCodeRunner({
       }
 
       setCodeStatus("Run complete.");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error running code:", error);
-      setCodeStatus(`Run failed: ${error.message || "Unknown error"}`);
+      setCodeStatus(
+        `Run failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
       setIsRunning(false);
     }
@@ -148,11 +150,12 @@ export function useCodeRunner({
       setCodeStatus("Running test cases...");
       toast.success("Running test cases...");
       await pollSubmissionStatus(submissionId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Submission error:", error);
-      setCodeStatus(`Submission failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setCodeStatus(`Submission failed: ${message}`);
       toast.error(
-        error.message || "An error occurred while submitting your solution",
+        message || "An error occurred while submitting your solution",
       );
     } finally {
       setIsRunning(false);
@@ -203,7 +206,7 @@ export function useCodeRunner({
 
           // Check if all tests passed by examining test results
           const hasFailedTests = mappedResults.some(
-            (result: any) => result.status !== "passed",
+            (result: CodeRunner) => result.status !== "passed",
           );
           const allTestsPassed =
             submissionData.status === "EVALUATION_COMPLETE" && !hasFailedTests;

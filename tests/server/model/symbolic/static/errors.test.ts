@@ -5,11 +5,7 @@
  */
 
 import { analyzeErrors } from "../../../../../src/server/model/symbolic/static/errors";
-import {
-  parseCode,
-  getLanguage,
-  createQuery,
-} from "../../../../../src/server/model/symbolic/parser";
+import { parseCode } from "../../../../../src/server/model/symbolic/parser";
 import fs from "fs";
 import path from "path";
 

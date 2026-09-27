@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   motion,
@@ -46,15 +46,15 @@ export function Carousel({
 
   const y = useTransform(scrollYProgress, [0, 1], ["-2%", "2%"]);
 
-  const goToNext = () => {
+  const goToNext = useCallback(() => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
-  };
+  }, [images.length]);
 
-  const goToPrev = () => {
+  const goToPrev = useCallback(() => {
     setCurrentIndex(
       (prevIndex) => (prevIndex - 1 + images.length) % images.length,
     );
-  };
+  }, [images.length]);
 
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
@@ -64,7 +64,7 @@ export function Carousel({
     if (!autoPlay || isHovering) return;
     const timer = setInterval(goToNext, interval);
     return () => clearInterval(timer);
-  }, [autoPlay, interval, isHovering, images.length]);
+  }, [autoPlay, interval, isHovering, goToNext]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -73,7 +73,7 @@ export function Carousel({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [goToNext, goToPrev]);
 
   if (images.length === 0) return null;
 

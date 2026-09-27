@@ -151,30 +151,6 @@ function checkTaintedDereference(
 /**
  * 检查是否为污染源：如 scanf、gets等污点函数返回值
  */
-function isTaintedSource(node: SyntaxNode): boolean {
-  if (!node) return false;
-
-  // 检查是否为污点函数调用
-  if (node.type === "call_expression") {
-    const fnNode = node.childForFieldName("function") || node.namedChildren[0];
-    const fnName = fnNode?.text?.trim() || "";
-    const taintedFunctions = new Set([
-      "scanf",
-      "fscanf",
-      "sscanf",
-      "gets",
-      "fgets",
-      "read",
-      "recv",
-      "getchar",
-      "getc",
-    ]);
-    return taintedFunctions.has(fnName);
-  }
-
-  return false;
-}
-
 function evalTaint(node: SyntaxNode, env: Environment): Interval {
   if (!node) return new Interval(0, 1);
 
@@ -266,17 +242,6 @@ function isSourceCall(callNode: SyntaxNode): boolean {
 /**
  * 标记指针为被污染
  */
-function markAsTaintedPtr(varName: string, env: Environment): void {
-  setTaint(varName, new Interval(1, 1), env);
-}
-
-/**
- * 检查指针是否已被标记为污染
- */
-function isTaintedPtr(varName: string, env: Environment): boolean {
-  return getTaint(varName, env).max >= 1;
-}
-
 function taintVarName(name: string): string {
   return `${TAINT_SHADOW_PREFIX}${name}`;
 }

@@ -21,13 +21,11 @@ import { SubmissionDetailsDialog } from "./submission-details-dialog";
 import {
   GradingTableColumn,
   GradingTableStudent,
-  AssignmentMetricInfo,
 } from "@/lib/types/assignment-tyes";
 
 interface GradingTableRowProps {
   student: GradingTableStudent;
   columns: GradingTableColumn[];
-  metrics: AssignmentMetricInfo[];
   isSelected: boolean;
   onSelect: (studentId: string, checked: boolean) => void;
   onScoreChange?: (
@@ -40,7 +38,6 @@ interface GradingTableRowProps {
 export function GradingTableRow({
   student,
   columns,
-  metrics,
   isSelected,
   onSelect,
   onScoreChange,

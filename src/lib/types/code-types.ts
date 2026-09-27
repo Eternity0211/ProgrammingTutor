@@ -53,7 +53,7 @@ export interface CodeSubmissionDetail {
   id: string;
   code: string;
   status: string; // 映射自 Prisma 的 CodeEvaluationStatus
-  testCaseResults: any[];
+  testCaseResults: CodeRunner[];
   symbolicOutput?: SymbolicResult; // 新增：符号引擎输出
   aiFeedback?: AIFeedback; // 新增：AI 评估反馈
   score: number | null;

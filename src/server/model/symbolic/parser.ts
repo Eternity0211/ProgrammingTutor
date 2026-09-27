@@ -10,6 +10,11 @@
 
 import path from "path";
 import fs from "fs";
+import {
+  Language as WebTreeSitterLanguage,
+  Parser as WebTreeSitterParser,
+  Query as WebTreeSitterQuery,
+} from "web-tree-sitter";
 
 // =============================================================================
 // Type Definitions (Facade & Stability) | 类型定义
@@ -38,61 +43,7 @@ export type SyntaxNode = Tree["rootNode"];
  * 通过显式定义此接口，我们解耦了编译期类型检查与运行时实现，
  * 避免了 "Type 'typeof import...' is not a constructor" 等经典 TypeScript 错误。
  */
-export interface Parser {
-  /** 解析源代码生成 AST */
-  parse(input: string, previousTree?: Tree): Tree;
-
-  /** 设置当前使用的语言 (C++) */
-  setLanguage(language: Language): void;
-
-  /** 获取当前语言实例 */
-  getLanguage(): Language;
-
-  /** 销毁实例，释放 WASM 堆内存 */
-  delete(): void;
-
-  reset(): void;
-  getTimeoutMicros(): number;
-  setTimeoutMicros(timeout: number): void;
-}
-
-// =============================================================================
-// Module Loading & Polyfills | 模块加载与兼容
-// =============================================================================
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const rawModule = require("web-tree-sitter");
-
-// 运行时实现类 (Implementation Classes)
-let ParserImp: any = null;
-let LanguageImp: any = null;
-let QueryImp: any = null;
-
-/*
- * 兼容性加载策略：
- * 不同的构建工具 (Webpack, Vite, Jest) 和运行环境 (Node, Browser)
- * 对 CommonJS/ESM 的互操作处理不同。这里逐一尝试可能的挂载点。
- */
-if (rawModule.Parser) {
-  ParserImp = rawModule.Parser;
-  LanguageImp = rawModule.Language;
-  QueryImp = rawModule.Query;
-} else if (rawModule.default) {
-  ParserImp = rawModule.default;
-  LanguageImp = rawModule.default.Language || rawModule.Language;
-  QueryImp = rawModule.default.Query || rawModule.Query;
-} else {
-  ParserImp = rawModule;
-  LanguageImp = rawModule.Language;
-  QueryImp = rawModule.Query;
-}
-
-// 核心依赖检查
-if (!ParserImp) {
-  throw new Error(
-    "Critical: Failed to load 'web-tree-sitter'. Check your node_modules compatibility.",
-  );
-}
+export type Parser = WebTreeSitterParser;
 
 // =============================================================================
 // Configuration & Singleton State | 配置与单例状态
@@ -126,7 +77,7 @@ export async function getParser(): Promise<Parser> {
 
   // 1. 初始化底层运行时
   try {
-    await ParserImp.init({
+    await WebTreeSitterParser.init({
       // In Next.js server (especially Docker), resolve runtime wasm explicitly
       // instead of relying on bundler-generated vendor chunk paths.
       locateFile(scriptName: string) {
@@ -146,7 +97,7 @@ export async function getParser(): Promise<Parser> {
     throw new Error("Parser initialization failed");
   }
 
-  const parser = new ParserImp();
+  const parser = new WebTreeSitterParser();
   const absoluteWasmPath = path.join(PUBLIC_DIR, WASM_FILE);
 
   // 2. 加载语言包 WASM
@@ -158,14 +109,16 @@ export async function getParser(): Promise<Parser> {
     // 使用 fs 读取 buffer 而非 Language.load(path)，
     // 是为了规避 Next.js 服务端与 Jest 测试环境下对相对路径解析的不一致问题。
     const wasmBuffer = fs.readFileSync(absoluteWasmPath);
-    cppLanguage = await LanguageImp.load(wasmBuffer);
-  } catch (e: any) {
+    cppLanguage = await WebTreeSitterLanguage.load(wasmBuffer);
+  } catch (e: unknown) {
     // 初始化失败时重置状态，防止残留脏数据
     parserInstance = null;
     cppLanguage = null;
 
     console.error(`[Parser] Failed to load WASM at ${absoluteWasmPath}`);
-    console.error(`[Parser] Reason: ${e.message}`);
+    console.error(
+      `[Parser] Reason: ${e instanceof Error ? e.message : String(e)}`,
+    );
     throw new Error(
       `Critical: Could not load ${WASM_FILE}. Ensure it exists in /public folder.`,
     );
@@ -202,7 +155,9 @@ export async function getLanguage(): Promise<Language> {
  */
 export async function parseCode(sourceCode: string): Promise<Tree> {
   const parser = await getParser();
-  return parser.parse(sourceCode);
+  const tree = parser.parse(sourceCode);
+  if (!tree) throw new Error("Parser returned no syntax tree");
+  return tree;
 }
 
 /**
@@ -215,16 +170,5 @@ export async function parseCode(sourceCode: string): Promise<Tree> {
  */
 export function createQuery(language: Language, source: string): Query {
   // 策略 1: 优先尝试标准的构造函数调用
-  if (QueryImp) {
-    return new QueryImp(language, source);
-  }
-
-  // 策略 2: 降级尝试旧版 API (挂载在 Language 实例上的工厂方法)
-  if ((language as any).query) {
-    return (language as any).query(source);
-  }
-
-  throw new Error(
-    "[Parser] WebTreeSitter Query constructor not found. Incompatible library version.",
-  );
+  return new WebTreeSitterQuery(language, source);
 }

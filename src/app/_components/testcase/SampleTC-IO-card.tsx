@@ -2,8 +2,19 @@
 import { Card, CardContent } from "../ui/card";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
+import type { TestCase } from "@/lib/types/assignment-tyes";
 
-export default function ({ testCase, onChange }: any) {
+type SampleTestCase = Pick<TestCase, "input" | "expectedOutput">;
+
+interface SampleTCIOCardProps {
+  testCase: SampleTestCase;
+  onChange: (field: keyof SampleTestCase, value: string) => void;
+}
+
+export default function SampleTCIOCard({
+  testCase,
+  onChange,
+}: SampleTCIOCardProps) {
   return (
     <Card className="rounded-xl border border-border bg-background">
       <CardContent className="p-4">

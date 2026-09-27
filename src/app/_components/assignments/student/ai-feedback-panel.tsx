@@ -94,7 +94,7 @@ export function AIFeedbackPanel({
               AI 陪伴助手
             </p>
             <p className="text-sm italic text-foreground/90 font-medium leading-relaxed">
-              "{emotion.emotion_analysis.supportive_guidance}"
+              &ldquo;{emotion.emotion_analysis.supportive_guidance}&rdquo;
             </p>
           </div>
         </div>

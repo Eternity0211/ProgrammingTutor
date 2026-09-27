@@ -1,7 +1,7 @@
 import { DualSessionStore } from "@/server/model/dialogue/memory/dual-session-store";
 import { createChatMessage } from "@/server/model/dialogue/memory/session-store";
 import type { SessionStore } from "@/server/model/dialogue/memory/session-store";
-import type { ChatMessage, ChatSession, SessionState } from "@/server/model/dialogue/types";
+import type { ChatSession, SessionState } from "@/server/model/dialogue/types";
 
 function makeSession(userId = "user-1"): ChatSession {
   return {
@@ -80,6 +80,7 @@ describe("DualSessionStore", () => {
 
     mockDb.getSession.mockClear();
     const cached = await dual.getSession(dbSession.sessionId);
+    expect(cached).not.toBeNull();
     expect(mockDb.getSession).not.toHaveBeenCalled();
   });
 

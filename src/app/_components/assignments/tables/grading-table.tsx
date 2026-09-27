@@ -42,7 +42,6 @@ interface GradingTableProps {
 export const GradingTable: React.FC<GradingTableProps> = ({
   data,
   columns,
-  assignmentId,
   onScoreChange,
   onBulkAction,
   onRefresh,
@@ -82,7 +81,6 @@ export const GradingTable: React.FC<GradingTableProps> = ({
           <GradingTableActions
             selectedStudents={selectedStudents}
             filteredData={filteredStudents}
-            data={data}
             onBulkAction={onBulkAction}
             onExport={handleExport}
             onRefresh={onRefresh}
@@ -124,7 +122,6 @@ export const GradingTable: React.FC<GradingTableProps> = ({
                   key={student.id}
                   student={student}
                   columns={tableColumns}
-                  metrics={data.metrics}
                   isSelected={selectedStudents.has(student.id)}
                   onSelect={handleSelectStudent}
                   onScoreChange={onScoreChange}

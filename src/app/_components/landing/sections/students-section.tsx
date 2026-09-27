@@ -37,7 +37,7 @@ export default function StudentsSection() {
               </p>
 
               <div className="space-y-6">
-                {studentFeatures.map((feature: any, index: number) => (
+                {studentFeatures.map((feature, index) => (
                   <StaggeredItem key={index} index={index}>
                     <FeatureHighlight
                       icon={feature.icon}
