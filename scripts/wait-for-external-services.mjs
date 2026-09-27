@@ -41,13 +41,18 @@ const checks = {
     const apiHost = process.env.JUDGE0_API_HOST?.trim();
     if (apiKey) headers["x-rapidapi-key"] = apiKey;
     if (apiHost) headers["x-rapidapi-host"] = apiHost;
-    const response = await fetch(`${baseUrl}/about`, { headers, signal: AbortSignal.timeout(5_000) });
+    const response = await fetch(`${baseUrl}/about`, {
+      headers,
+      signal: AbortSignal.timeout(5_000),
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
   },
 };
 
 const pending = new Map(Object.entries(checks));
 const lastErrors = new Map();
+const lastReportedErrors = new Map();
+let lastProgressAt = 0;
 
 while (pending.size > 0 && Date.now() < deadline) {
   for (const [name, check] of pending) {
@@ -57,12 +62,24 @@ while (pending.size > 0 && Date.now() < deadline) {
       lastErrors.delete(name);
       console.log(`[ready] ${name}`);
     } catch (error) {
-      lastErrors.set(name, error instanceof Error ? error.message : String(error));
+      const message = error instanceof Error ? error.message : String(error);
+      lastErrors.set(name, message);
+      if (lastReportedErrors.get(name) !== message) {
+        console.log(`[not-ready] ${name}: ${message}`);
+        lastReportedErrors.set(name, message);
+      }
     }
   }
 
   if (pending.size > 0) {
-    console.log(`[waiting] ${[...pending.keys()].join(", ")}`);
+    const now = Date.now();
+    if (now - lastProgressAt >= 60_000 || lastProgressAt === 0) {
+      const elapsedSeconds = Math.round((timeoutMs - (deadline - now)) / 1_000);
+      console.log(
+        `[waiting] ${[...pending.keys()].join(", ")} (${elapsedSeconds}s elapsed, ${Math.max(0, Math.round((deadline - now) / 1_000))}s remaining)`,
+      );
+      lastProgressAt = now;
+    }
     await new Promise((resolve) => setTimeout(resolve, retryMs));
   }
 }
@@ -71,7 +88,9 @@ if (pending.size > 0) {
   const details = [...pending.keys()]
     .map((name) => `${name}: ${lastErrors.get(name) ?? "not ready"}`)
     .join("; ");
-  throw new Error(`External services did not become ready within ${timeoutMs}ms (${details})`);
+  throw new Error(
+    `External services did not become ready within ${timeoutMs}ms (${details})`,
+  );
 }
 
 console.log("All external services are ready.");

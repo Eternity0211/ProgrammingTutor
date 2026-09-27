@@ -18,8 +18,8 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -61,15 +61,19 @@ jobs:
       NEO4J_PASSWORD: ci-neo4j-password
       JUDGE0_API_URL: http://localhost:2358
       JUDGE0_CPP_LANGUAGE_ID: 54
+      EXTERNAL_SERVICES_TIMEOUT_MS: 480000
+      EXTERNAL_SERVICES_RETRY_MS: 5000
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
       - run: npm ci
       - name: Start real service containers
         run: docker compose up -d db neo4j judge0-server judge0-worker
+      - name: Show initial service state
+        run: docker compose ps -a
       - name: Wait for real services
         run: npm run services:wait
       - name: Apply the real PostgreSQL schema

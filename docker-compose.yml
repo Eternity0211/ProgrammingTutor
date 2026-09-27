@@ -10,7 +10,8 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gradeitDB -d gradeit"]
+      test:
+        ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,7 +82,11 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl --fail --silent http://localhost:2358/about >/dev/null"]
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail --silent http://localhost:2358/about >/dev/null",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
