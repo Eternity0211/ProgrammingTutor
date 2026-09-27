@@ -44,7 +44,7 @@ jobs:
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://localhost:4318/v1/traces
 
   external-integration:
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_external)
+    if: github.event_name == 'push' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_external)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
