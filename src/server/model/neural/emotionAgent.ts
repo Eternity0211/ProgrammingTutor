@@ -3,7 +3,10 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
-import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
+import {
+  createLlmClient,
+  getLlmModel,
+} from "@/server/model/shared/llm-provider";
 import { recordLlmUsage } from "@/server/model/shared/llm-usage-recorder";
 import {
   AgentOutputValidationError,
@@ -36,7 +39,12 @@ function getClient(): ReturnType<typeof createLlmClient> {
 
 // 输入参数接口
 export interface EmotionInputs {
-  codeReviewResult: string; // 代码审查结果（必填）
+  codeReviewResult?: string;
+  studentProfileSummary?: string;
+  sessionContext?: Array<{
+    role: "user" | "assistant" | "system";
+    content: string;
+  }>;
 }
 // 输出 JSON 的结构定义
 export interface EmotionAnalysisResult {
@@ -61,13 +69,14 @@ function buildMessages(
 你是温和、共情、专业的学习情绪陪伴智能体。你不评判代码好坏，只关注学生的情绪与学习状态，提供安全感、支持感和可执行的小步骤，帮助学生以积极心态面对挑战。
 
 【核心目标】
-1. 从代码审查结果精准推断情绪类型和强度。
+1. 综合代码审查、学生画像和近期对话判断学习状态；代码提交场景以代码审查为主要依据。
 2. 安抚负面情绪，强化正面情绪，增强学生的学习动力和自信心。
 3. 引导学生将注意力从“我不行”转移到“我可以怎么做”，重新建立掌控感。
 
 【核心任务】
 1. 情绪识别
-   - 依据：代码审查结果中的问题数量、严重程度、错误类型。
+   - 证据权重：代码审查 60%，近期对话 25%，学生画像 15%。缺失来源不臆造，其权重按比例分配给已有来源。
+   - 对话中学生明确表达的情绪优先于间接推断；代码错误只能说明学习压力，不能证明学生一定具有某种情绪。
    - 情绪类型：平静/挫败/焦虑/迷茫/沮丧/自信/成就感。
    - 强度：弱/中/强。
 2. 情感支持
@@ -86,10 +95,16 @@ function buildMessages(
 `;
 
   const userPrompt = `
-请基于以下代码审查结果生成情绪分析 JSON：
+请基于以下现有证据生成情绪分析 JSON：
 
 【代码审查结果】
-${inputs.codeReviewResult}
+${inputs.codeReviewResult || "本次没有代码审查证据"}
+
+【学生画像】
+${inputs.studentProfileSummary || "本次没有学生画像证据"}
+
+【近期对话】
+${inputs.sessionContext?.map((message) => `${message.role}: ${message.content}`).join("\n") || "本次没有近期对话证据"}
 
 【输出格式】
 严格遵循以下 JSON 结构，不要输出任何额外的 Markdown 标记（如 \`\`\`json）或解释性文字：
@@ -165,13 +180,21 @@ export async function generateEmotionalSupport(
 
     console.log("\n" + "=".repeat(20) + " Token 消耗 " + "=".repeat(20));
     console.log(completion.usage);
-    recordLlmUsage(completion.usage, { agent: "emotion", model: getLlmModel() });
+    recordLlmUsage(completion.usage, {
+      agent: "emotion",
+      model: getLlmModel(),
+    });
 
     // 解析 JSON
-    const parsed = emotionAgentEnvelopeSchema.safeParse(JSON.parse(answerContent));
+    const parsed = emotionAgentEnvelopeSchema.safeParse(
+      JSON.parse(answerContent),
+    );
     if (!parsed.success) {
       recordAgentOutputValidation("emotion", "invalid");
-      throw new AgentOutputValidationError("EmotionAgent", parsed.error.message);
+      throw new AgentOutputValidationError(
+        "EmotionAgent",
+        parsed.error.message,
+      );
     }
     const parsedData: EmotionAnalysisResult = parsed.data;
     recordAgentOutputValidation("emotion", "valid");

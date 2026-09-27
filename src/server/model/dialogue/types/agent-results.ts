@@ -7,10 +7,12 @@ export class AgentOutputValidationError extends Error {
   }
 }
 
-const chatMessageSchema = z.object({
-  role: z.enum(["user", "assistant", "system"]),
-  content: z.string(),
-}).passthrough();
+const chatMessageSchema = z
+  .object({
+    role: z.enum(["user", "assistant", "system"]),
+    content: z.string(),
+  })
+  .passthrough();
 
 export const codeReviewAgentInputSchema = z.object({
   code: z.string().min(1),
@@ -21,19 +23,42 @@ export const codeReviewAgentInputSchema = z.object({
   sessionContext: z.array(chatMessageSchema),
 });
 
-export const emotionAgentInputSchema = z.object({
-  codeReviewResult: z.string().min(1),
-  studentProfileSummary: z.string(),
-  sessionContext: z.array(chatMessageSchema),
-});
+export const emotionAgentInputSchema = z
+  .object({
+    codeReviewResult: z.string().min(1).optional(),
+    studentProfileSummary: z.string().min(1).optional(),
+    sessionContext: z.array(chatMessageSchema).optional(),
+  })
+  .refine(
+    (input) =>
+      Boolean(
+        input.codeReviewResult ||
+          input.studentProfileSummary ||
+          input.sessionContext?.length,
+      ),
+    { message: "emotion agent requires at least one evidence source" },
+  );
 
-export const navigationAgentInputSchema = z.object({
-  codeReviewResult: z.string().min(1),
-  knowledgeGraph: z.string(),
-  studentHistory: z.string().optional(),
-  studentProfileSummary: z.string(),
-  sessionContext: z.array(chatMessageSchema),
-});
+export const navigationAgentInputSchema = z
+  .object({
+    codeReviewResult: z.string().min(1).optional(),
+    knowledgeGraph: z.string().min(1).optional(),
+    studentHistory: z.string().optional(),
+    studentProfileSummary: z.string().min(1).optional(),
+    sessionContext: z.array(chatMessageSchema).optional(),
+  })
+  .refine(
+    (input) =>
+      Boolean(
+        input.codeReviewResult ||
+          input.studentHistory ||
+          input.studentProfileSummary ||
+          input.sessionContext?.length,
+      ),
+    {
+      message: "navigation agent requires at least one student evidence source",
+    },
+  );
 
 export const codeReviewAgentResultSchema = z.object({
   reviewSummary: z.string().min(1),

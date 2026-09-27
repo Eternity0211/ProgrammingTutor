@@ -3,8 +3,14 @@ import * as fs from "fs";
 import * as path from "path";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
-import { runCodeReviewAgent, CodeReviewAgentInput } from "@/server/model/neural/codeAgent";
-import { createLlmClient, getLlmModel } from "@/server/model/shared/llm-provider";
+import {
+  runCodeReviewAgent,
+  CodeReviewAgentInput,
+} from "@/server/model/neural/codeAgent";
+import {
+  createLlmClient,
+  getLlmModel,
+} from "@/server/model/shared/llm-provider";
 import { recordLlmUsage } from "@/server/model/shared/llm-usage-recorder";
 import {
   AgentOutputValidationError,
@@ -43,9 +49,14 @@ function getClient(): ReturnType<typeof createLlmClient> {
 
 // 输入参数接口
 export interface NavigatorInputs {
-  codeReviewResult: string;
-  knowledgeGraph: string;
+  codeReviewResult?: string;
+  knowledgeGraph?: string;
   studentHistory?: string; // 可选的历史记录
+  studentProfileSummary?: string;
+  sessionContext?: Array<{
+    role: "user" | "assistant" | "system";
+    content: string;
+  }>;
 }
 
 // 输出 JSON 的结构定义
@@ -85,7 +96,10 @@ function loadLeetCodeQuestions() {
 
 function loadKnowledgeGraph(): string {
   try {
-    const metadataPath = path.resolve(process.cwd(), "data/neural/metadata.json");
+    const metadataPath = path.resolve(
+      process.cwd(),
+      "data/neural/metadata.json",
+    );
     if (!fs.existsSync(metadataPath)) return "C++ 核心知识图谱";
 
     const raw = fs.readFileSync(metadataPath, "utf8");
@@ -95,7 +109,6 @@ function loadKnowledgeGraph(): string {
     return "C++ 核心知识图谱：指针/引用、内存管理、STL容器、面向对象、递归算法、异常处理";
   }
 }
-
 
 /**
  * 生成 System 和 User Prompt
@@ -115,6 +128,7 @@ function buildMessages(
 
 【核心任务】
 - 能力诊断：从代码审查 issues 归纳薄弱点；结合知识图谱判断缺失；评估水平。
+- 证据优先级：代码审查是本次问题的主证据，学生画像用于识别长期薄弱点，近期对话用于理解当前目标；知识图谱只用于约束知识关系，不得替代学生证据。
 - 学习路径规划：循序渐进（先基础后提升）；明确每个步骤（主题、时长、资源）；拆解目标。
 - 练习题推荐：难度匹配；说明训练目的；覆盖多维度,必须从提供的 LeetCode 题库中选择，不能编造。
 
@@ -130,13 +144,19 @@ function buildMessages(
 请基于以下信息生成学习导航 JSON：
 
 【代码审查结果】
-${inputs.codeReviewResult}
+${inputs.codeReviewResult || "本次没有代码审查证据"}
 
 【知识图谱】
-${inputs.knowledgeGraph}
+${inputs.knowledgeGraph || "本次没有知识图谱证据"}
 
 【学生历史记录】
 ${inputs.studentHistory || "无"}
+
+【学生画像】
+${inputs.studentProfileSummary || "无"}
+
+【近期对话】
+${inputs.sessionContext?.map((message) => `${message.role}: ${message.content}`).join("\n") || "无"}
 
 【可推荐题库】
 ${JSON.stringify(leetCodeQuestions, null, 2)}
@@ -204,7 +224,9 @@ export async function generateLearningNavigation(
   try {
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
-      console.warn("⚠️  DEEPSEEK_API_KEY not set, skipping learning navigation");
+      console.warn(
+        "⚠️  DEEPSEEK_API_KEY not set, skipping learning navigation",
+      );
       recordAgentOutputValidation("navigation", "unavailable");
       return null;
     }
@@ -230,13 +252,21 @@ export async function generateLearningNavigation(
 
     console.log("\n" + "=".repeat(20) + " Token 消耗 " + "=".repeat(20));
     console.log(completion.usage);
-    recordLlmUsage(completion.usage, { agent: "navigation", model: getLlmModel() });
+    recordLlmUsage(completion.usage, {
+      agent: "navigation",
+      model: getLlmModel(),
+    });
 
     // 解析 JSON
-    const parsed = navigationAgentEnvelopeSchema.safeParse(JSON.parse(answerContent));
+    const parsed = navigationAgentEnvelopeSchema.safeParse(
+      JSON.parse(answerContent),
+    );
     if (!parsed.success) {
       recordAgentOutputValidation("navigation", "invalid");
-      throw new AgentOutputValidationError("NavigationAgent", parsed.error.message);
+      throw new AgentOutputValidationError(
+        "NavigationAgent",
+        parsed.error.message,
+      );
     }
     const parsedData: LearningNavigationResult = parsed.data;
     recordAgentOutputValidation("navigation", "valid");
@@ -258,15 +288,15 @@ export async function generateRealAbilityScore(
   codeReviews: Array<{
     conceptIds: string[];
     errorCount: number;
-  }>
+  }>,
 ) {
   const scoreMap: Record<string, number> = {
     "指针/引用": 100,
-    "内存管理": 100,
-    "STL容器": 100,
-    "面向对象": 100,
-    "递归算法": 100,
-    "异常处理": 100,
+    内存管理: 100,
+    STL容器: 100,
+    面向对象: 100,
+    递归算法: 100,
+    异常处理: 100,
   };
 
   const errorToTopic: Record<string, keyof typeof scoreMap> = {
@@ -283,7 +313,10 @@ export async function generateRealAbilityScore(
       const key = Object.keys(errorToTopic).find((k) => id.includes(k));
       if (key) {
         const topic = errorToTopic[key];
-        scoreMap[topic] = Math.max(20, scoreMap[topic] - (15 + review.errorCount * 2));
+        scoreMap[topic] = Math.max(
+          20,
+          scoreMap[topic] - (15 + review.errorCount * 2),
+        );
       }
     }
   }
@@ -295,7 +328,9 @@ export async function generateRealAbilityScore(
   }));
 }
 
-export async function generateNavigationFromCode(codeInput: CodeReviewAgentInput) {
+export async function generateNavigationFromCode(
+  codeInput: CodeReviewAgentInput,
+) {
   // 1. 调用 codeAgent 做真实代码审查
   const review = await runCodeReviewAgent(codeInput);
 
@@ -317,12 +352,14 @@ export async function generateNavigationFromCode(codeInput: CodeReviewAgentInput
   });
 }
 
-export async function getRecommendedExercisesByWeaknesses(weakTopics: string[]) {
+export async function getRecommendedExercisesByWeaknesses(
+  weakTopics: string[],
+) {
   const knowledgeGraph = loadKnowledgeGraph();
 
   const codeReviewResult = `
 学生能力雷达图显示以下知识点掌握薄弱：
-${weakTopics.map(t => `- ${t}`).join("\n")}
+${weakTopics.map((t) => `- ${t}`).join("\n")}
 请针对性生成学习路径与练习题。
   `;
 

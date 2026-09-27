@@ -22,10 +22,17 @@ import { recordEvaluationOutcome } from "@/server/observability/metrics";
 import {
   codeReviewAgentResultSchema,
   emotionAgentEnvelopeSchema,
+  emotionAgentInputSchema,
   navigationAgentEnvelopeSchema,
+  navigationAgentInputSchema,
 } from "@/server/model/dialogue/types/agent-results";
 import { recordAgentOutputValidation } from "@/server/observability/metrics";
 import { promptTraceAttributes } from "@/server/model/prompts/registry";
+import {
+  agentEvidenceFingerprint,
+  getAgentEvidenceSources,
+  runIndependentAgentTasks,
+} from "@/server/model/dialogue/orchestrator/agent-evidence";
 
 const runtimeHarness = new Judge0RuntimeHarness();
 
@@ -90,7 +97,10 @@ export async function evaluateSubmissionInsidePlatform(
   });
 
   try {
-    const symbolicSpan = traceLogger.startSpan("evaluation.symbolic", evaluationSpan);
+    const symbolicSpan = traceLogger.startSpan(
+      "evaluation.symbolic",
+      evaluationSpan,
+    );
     const symbolic = await analyzeCode(codeSubmission.code);
     traceLogger.endSpan(symbolicSpan, {
       errors: symbolic.errors.length,
@@ -115,7 +125,10 @@ export async function evaluateSubmissionInsidePlatform(
           : mappedLanguageId;
 
       if (languageId) {
-        const runtimeSpan = traceLogger.startSpan("evaluation.runtime", evaluationSpan);
+        const runtimeSpan = traceLogger.startSpan(
+          "evaluation.runtime",
+          evaluationSpan,
+        );
         const results = await Promise.all(
           codeSubmission.question.testCases.map(async (testCase) => {
             try {
@@ -127,8 +140,7 @@ export async function evaluateSubmissionInsidePlatform(
                 traceLogger,
                 parentSpanId: runtimeSpan,
               });
-              const status =
-                execution.status.toUpperCase() as TestCaseStatus;
+              const status = execution.status.toUpperCase() as TestCaseStatus;
 
               await prisma.testCaseResult.update({
                 where: {
@@ -158,8 +170,7 @@ export async function evaluateSubmissionInsidePlatform(
         );
 
         passedCount = results.reduce<number>((sum, passed) => sum + passed, 0);
-        testCaseScore =
-          totalCount > 0 ? (passedCount / totalCount) * 100 : 0;
+        testCaseScore = totalCount > 0 ? (passedCount / totalCount) * 100 : 0;
         traceLogger.endSpan(runtimeSpan, {
           total: totalCount,
           passed: passedCount,
@@ -175,9 +186,13 @@ export async function evaluateSubmissionInsidePlatform(
     let navigation: unknown = null;
     let emotion: unknown = null;
     let knowledgeContext: unknown = {};
+    let downstreamReviewEvidence = "";
 
     try {
-      const graphSpan = traceLogger.startSpan("evaluation.knowledgeGraph", evaluationSpan);
+      const graphSpan = traceLogger.startSpan(
+        "evaluation.knowledgeGraph",
+        evaluationSpan,
+      );
       const concepts = [...symbolic.errors, ...symbolic.warnings]
         .map((issue) => issue.knowledge_concept)
         .filter(Boolean);
@@ -188,8 +203,13 @@ export async function evaluateSubmissionInsidePlatform(
     } catch (error) {
       const graphSpan = traceLogger
         .getContext()
-        .spans.find((span) => span.name === "evaluation.knowledgeGraph" && !span.endTime);
-      if (graphSpan) traceLogger.recordException(graphSpan.spanId, error, { degraded: true });
+        .spans.find(
+          (span) => span.name === "evaluation.knowledgeGraph" && !span.endTime,
+        );
+      if (graphSpan)
+        traceLogger.recordException(graphSpan.spanId, error, {
+          degraded: true,
+        });
       console.warn("Neo4j 服务不可用，跳过图谱关联分析");
     }
 
@@ -204,7 +224,10 @@ export async function evaluateSubmissionInsidePlatform(
 
       if (assignmentMetrics.length > 0) {
         try {
-          const metricSpan = traceLogger.startSpan("evaluation.llmMetrics", evaluationSpan);
+          const metricSpan = traceLogger.startSpan(
+            "evaluation.llmMetrics",
+            evaluationSpan,
+          );
           const llmResult = await evaluateCodeWithLLM({
             code: codeSubmission.code,
             language: codeSubmission.language,
@@ -246,33 +269,27 @@ export async function evaluateSubmissionInsidePlatform(
           (evaluation) => `${evaluation.metricName}: ${evaluation.feedback}`,
         ),
       };
-      const navigationSpan = traceLogger.startSpan("agent.navigation", evaluationSpan);
-      const navigationResult = await generateLearningNavigation({
-        codeReviewResult: JSON.stringify(aiFeedback),
-        knowledgeGraph: JSON.stringify(knowledgeContext),
-        studentHistory: "",
-      });
-      const validatedNavigation = navigationAgentEnvelopeSchema.safeParse(navigationResult);
-      if (validatedNavigation.success) {
-        navigation = validatedNavigation.data;
-        recordAgentOutputValidation("navigation-pipeline", "valid");
-      } else if (navigationResult !== null) {
-        recordAgentOutputValidation("navigation-pipeline", "invalid");
-      }
-      traceLogger.endSpan(navigationSpan, {
-        ...promptTraceAttributes("agent.learning-navigation"),
-        available: Boolean(navigation),
-        valid: validatedNavigation.success,
+      downstreamReviewEvidence = JSON.stringify({
+        ...aiFeedback,
+        testSummary: {
+          total: totalCount,
+          passed: passedCount,
+          failed: totalCount - passedCount,
+        },
       });
     } else {
-      const codeReviewSpan = traceLogger.startSpan("agent.codeReview", evaluationSpan);
+      const codeReviewSpan = traceLogger.startSpan(
+        "agent.codeReview",
+        evaluationSpan,
+      );
       const codeReviewResult = await runCodeReviewAgent({
         code: codeSubmission.code,
         language: codeSubmission.language,
         symbolic,
         testSummary: { total: totalCount, passed: 0, failed: totalCount },
       });
-      const validatedCodeReview = codeReviewAgentResultSchema.safeParse(codeReviewResult);
+      const validatedCodeReview =
+        codeReviewAgentResultSchema.safeParse(codeReviewResult);
       if (!validatedCodeReview.success) {
         recordAgentOutputValidation("code-review-pipeline", "invalid");
         throw new EvaluationPlatformError(
@@ -289,43 +306,94 @@ export async function evaluateSubmissionInsidePlatform(
       });
 
       aiFeedback = { branch: "code-review-agent", ...validatedCodeReview.data };
-      const navigationSpan = traceLogger.startSpan("agent.navigation", evaluationSpan);
-      const navigationResult = await generateLearningNavigation({
-        codeReviewResult: validatedCodeReview.data.causalAnalysis,
-        knowledgeGraph: JSON.stringify(knowledgeContext),
-        studentHistory: "",
-      });
-      const validatedNavigation = navigationAgentEnvelopeSchema.safeParse(navigationResult);
-      if (validatedNavigation.success) {
-        navigation = validatedNavigation.data;
-        recordAgentOutputValidation("navigation-pipeline", "valid");
-      } else if (navigationResult !== null) {
-        recordAgentOutputValidation("navigation-pipeline", "invalid");
-      }
-      traceLogger.endSpan(navigationSpan, {
-        ...promptTraceAttributes("agent.learning-navigation"),
-        available: Boolean(navigation),
-        valid: validatedNavigation.success,
-      });
+      downstreamReviewEvidence = [
+        validatedCodeReview.data.reviewSummary,
+        validatedCodeReview.data.causalAnalysis,
+        ...validatedCodeReview.data.suggestions,
+      ].join("\n");
       score = 0;
     }
 
-    const emotionSpan = traceLogger.startSpan("agent.emotion", evaluationSpan);
-    const emotionResult = await generateEmotionalSupport({
-      codeReviewResult: isAllTestsPassed ? "表现优异" : "再接再厉",
+    const sharedEvidence = {
+      codeReviewResult: downstreamReviewEvidence,
+    };
+    const navigationEvidence = {
+      ...sharedEvidence,
+      knowledgeGraph: JSON.stringify(knowledgeContext),
+    };
+    const supportResults = await runIndependentAgentTasks({
+      emotion: async () => {
+        const emotionSpan = traceLogger.startSpan(
+          "agent.emotion",
+          evaluationSpan,
+        );
+        try {
+          const input = emotionAgentInputSchema.parse(sharedEvidence);
+          const result = await generateEmotionalSupport(input);
+          const validated = emotionAgentEnvelopeSchema.safeParse(result);
+          if (validated.success) {
+            recordAgentOutputValidation("emotion-pipeline", "valid");
+          } else if (result !== null) {
+            recordAgentOutputValidation("emotion-pipeline", "invalid");
+          }
+          traceLogger.endSpan(emotionSpan, {
+            ...promptTraceAttributes("agent.emotion-support"),
+            evidenceSources: getAgentEvidenceSources(sharedEvidence).join(","),
+            evidenceFingerprint: agentEvidenceFingerprint(sharedEvidence),
+            available: validated.success,
+            valid: validated.success,
+          });
+          return validated.success ? validated.data : null;
+        } catch (error) {
+          traceLogger.recordException(emotionSpan, error);
+          throw error;
+        }
+      },
+      navigation: async () => {
+        const navigationSpan = traceLogger.startSpan(
+          "agent.navigation",
+          evaluationSpan,
+        );
+        try {
+          const input = navigationAgentInputSchema.parse(navigationEvidence);
+          const result = await generateLearningNavigation(input);
+          const validated = navigationAgentEnvelopeSchema.safeParse(result);
+          if (validated.success) {
+            recordAgentOutputValidation("navigation-pipeline", "valid");
+          } else if (result !== null) {
+            recordAgentOutputValidation("navigation-pipeline", "invalid");
+          }
+          traceLogger.endSpan(navigationSpan, {
+            ...promptTraceAttributes("agent.learning-navigation"),
+            evidenceSources:
+              getAgentEvidenceSources(navigationEvidence).join(","),
+            evidenceFingerprint: agentEvidenceFingerprint(navigationEvidence),
+            available: validated.success,
+            valid: validated.success,
+          });
+          return validated.success ? validated.data : null;
+        } catch (error) {
+          traceLogger.recordException(navigationSpan, error);
+          throw error;
+        }
+      },
     });
-    const validatedEmotion = emotionAgentEnvelopeSchema.safeParse(emotionResult);
-    if (validatedEmotion.success) {
-      emotion = validatedEmotion.data;
-      recordAgentOutputValidation("emotion-pipeline", "valid");
-    } else if (emotionResult !== null) {
-      recordAgentOutputValidation("emotion-pipeline", "invalid");
+    if (supportResults.emotion?.status === "fulfilled") {
+      emotion = supportResults.emotion.value;
+    } else if (supportResults.emotion?.status === "rejected") {
+      console.warn(
+        "Emotion Agent 不可用，跳过情绪支持",
+        supportResults.emotion.reason,
+      );
     }
-    traceLogger.endSpan(emotionSpan, {
-      ...promptTraceAttributes("agent.emotion-support"),
-      available: Boolean(emotion),
-      valid: validatedEmotion.success,
-    });
+    if (supportResults.navigation?.status === "fulfilled") {
+      navigation = supportResults.navigation.value;
+    } else if (supportResults.navigation?.status === "rejected") {
+      console.warn(
+        "Navigation Agent 不可用，跳过学习导航",
+        supportResults.navigation.reason,
+      );
+    }
 
     const branch = blocking ? "code-review-agent" : "general-llm";
     const feedback = {
@@ -339,7 +407,10 @@ export async function evaluateSubmissionInsidePlatform(
       navigation,
       emotion,
     };
-    const persistSpan = traceLogger.startSpan("database.evaluation.commit", evaluationSpan);
+    const persistSpan = traceLogger.startSpan(
+      "database.evaluation.commit",
+      evaluationSpan,
+    );
     await prisma.$transaction([
       prisma.codeSubmission.update({
         where: { id: codeSubmissionId },
@@ -370,7 +441,9 @@ export async function evaluateSubmissionInsidePlatform(
         },
       }),
     ]);
-    traceLogger.endSpan(persistSpan, { status: blocking ? "BLOCKED" : "COMPLETED" });
+    traceLogger.endSpan(persistSpan, {
+      status: blocking ? "BLOCKED" : "COMPLETED",
+    });
 
     await updateSubmissionStatus(codeSubmission.submissionId);
     finalStatus = blocking ? "BLOCKED" : "COMPLETED";

@@ -7,7 +7,9 @@ import {
 describe("prompt registry", () => {
   it("uses unique IDs, semantic versions, and stable fingerprints", () => {
     const definitions = listPromptDefinitions();
-    expect(new Set(definitions.map((item) => item.id)).size).toBe(definitions.length);
+    expect(new Set(definitions.map((item) => item.id)).size).toBe(
+      definitions.length,
+    );
     for (const definition of definitions) {
       expect(definition.version).toMatch(/^\d+\.\d+\.\d+$/);
       expect(definition.fingerprint).toMatch(/^[a-f0-9]{16}$/);
@@ -26,6 +28,13 @@ describe("prompt registry", () => {
   it("fails closed for unregistered prompt IDs", () => {
     expect(() => getPromptDefinition("unknown.prompt")).toThrow(
       "Unknown prompt definition",
+    );
+  });
+
+  it("versions adaptive downstream-agent evidence contracts", () => {
+    expect(getPromptDefinition("agent.emotion-support").version).toBe("2.0.0");
+    expect(getPromptDefinition("agent.learning-navigation").version).toBe(
+      "2.0.0",
     );
   });
 });

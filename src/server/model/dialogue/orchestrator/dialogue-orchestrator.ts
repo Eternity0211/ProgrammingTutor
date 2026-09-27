@@ -16,7 +16,11 @@ import { InMemorySessionStore } from "../memory";
 import { createChatMessage } from "../memory";
 import type { SessionStore } from "../memory";
 import { DialogueLlmClient } from "../shared/llm-client";
-import { createConfiguredTraceSink, TraceLogger, type TraceSink } from "../shared/trace-logger";
+import {
+  createConfiguredTraceSink,
+  TraceLogger,
+  type TraceSink,
+} from "../shared/trace-logger";
 import type {
   AgentResultSnapshot,
   ChatMessage,
@@ -37,10 +41,12 @@ import {
   navigationAgentResultSchema,
 } from "../types/agent-results";
 import { transition, type DialogueState } from "./dialogue-state";
+import { enforceDialogueQualityGate, planDialogue } from "./agent-pipeline";
 import {
-  enforceDialogueQualityGate,
-  planDialogue,
-} from "./agent-pipeline";
+  agentEvidenceFingerprint,
+  getAgentEvidenceSources,
+  runIndependentAgentTasks,
+} from "./agent-evidence";
 import {
   PrismaEvaluationEvidenceStore,
   type EvaluationEvidenceStore,
@@ -83,8 +89,13 @@ interface HandlerResult {
   sessionStateUpdate?: Partial<SessionState>;
 }
 
-const AGENT_TIMEOUT_MS = Number(process.env.DIALOGUE_AGENT_TIMEOUT_MS ?? 30_000);
-const AGENT_RETRIES = Math.max(0, Number(process.env.DIALOGUE_AGENT_RETRIES ?? 1));
+const AGENT_TIMEOUT_MS = Number(
+  process.env.DIALOGUE_AGENT_TIMEOUT_MS ?? 30_000,
+);
+const AGENT_RETRIES = Math.max(
+  0,
+  Number(process.env.DIALOGUE_AGENT_RETRIES ?? 1),
+);
 
 function withTimeout<T>(promise: Promise<T>, label: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
@@ -162,10 +173,14 @@ export class DialogueOrchestrator {
       const session = request.sessionId
         ? await this.sessionStore.getSession(request.sessionId)
         : null;
-      const activeSession = session ?? (await this.sessionStore.createSession(request.userId));
+      const activeSession =
+        session ?? (await this.sessionStore.createSession(request.userId));
       const sessionId = activeSession.sessionId;
       state = { ...state, sessionId };
-      traceLogger.endSpan(sessionSpan, { sessionId, created: session === null });
+      traceLogger.endSpan(sessionSpan, {
+        sessionId,
+        created: session === null,
+      });
 
       const userMessage = createChatMessage("user", request.message);
       await this.sessionStore.addMessage(sessionId, userMessage);
@@ -218,7 +233,10 @@ export class DialogueOrchestrator {
         };
       }
 
-      const handlerSpan = traceLogger.startSpan(`handler.${intent.intent}`, spanId);
+      const handlerSpan = traceLogger.startSpan(
+        `handler.${intent.intent}`,
+        spanId,
+      );
       const ctx: HandlerContext = {
         request,
         sessionId,
@@ -283,7 +301,10 @@ export class DialogueOrchestrator {
       }
 
       const assistantMessage = createChatMessage("assistant", result.reply);
-      const messageSpan = traceLogger.startSpan("database.session.addMessage", spanId);
+      const messageSpan = traceLogger.startSpan(
+        "database.session.addMessage",
+        spanId,
+      );
       try {
         await this.sessionStore.addMessage(sessionId, assistantMessage);
         traceLogger.endSpan(messageSpan, { sessionId });
@@ -303,8 +324,10 @@ export class DialogueOrchestrator {
         ...(trimmed.summary ? { contextSummary: trimmed.summary } : {}),
         ...result.sessionStateUpdate,
       };
-      state = { ...transition(state, "persist"), sessionState: newState };
-      const stateSpan = traceLogger.startSpan("database.session.updateState", spanId);
+      const stateSpan = traceLogger.startSpan(
+        "database.session.updateState",
+        spanId,
+      );
       const persistState = (async () => {
         try {
           await this.sessionStore.updateSessionState(sessionId, newState);
@@ -323,12 +346,19 @@ export class DialogueOrchestrator {
           navigation: result.agentResults.navigation,
           rag: result.agentResults.rag,
         };
-        const profileSpan = traceLogger.startSpan("database.profile.update", spanId);
+        const profileSpan = traceLogger.startSpan(
+          "database.profile.update",
+          spanId,
+        );
         try {
-          await this.profileUpdater.updateFromAgentResults(request.userId, snapshot, {
-            questionId: request.context?.questionId,
-            score: undefined,
-          });
+          await this.profileUpdater.updateFromAgentResults(
+            request.userId,
+            snapshot,
+            {
+              questionId: request.context?.questionId,
+              score: undefined,
+            },
+          );
           traceLogger.endSpan(profileSpan, { userId: request.userId });
         } catch (error) {
           traceLogger.endSpan(profileSpan, { error: String(error) });
@@ -347,7 +377,10 @@ export class DialogueOrchestrator {
         agentResults: result.agentResults,
       };
     } catch (error) {
-      state = { ...transition(state, "failed"), error: error instanceof Error ? error.message : String(error) };
+      state = {
+        ...transition(state, "failed"),
+        error: error instanceof Error ? error.message : String(error),
+      };
       console.error("[DialogueOrchestrator] chat() fatal error:", error);
       return {
         reply: "抱歉，我暂时无法回答。请稍后再试。",
@@ -356,8 +389,11 @@ export class DialogueOrchestrator {
         traceId: traceLogger.traceId,
       };
     } finally {
-      state = transition(state, state.phase === "failed" ? "failed" : "completed");
-      traceLogger.endSpan(spanId);
+      if (state.phase !== "failed") state = transition(state, "completed");
+      traceLogger.endSpan(spanId, {
+        phase: state.phase,
+        ...(state.error ? { error: state.error } : {}),
+      });
       try {
         await traceLogger.persist();
       } catch (error) {
@@ -366,7 +402,9 @@ export class DialogueOrchestrator {
     }
   }
 
-  private async handleCodeSubmission(ctx: HandlerContext): Promise<HandlerResult> {
+  private async handleCodeSubmission(
+    ctx: HandlerContext,
+  ): Promise<HandlerResult> {
     const { request, trimmed, profileSummary, intent } = ctx;
     const evidenceSpan = ctx.traceLogger.startSpan(
       "evaluation.evidence.load",
@@ -406,7 +444,10 @@ export class DialogueOrchestrator {
       };
     }
     const code =
-      evidence?.code ?? intent.entities.codeSnippet ?? request.context?.code ?? "";
+      evidence?.code ??
+      intent.entities.codeSnippet ??
+      request.context?.code ??
+      "";
     const language =
       evidence?.language ??
       intent.entities.language ??
@@ -417,7 +458,37 @@ export class DialogueOrchestrator {
 
     if (symbolic && testSummary && code) {
       try {
-        const codeSpan = ctx.traceLogger.startSpan("agent.codeReview", ctx.parentSpanId);
+        const conceptIds = Array.isArray(request.context?.knowledgeConcepts)
+          ? request.context.knowledgeConcepts.filter(
+              (id): id is string => typeof id === "string",
+            )
+          : [];
+        const graphContextPromise = (async () => {
+          const graphSpan = ctx.traceLogger.startSpan(
+            "knowledgeGraph.navigationContext",
+            ctx.parentSpanId,
+          );
+          try {
+            const knowledgeGraphContext =
+              await getAggregatedKnowledgeContext(conceptIds);
+            ctx.traceLogger.endSpan(graphSpan, {
+              requestedConcepts: conceptIds.length,
+              resolvedConcepts: knowledgeGraphContext.length,
+              degraded:
+                conceptIds.length > 0 && knowledgeGraphContext.length === 0,
+            });
+            return knowledgeGraphContext;
+          } catch (error) {
+            ctx.traceLogger.recordException(graphSpan, error, {
+              degraded: true,
+            });
+            return [];
+          }
+        })();
+        const codeSpan = ctx.traceLogger.startSpan(
+          "agent.codeReview",
+          ctx.parentSpanId,
+        );
         const codeReviewInput = codeReviewAgentInputSchema.parse({
           code,
           language,
@@ -426,10 +497,18 @@ export class DialogueOrchestrator {
           studentProfileSummary: profileSummary,
           sessionContext: trimmed.recentMessages,
         });
-        const codeReview = await withRetry(() => runCodeReviewAgent(codeReviewInput as CodeReviewAgentInput), "codeReviewAgent", (attempt, error) =>
-          ctx.traceLogger.logEvent("warn", "agent.retry", { agent: "codeReviewAgent", attempt, error: String(error) }),
+        const codeReview = await withRetry(
+          () => runCodeReviewAgent(codeReviewInput as CodeReviewAgentInput),
+          "codeReviewAgent",
+          (attempt, error) =>
+            ctx.traceLogger.logEvent("warn", "agent.retry", {
+              agent: "codeReviewAgent",
+              attempt,
+              error: String(error),
+            }),
         );
-        const validatedCodeReview = codeReviewAgentResultSchema.safeParse(codeReview);
+        const validatedCodeReview =
+          codeReviewAgentResultSchema.safeParse(codeReview);
         if (!validatedCodeReview.success) {
           throw new Error("codeReviewAgent returned an invalid result");
         }
@@ -440,36 +519,125 @@ export class DialogueOrchestrator {
         });
 
         let emotion: AgentResultSnapshot["emotion"] | undefined;
-        try {
-          const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", codeSpan);
-          const emotionInput = emotionAgentInputSchema.parse({
-            codeReviewResult: validatedCodeReview.data.reviewSummary,
-            studentProfileSummary: profileSummary,
-            sessionContext: trimmed.recentMessages,
-          });
-          const emotionResult = await withRetry(() => generateEmotionalSupport(emotionInput as EmotionInputs), "emotionAgent", (attempt, error) =>
-            ctx.traceLogger.logEvent("warn", "agent.retry", { agent: "emotionAgent", attempt, error: String(error) }),
-          );
-          if (emotionResult?.emotion_analysis) {
-            const validatedEmotion = emotionAgentResultSchema.safeParse(
-              emotionResult.emotion_analysis,
+        let navigation: AgentResultSnapshot["navigation"] | undefined;
+        const sharedEvidence = {
+          codeReviewResult: [
+            validatedCodeReview.data.reviewSummary,
+            validatedCodeReview.data.causalAnalysis,
+            ...validatedCodeReview.data.suggestions,
+          ].join("\n"),
+          studentProfileSummary:
+            profileSummary === "暂无学生画像数据" ? undefined : profileSummary,
+          sessionContext: trimmed.recentMessages,
+        };
+        const supportResults = await runIndependentAgentTasks({
+          emotion: async () => {
+            const emotionSpan = ctx.traceLogger.startSpan(
+              "agent.emotion",
+              ctx.parentSpanId,
             );
-            if (validatedEmotion.success) emotion = validatedEmotion.data;
-          }
-          ctx.traceLogger.endSpan(emotionSpan, {
-            ...promptTraceAttributes("agent.emotion-support"),
-            available: Boolean(emotion),
-          });
-        } catch (error) {
+            try {
+              const emotionInput =
+                emotionAgentInputSchema.parse(sharedEvidence);
+              const emotionResult = await withRetry(
+                () => generateEmotionalSupport(emotionInput as EmotionInputs),
+                "emotionAgent",
+                (attempt, error) =>
+                  ctx.traceLogger.logEvent("warn", "agent.retry", {
+                    agent: "emotionAgent",
+                    attempt,
+                    error: String(error),
+                  }),
+              );
+              const validatedEmotion = emotionAgentResultSchema.safeParse(
+                emotionResult?.emotion_analysis,
+              );
+              ctx.traceLogger.endSpan(emotionSpan, {
+                ...promptTraceAttributes("agent.emotion-support"),
+                evidenceSources:
+                  getAgentEvidenceSources(sharedEvidence).join(","),
+                evidenceFingerprint: agentEvidenceFingerprint(sharedEvidence),
+                available: validatedEmotion.success,
+              });
+              return validatedEmotion.success
+                ? validatedEmotion.data
+                : undefined;
+            } catch (error) {
+              ctx.traceLogger.recordException(emotionSpan, error);
+              throw error;
+            }
+          },
+          navigation: async () => {
+            const navigationSpan = ctx.traceLogger.startSpan(
+              "agent.navigation",
+              ctx.parentSpanId,
+            );
+            try {
+              const knowledgeGraphContext = await graphContextPromise;
+              const navigationEvidence = {
+                ...sharedEvidence,
+                knowledgeGraph: JSON.stringify(knowledgeGraphContext),
+                studentHistory: profileSummary,
+              };
+              const navigationInput =
+                navigationAgentInputSchema.parse(navigationEvidence);
+              const navigationResult = await withRetry(
+                () =>
+                  generateLearningNavigation(
+                    navigationInput as NavigatorInputs,
+                  ),
+                "navigationAgent",
+                (attempt, error) =>
+                  ctx.traceLogger.logEvent("warn", "agent.retry", {
+                    agent: "navigationAgent",
+                    attempt,
+                    error: String(error),
+                  }),
+              );
+              const validatedNavigation = navigationAgentResultSchema.safeParse(
+                navigationResult?.learning_navigation,
+              );
+              ctx.traceLogger.endSpan(navigationSpan, {
+                ...promptTraceAttributes("agent.learning-navigation"),
+                evidenceSources:
+                  getAgentEvidenceSources(navigationEvidence).join(","),
+                evidenceFingerprint:
+                  agentEvidenceFingerprint(navigationEvidence),
+                available: validatedNavigation.success,
+                pathSteps: validatedNavigation.success
+                  ? validatedNavigation.data.learning_path.length
+                  : 0,
+              });
+              return validatedNavigation.success
+                ? validatedNavigation.data
+                : undefined;
+            } catch (error) {
+              ctx.traceLogger.recordException(navigationSpan, error);
+              throw error;
+            }
+          },
+        });
+        if (supportResults.emotion?.status === "fulfilled") {
+          emotion = supportResults.emotion.value;
+        } else if (supportResults.emotion?.status === "rejected") {
           console.warn(
             "[DialogueOrchestrator] emotionAgent failed, skipping:",
-            error,
+            supportResults.emotion.reason,
+          );
+        }
+        if (supportResults.navigation?.status === "fulfilled") {
+          navigation = supportResults.navigation.value;
+        } else if (supportResults.navigation?.status === "rejected") {
+          console.warn(
+            "[DialogueOrchestrator] navigationAgent failed, skipping:",
+            supportResults.navigation.reason,
           );
         }
 
         const agentResults: DialogueAgentResults = {
-            codeReview: validatedCodeReview.data,
+          codeReview: validatedCodeReview.data,
           ...(emotion ? { emotion } : {}),
+          ...(navigation ? { navigation } : {}),
         };
 
         const reply = await this.generateReply(
@@ -517,18 +685,30 @@ export class DialogueOrchestrator {
     const codeReviewResult =
       sessionState?.lastCodeReview?.reviewSummary ??
       request.context?.codeReviewResult;
+    const emotionEvidence = {
+      codeReviewResult,
+      studentProfileSummary:
+        profileSummary === "暂无学生画像数据" ? undefined : profileSummary,
+      sessionContext: trimmed.recentMessages,
+    };
 
     let emotion: AgentResultSnapshot["emotion"] | undefined;
-    if (codeReviewResult) {
+    if (getAgentEvidenceSources(emotionEvidence).length > 0) {
       try {
-        const emotionSpan = ctx.traceLogger.startSpan("agent.emotion", ctx.parentSpanId);
-        const emotionInput = emotionAgentInputSchema.parse({
-          codeReviewResult,
-          studentProfileSummary: profileSummary,
-          sessionContext: trimmed.recentMessages,
-        });
-        const emotionResult = await withRetry(() => generateEmotionalSupport(emotionInput as EmotionInputs), "emotionAgent", (attempt, error) =>
-          ctx.traceLogger.logEvent("warn", "agent.retry", { agent: "emotionAgent", attempt, error: String(error) }),
+        const emotionSpan = ctx.traceLogger.startSpan(
+          "agent.emotion",
+          ctx.parentSpanId,
+        );
+        const emotionInput = emotionAgentInputSchema.parse(emotionEvidence);
+        const emotionResult = await withRetry(
+          () => generateEmotionalSupport(emotionInput as EmotionInputs),
+          "emotionAgent",
+          (attempt, error) =>
+            ctx.traceLogger.logEvent("warn", "agent.retry", {
+              agent: "emotionAgent",
+              attempt,
+              error: String(error),
+            }),
         );
         if (emotionResult?.emotion_analysis) {
           const validatedEmotion = emotionAgentResultSchema.safeParse(
@@ -538,6 +718,8 @@ export class DialogueOrchestrator {
         }
         ctx.traceLogger.endSpan(emotionSpan, {
           ...promptTraceAttributes("agent.emotion-support"),
+          evidenceSources: getAgentEvidenceSources(emotionEvidence).join(","),
+          evidenceFingerprint: agentEvidenceFingerprint(emotionEvidence),
           available: Boolean(emotion),
         });
       } catch (error) {
@@ -572,39 +754,68 @@ export class DialogueOrchestrator {
     const codeReviewResult =
       sessionState?.lastCodeReview?.reviewSummary ??
       request.context?.codeReviewResult;
+    const baseNavigationEvidence = {
+      codeReviewResult,
+      studentProfileSummary:
+        profileSummary === "暂无学生画像数据" ? undefined : profileSummary,
+      sessionContext: trimmed.recentMessages,
+    };
 
     let navigation: AgentResultSnapshot["navigation"] | undefined;
-    if (codeReviewResult) {
+    if (getAgentEvidenceSources(baseNavigationEvidence).length > 0) {
       try {
-        const graphSpan = ctx.traceLogger.startSpan("knowledgeGraph.navigationContext", ctx.parentSpanId);
+        const graphSpan = ctx.traceLogger.startSpan(
+          "knowledgeGraph.navigationContext",
+          ctx.parentSpanId,
+        );
         const conceptIds = Array.isArray(request.context?.knowledgeConcepts)
-          ? request.context.knowledgeConcepts.filter((id): id is string => typeof id === "string")
+          ? request.context.knowledgeConcepts.filter(
+              (id): id is string => typeof id === "string",
+            )
           : [];
-        const knowledgeGraphContext = await getAggregatedKnowledgeContext(conceptIds);
+        const knowledgeGraphContext =
+          await getAggregatedKnowledgeContext(conceptIds);
         ctx.traceLogger.endSpan(graphSpan, {
           requestedConcepts: conceptIds.length,
           resolvedConcepts: knowledgeGraphContext.length,
           degraded: conceptIds.length > 0 && knowledgeGraphContext.length === 0,
         });
-        const navigationSpan = ctx.traceLogger.startSpan("agent.navigation", ctx.parentSpanId);
+        const navigationSpan = ctx.traceLogger.startSpan(
+          "agent.navigation",
+          ctx.parentSpanId,
+        );
         const navigationInput = navigationAgentInputSchema.parse({
-          codeReviewResult,
+          ...baseNavigationEvidence,
           knowledgeGraph: JSON.stringify(knowledgeGraphContext),
           studentHistory: profileSummary,
-          studentProfileSummary: profileSummary,
-          sessionContext: trimmed.recentMessages,
         });
-        const navResult = await withRetry(() => generateLearningNavigation(navigationInput as NavigatorInputs), "navigationAgent", (attempt, error) =>
-          ctx.traceLogger.logEvent("warn", "agent.retry", { agent: "navigationAgent", attempt, error: String(error) }),
+        const navResult = await withRetry(
+          () => generateLearningNavigation(navigationInput as NavigatorInputs),
+          "navigationAgent",
+          (attempt, error) =>
+            ctx.traceLogger.logEvent("warn", "agent.retry", {
+              agent: "navigationAgent",
+              attempt,
+              error: String(error),
+            }),
         );
         if (navResult?.learning_navigation) {
           const validatedNavigation = navigationAgentResultSchema.safeParse(
             navResult.learning_navigation,
           );
-          if (validatedNavigation.success) navigation = validatedNavigation.data;
+          if (validatedNavigation.success)
+            navigation = validatedNavigation.data;
         }
         ctx.traceLogger.endSpan(navigationSpan, {
           ...promptTraceAttributes("agent.learning-navigation"),
+          evidenceSources: getAgentEvidenceSources({
+            ...baseNavigationEvidence,
+            knowledgeGraph: JSON.stringify(knowledgeGraphContext),
+          }).join(","),
+          evidenceFingerprint: agentEvidenceFingerprint({
+            ...baseNavigationEvidence,
+            knowledgeGraph: JSON.stringify(knowledgeGraphContext),
+          }),
           available: Boolean(navigation),
           pathSteps: navigation?.learning_path.length ?? 0,
         });
@@ -639,7 +850,10 @@ export class DialogueOrchestrator {
     const ragSpan = ctx.traceLogger.startSpan("rag.answer", ctx.parentSpanId);
     try {
       const ragResponse = request.context?.ragFilters
-        ? await this.ragEngine.answer(request.message, request.context.ragFilters)
+        ? await this.ragEngine.answer(
+            request.message,
+            request.context.ragFilters,
+          )
         : await this.ragEngine.answer(request.message);
       ctx.traceLogger.endSpan(ragSpan, {
         ...promptTraceAttributes("rag.grounded-answer"),
@@ -721,9 +935,7 @@ export class DialogueOrchestrator {
     const systemPrompt =
       `${promptContractHeader(prompt.id)}\n` +
       `你是编程教学助手。请根据以下信息回答学生的问题，语气亲切、鼓励。\n` +
-      (contextParts.length > 0
-        ? contextParts.join("\n")
-        : "暂无额外上下文。");
+      (contextParts.length > 0 ? contextParts.join("\n") : "暂无额外上下文。");
 
     try {
       const llmSpan = traceLogger?.startSpan("llm.reply", parentSpanId);
@@ -782,10 +994,7 @@ export class DialogueOrchestrator {
       });
       return title.slice(0, 20).trim();
     } catch (error) {
-      console.warn(
-        "[DialogueOrchestrator] Title generation failed:",
-        error,
-      );
+      console.warn("[DialogueOrchestrator] Title generation failed:", error);
       return message.slice(0, 20).trim();
     }
   }

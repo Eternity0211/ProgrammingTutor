@@ -7,6 +7,9 @@ jest.mock("../../../../src/server/model/neural/emotionAgent", () => ({
 jest.mock("../../../../src/server/model/neural/navigationAgent", () => ({
   generateLearningNavigation: jest.fn(),
 }));
+jest.mock("@/lib/services/graph-service", () => ({
+  getAggregatedKnowledgeContext: jest.fn().mockResolvedValue([]),
+}));
 
 import { runCodeReviewAgent } from "@/server/model/neural/codeAgent";
 import { generateEmotionalSupport } from "@/server/model/neural/emotionAgent";
@@ -23,9 +26,17 @@ import { DialogueLlmClient } from "@/server/model/dialogue/shared/llm-client";
 import type { IntentRecognitionResult } from "@/server/model/dialogue/types";
 import type { EvaluationEvidenceStore } from "@/server/model/pipeline/evaluation-evidence-store";
 
-const mockedRunCodeReviewAgent = runCodeReviewAgent as jest.MockedFunction<typeof runCodeReviewAgent>;
-const mockedGenerateEmotionalSupport = generateEmotionalSupport as jest.MockedFunction<typeof generateEmotionalSupport>;
-const mockedGenerateLearningNavigation = generateLearningNavigation as jest.MockedFunction<typeof generateLearningNavigation>;
+const mockedRunCodeReviewAgent = runCodeReviewAgent as jest.MockedFunction<
+  typeof runCodeReviewAgent
+>;
+const mockedGenerateEmotionalSupport =
+  generateEmotionalSupport as jest.MockedFunction<
+    typeof generateEmotionalSupport
+  >;
+const mockedGenerateLearningNavigation =
+  generateLearningNavigation as jest.MockedFunction<
+    typeof generateLearningNavigation
+  >;
 
 function makeMockLlm() {
   return {
@@ -37,7 +48,10 @@ function makeMockLlm() {
   };
 }
 
-function makeMockRecognizer(intent: string, entities: Record<string, unknown> = {}): IntentRecognizer {
+function makeMockRecognizer(
+  intent: string,
+  entities: Record<string, unknown> = {},
+): IntentRecognizer {
   const result: IntentRecognitionResult = {
     intent: intent as IntentRecognitionResult["intent"],
     confidence: 0.9,
@@ -77,14 +91,16 @@ function makeMockProfileUpdater(): ProfileUpdater {
   } as unknown as ProfileUpdater;
 }
 
-function makeMockContextTrimmer(): ContextTrimmer {
+function makeMockContextTrimmer(): ContextTrimmer & {
+  trimForAgent: jest.Mock;
+} {
   return {
     trimForAgent: jest.fn().mockResolvedValue({
       summary: undefined,
       recentMessages: [],
       extractedFields: {},
     }),
-  } as unknown as ContextTrimmer;
+  } as unknown as ContextTrimmer & { trimForAgent: jest.Mock };
 }
 
 describe("DialogueOrchestrator", () => {
@@ -105,6 +121,8 @@ describe("DialogueOrchestrator", () => {
     mockedRunCodeReviewAgent.mockReset();
     mockedGenerateEmotionalSupport.mockReset();
     mockedGenerateLearningNavigation.mockReset();
+    mockedGenerateEmotionalSupport.mockResolvedValue(null);
+    mockedGenerateLearningNavigation.mockResolvedValue(null);
   });
 
   function makeOrchestrator(opts: {
@@ -122,7 +140,9 @@ describe("DialogueOrchestrator", () => {
       llm: mockLlm,
       evaluationEvidenceStore:
         opts.evaluationEvidenceStore ??
-        ({ getByReference: jest.fn().mockResolvedValue(null) } as EvaluationEvidenceStore),
+        ({
+          getByReference: jest.fn().mockResolvedValue(null),
+        } as EvaluationEvidenceStore),
     });
   }
 
@@ -189,6 +209,13 @@ describe("DialogueOrchestrator", () => {
           supportive_guidance: "加油",
         },
       });
+      mockedGenerateLearningNavigation.mockResolvedValue({
+        learning_navigation: {
+          weaknesses: ["指针"],
+          learning_path: [],
+          recommended_exercises: [],
+        },
+      });
 
       const response = await orchestrator.chat({
         userId: "user-1",
@@ -204,8 +231,10 @@ describe("DialogueOrchestrator", () => {
       expect(response.intent).toBe("CODE_SUBMISSION");
       expect(mockedRunCodeReviewAgent).toHaveBeenCalled();
       expect(mockedGenerateEmotionalSupport).toHaveBeenCalled();
+      expect(mockedGenerateLearningNavigation).toHaveBeenCalled();
       expect(response.agentResults?.codeReview).toBeDefined();
       expect(response.agentResults?.emotion).toBeDefined();
+      expect(response.agentResults?.navigation).toBeDefined();
       expect(response.reply).toBe("LLM reply");
     });
 
@@ -280,17 +309,42 @@ describe("DialogueOrchestrator", () => {
       expect(response.agentResults?.emotion).toBeDefined();
     });
 
-    it("should use LLM fallback when no codeReviewResult available", async () => {
+    it("uses current dialogue evidence when no code review is available", async () => {
       const recognizer = makeMockRecognizer("EMOTIONAL_VENTING");
       const orchestrator = makeOrchestrator({ recognizer });
+      contextTrimmer.trimForAgent.mockResolvedValue({
+        summary: undefined,
+        recentMessages: [
+          {
+            id: "message-1",
+            role: "user",
+            content: "我太难了",
+            timestamp: 1,
+          },
+        ],
+        extractedFields: {},
+      });
+
+      mockedGenerateEmotionalSupport.mockResolvedValue({
+        emotion_analysis: {
+          detected_emotion: "挫败",
+          intensity: "中",
+          reason: "学生明确表达任务很难",
+          supportive_guidance: "先完成一个最小步骤",
+        },
+      });
 
       const response = await orchestrator.chat({
         userId: "user-1",
         message: "我太难了",
       });
 
-      expect(mockedGenerateEmotionalSupport).not.toHaveBeenCalled();
-      expect(mockLlm.chatCompletion).toHaveBeenCalled();
+      expect(mockedGenerateEmotionalSupport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionContext: expect.any(Array),
+        }),
+      );
+      expect(response.agentResults?.emotion).toBeDefined();
     });
   });
 
@@ -323,17 +377,41 @@ describe("DialogueOrchestrator", () => {
       expect(response.agentResults?.navigation).toBeDefined();
     });
 
-    it("should use LLM fallback when no codeReviewResult", async () => {
+    it("uses profile or dialogue evidence when no code review is available", async () => {
       const recognizer = makeMockRecognizer("LEARNING_PATH_INQUIRY");
       const orchestrator = makeOrchestrator({ recognizer });
+      contextTrimmer.trimForAgent.mockResolvedValue({
+        summary: undefined,
+        recentMessages: [
+          {
+            id: "message-2",
+            role: "user",
+            content: "下一步学什么",
+            timestamp: 1,
+          },
+        ],
+        extractedFields: {},
+      });
+
+      mockedGenerateLearningNavigation.mockResolvedValue({
+        learning_navigation: {
+          weaknesses: ["学习目标尚不明确"],
+          learning_path: [],
+          recommended_exercises: [],
+        },
+      });
 
       const response = await orchestrator.chat({
         userId: "user-1",
         message: "下一步学什么",
       });
 
-      expect(mockedGenerateLearningNavigation).not.toHaveBeenCalled();
-      expect(mockLlm.chatCompletion).toHaveBeenCalled();
+      expect(mockedGenerateLearningNavigation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionContext: expect.any(Array),
+        }),
+      );
+      expect(response.agentResults?.navigation).toBeDefined();
     });
   });
 
@@ -502,7 +580,9 @@ describe("DialogueOrchestrator", () => {
       });
 
       const session = await sessionStore.getSession(response.sessionId);
-      expect(session?.sessionState?.lastCodeReview?.reviewSummary).toBe("指针问题");
+      expect(session?.sessionState?.lastCodeReview?.reviewSummary).toBe(
+        "指针问题",
+      );
       expect(session?.sessionState?.lastIntent).toBe("CODE_SUBMISSION");
     });
   });

@@ -6,11 +6,15 @@ jest.mock("@/lib/prisma", () => ({
     $transaction: jest.fn(),
   },
 }));
-jest.mock("@/server/model/symbolic/service", () => ({ analyzeCode: jest.fn() }));
+jest.mock("@/server/model/symbolic/service", () => ({
+  analyzeCode: jest.fn(),
+}));
 jest.mock("@/lib/services/code-evaluation-llm-service", () => ({
   evaluateCodeWithLLM: jest.fn(),
 }));
-jest.mock("@/server/model/neural/codeAgent", () => ({ runCodeReviewAgent: jest.fn() }));
+jest.mock("@/server/model/neural/codeAgent", () => ({
+  runCodeReviewAgent: jest.fn(),
+}));
 jest.mock("@/lib/services/graph-service", () => ({
   getAggregatedKnowledgeContext: jest.fn(),
 }));
@@ -61,8 +65,12 @@ const submission = {
 describe("submission evaluation fact pipeline", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (prisma.codeSubmission.findUnique as jest.Mock).mockResolvedValue(submission);
-    (prisma.evaluationRun.create as jest.Mock).mockResolvedValue({ id: "run-1" });
+    (prisma.codeSubmission.findUnique as jest.Mock).mockResolvedValue(
+      submission,
+    );
+    (prisma.evaluationRun.create as jest.Mock).mockResolvedValue({
+      id: "run-1",
+    });
     (prisma.evaluationRun.update as jest.Mock).mockResolvedValue({});
     (prisma.codeSubmission.update as jest.Mock).mockResolvedValue({});
     (prisma.testCaseResult.update as jest.Mock).mockResolvedValue({});
@@ -84,7 +92,11 @@ describe("submission evaluation fact pipeline", () => {
       judgeStatus: "Accepted",
     });
     (generateLearningNavigation as jest.Mock).mockResolvedValue({
-      learning_navigation: { weaknesses: [], learning_path: [], recommended_exercises: [] },
+      learning_navigation: {
+        weaknesses: [],
+        learning_path: [],
+        recommended_exercises: [],
+      },
     });
     (runCodeReviewAgent as jest.Mock).mockResolvedValue({
       reviewSummary: "发现高风险问题",
@@ -113,15 +125,22 @@ describe("submission evaluation fact pipeline", () => {
       score: 100,
     });
     expect(prisma.evaluationRun.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ traceId: "trace-1" }) }),
+      expect.objectContaining({
+        data: expect.objectContaining({ traceId: "trace-1" }),
+      }),
     );
     expect(prisma.evaluationRun.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ status: "COMPLETED", failureScope: null }),
+        data: expect.objectContaining({
+          status: "COMPLETED",
+          failureScope: null,
+        }),
       }),
     );
     expect(prisma.codeSubmission.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ score: 100 }) }),
+      expect.objectContaining({
+        data: expect.objectContaining({ score: 100 }),
+      }),
     );
   });
 
@@ -150,7 +169,9 @@ describe("submission evaluation fact pipeline", () => {
   it("keeps the previous score when Judge0 is unavailable", async () => {
     execute.mockRejectedValue(new Error("connection refused"));
 
-    await expect(evaluateSubmissionInsidePlatform("code-1")).rejects.toMatchObject({
+    await expect(
+      evaluateSubmissionInsidePlatform("code-1"),
+    ).rejects.toMatchObject({
       message: "Judge0 execution service is unavailable",
       evaluationRunId: "run-1",
       codeSubmissionId: "code-1",
@@ -196,6 +217,38 @@ describe("submission evaluation fact pipeline", () => {
     );
   });
 
+  it("starts emotion and navigation concurrently after review evidence is ready", async () => {
+    const started: string[] = [];
+    let releaseEmotion!: () => void;
+    let releaseNavigation!: () => void;
+    const emotionGate = new Promise<void>((resolve) => {
+      releaseEmotion = resolve;
+    });
+    const navigationGate = new Promise<void>((resolve) => {
+      releaseNavigation = resolve;
+    });
+    (generateEmotionalSupport as jest.Mock).mockImplementation(async () => {
+      started.push("emotion");
+      await emotionGate;
+      return null;
+    });
+    (generateLearningNavigation as jest.Mock).mockImplementation(async () => {
+      started.push("navigation");
+      await navigationGate;
+      return null;
+    });
+
+    const evaluation = evaluateSubmissionInsidePlatform("code-1");
+    for (let index = 0; index < 20 && started.length < 2; index += 1) {
+      await Promise.resolve();
+    }
+
+    expect(started).toEqual(["emotion", "navigation"]);
+    releaseEmotion();
+    releaseNavigation();
+    await expect(evaluation).resolves.toMatchObject({ status: "COMPLETED" });
+  });
+
   it("marks an invalid required code-review output as retryable platform failure", async () => {
     (analyzeCode as jest.Mock).mockResolvedValue({
       errors: [{ severity: "High", knowledge_concept: "pointer" }],
@@ -209,7 +262,9 @@ describe("submission evaluation fact pipeline", () => {
       confidence: 4,
     });
 
-    await expect(evaluateSubmissionInsidePlatform("code-1")).rejects.toMatchObject({
+    await expect(
+      evaluateSubmissionInsidePlatform("code-1"),
+    ).rejects.toMatchObject({
       message: "Code review model returned invalid output",
       retryable: true,
     });

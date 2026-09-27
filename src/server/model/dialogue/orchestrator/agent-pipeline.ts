@@ -25,17 +25,59 @@ export interface VerificationResult {
 export function planDialogue(intent: DialogueIntent): DialoguePlan {
   switch (intent) {
     case "CODE_SUBMISSION":
-      return { intent, steps: [{ agent: "code-review", purpose: "分析代码并给出可执行反馈", required: true }, { agent: "emotion", purpose: "识别学习情绪并提供支持", required: false }] };
+      return {
+        intent,
+        steps: [
+          {
+            agent: "code-review",
+            purpose: "分析代码并给出可执行反馈",
+            required: true,
+          },
+          {
+            agent: "emotion",
+            purpose: "识别学习情绪并提供支持",
+            required: false,
+          },
+          {
+            agent: "navigation",
+            purpose: "根据审查证据生成后续学习路径",
+            required: false,
+          },
+        ],
+      };
     case "LEARNING_PATH_INQUIRY":
-      return { intent, steps: [{ agent: "navigation", purpose: "生成个性化学习路径", required: true }, { agent: "rag", purpose: "补充课程知识来源", required: false }] };
+      return {
+        intent,
+        steps: [
+          {
+            agent: "navigation",
+            purpose: "生成个性化学习路径",
+            required: true,
+          },
+          { agent: "rag", purpose: "补充课程知识来源", required: false },
+        ],
+      };
     case "KNOWLEDGE_QUESTION":
-      return { intent, steps: [{ agent: "rag", purpose: "检索知识并回答问题", required: true }] };
+      return {
+        intent,
+        steps: [
+          { agent: "rag", purpose: "检索知识并回答问题", required: true },
+        ],
+      };
     default:
-      return { intent, steps: [{ agent: "direct", purpose: "直接回答当前对话", required: true }] };
+      return {
+        intent,
+        steps: [
+          { agent: "direct", purpose: "直接回答当前对话", required: true },
+        ],
+      };
   }
 }
 
-export function critiqueDialogueResult(result: DialogueNodeResult | undefined, plan: DialoguePlan): Critique {
+export function critiqueDialogueResult(
+  result: DialogueNodeResult | undefined,
+  plan: DialoguePlan,
+): Critique {
   const issues: string[] = [];
   if (!result?.reply?.trim()) issues.push("回复内容为空");
   for (const step of plan.steps.filter((item) => item.required)) {
@@ -52,7 +94,9 @@ export function critiqueDialogueResult(result: DialogueNodeResult | undefined, p
   return { approved: issues.length === 0, issues };
 }
 
-export function verifyDialogueResult(result: DialogueNodeResult | undefined): VerificationResult {
+export function verifyDialogueResult(
+  result: DialogueNodeResult | undefined,
+): VerificationResult {
   const issues: string[] = [];
   if (!result) issues.push("缺少编排结果");
   else if (result.reply.length > 20_000) issues.push("回复超过 20000 字符限制");
