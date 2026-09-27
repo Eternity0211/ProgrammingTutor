@@ -2,11 +2,11 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: gradeitDB
-      POSTGRES_PASSWORD: mypassword
-      POSTGRES_DB: gradeit
+      POSTGRES_USER: ${POSTGRES_USER:-gradeitDB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mypassword}
+      POSTGRES_DB: ${POSTGRES_DB:-gradeit}
     ports:
-      - "5173:5432"
+      - "${POSTGRES_HOST_PORT:-5173}:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -80,6 +80,12 @@ services:
       judge0-redis:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://localhost:2358/about >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   judge0-worker:
     image: judge0/judge0:latest
@@ -150,6 +156,12 @@ services:
       - neo4j_data:/data
       - neo4j_logs:/logs
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider http://localhost:7474/"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
 volumes:
   gradeit_node_modules:
   db_data:

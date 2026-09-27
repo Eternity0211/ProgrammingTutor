@@ -11,7 +11,7 @@ function requiredEnv(name: string): string {
 }
 
 externalDescribe("external service integration", () => {
-  jest.setTimeout(30_000);
+  jest.setTimeout(120_000);
 
   it("executes a real PostgreSQL query", async () => {
     requiredEnv("DATABASE_URL");
@@ -56,8 +56,9 @@ externalDescribe("external service integration", () => {
         source_code: Buffer.from("#include <iostream>\nint main(){std::cout << 42;}").toString("base64"),
       }),
     });
-    expect(response.ok).toBe(true);
-    const result = await response.json() as {
+    const responseBody = await response.text();
+    expect({ status: response.status, body: responseBody }).toMatchObject({ status: 201 });
+    const result = JSON.parse(responseBody) as {
       status?: { id?: number; description?: string };
       stdout?: string | null;
       message?: string | null;

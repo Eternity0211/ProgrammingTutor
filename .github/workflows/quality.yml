@@ -4,6 +4,8 @@ on:
   push:
     branches: [feature-agent-tutor, main]
   pull_request:
+  schedule:
+    - cron: "0 18 * * 1"
   workflow_dispatch:
     inputs:
       run_external:
@@ -27,7 +29,7 @@ jobs:
       - run: npm run test:observability
       - run: npm run test:resilience
       - run: npm run test:ai-quality
-      - run: npm test -- --runInBand
+      - run: npm run test:ci
       - run: npm run build
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
@@ -42,17 +44,21 @@ jobs:
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://localhost:4318/v1/traces
 
   external-integration:
-    if: github.event_name == 'workflow_dispatch' && inputs.run_external
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_external)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      NEO4J_URI: ${{ secrets.NEO4J_URI }}
-      NEO4J_USER: ${{ secrets.NEO4J_USER }}
-      NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
-      JUDGE0_API_URL: ${{ secrets.JUDGE0_API_URL }}
-      JUDGE0_API_KEY: ${{ secrets.JUDGE0_API_KEY }}
-      JUDGE0_API_HOST: ${{ secrets.JUDGE0_API_HOST }}
-      JUDGE0_CPP_LANGUAGE_ID: ${{ vars.JUDGE0_CPP_LANGUAGE_ID || '54' }}
+      COMPOSE_PROJECT_NAME: programming-tutor-ci
+      POSTGRES_USER: gradeit_ci
+      POSTGRES_PASSWORD: gradeit_ci_password
+      POSTGRES_DB: gradeit_ci
+      POSTGRES_HOST_PORT: 5173
+      DATABASE_URL: postgresql://gradeit_ci:gradeit_ci_password@localhost:5173/gradeit_ci
+      NEO4J_URI: bolt://localhost:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ci-neo4j-password
+      JUDGE0_API_URL: http://localhost:2358
+      JUDGE0_CPP_LANGUAGE_ID: 54
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -60,4 +66,16 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Start real service containers
+        run: docker compose up -d db neo4j judge0-server judge0-worker
+      - name: Wait for real services
+        run: npm run services:wait
+      - name: Apply the real PostgreSQL schema
+        run: npx prisma migrate deploy
       - run: npm run test:integration:external
+      - name: Print service diagnostics
+        if: always()
+        run: docker compose ps -a && docker compose logs --no-color --tail=200 db neo4j judge0-server judge0-worker
+      - name: Stop real service containers
+        if: always()
+        run: docker compose down -v --remove-orphans

@@ -51,4 +51,4 @@
 
 示例 Prometheus 告警位于 `ops/prometheus-alerts.yml`，包括硬依赖不可用、HTTP 5xx 超标、评测失败率超标和对话延迟超标。阈值是初始建议，取得真实流量基线后应按 P95/P99 与业务容忍度调整。
 
-CI 会依次执行数据集严格校验、类型检查、可观测性契约测试、完整 Jest 测试和生产构建。真实 PostgreSQL、Neo4j、Judge0 的测试仍由手动 workflow 使用 GitHub Secrets 触发，避免普通提交消耗外部资源。
+CI 会依次执行数据集严格校验、类型检查、可观测性契约测试、完整 Jest 测试和生产构建。真实 PostgreSQL、Neo4j、Judge0 测试由独立任务启动一次性容器，应用 Prisma 迁移并执行真实 SQL、Cypher 和 C++ 编译运行；该任务每周自动运行，也可在 Quality workflow 中手动触发，不需要 GitHub Secrets。
