@@ -5,6 +5,7 @@ import neo4j from "neo4j-driver";
 
 const timeoutMs = Number(process.env.EXTERNAL_SERVICES_TIMEOUT_MS ?? 180_000);
 const retryMs = Number(process.env.EXTERNAL_SERVICES_RETRY_MS ?? 3_000);
+const checkTimeoutMs = Number(process.env.EXTERNAL_SERVICE_CHECK_TIMEOUT_MS ?? 10_000);
 const deadline = Date.now() + timeoutMs;
 
 function required(name) {
@@ -54,10 +55,27 @@ const lastErrors = new Map();
 const lastReportedErrors = new Map();
 let lastProgressAt = 0;
 
+async function runCheckWithTimeout(name, check) {
+  let timer;
+  try {
+    await Promise.race([
+      check(),
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`${name} check timed out after ${checkTimeoutMs}ms`)),
+          checkTimeoutMs,
+        );
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 while (pending.size > 0 && Date.now() < deadline) {
   for (const [name, check] of pending) {
     try {
-      await check();
+      await runCheckWithTimeout(name, check);
       pending.delete(name);
       lastErrors.delete(name);
       console.log(`[ready] ${name}`);
