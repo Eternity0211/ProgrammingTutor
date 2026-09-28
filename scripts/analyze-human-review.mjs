@@ -70,9 +70,13 @@ const versionSummary = Object.fromEntries(
     },
   ]),
 );
-const ragAnnotations = review.ragItems
-  .map((item) => item.annotation)
-  .filter((annotation) => annotation.answerCorrectness !== null);
+const annotatedRagItems = review.ragItems.filter(
+  (item) => item.annotation.answerCorrectness !== null,
+);
+const ragAnnotations = annotatedRagItems.map((item) => item.annotation);
+const annotatedRefusalItems = annotatedRagItems.filter(
+  (item) => item.shouldGround === false,
+);
 const report = {
   generatedAt: new Date().toISOString(),
   versions: versionSummary,
@@ -86,10 +90,14 @@ const report = {
           evidenceSupport: round(
             mean(ragAnnotations.map((item) => item.evidenceSupport)),
           ),
-          correctRefusalRate: round(
-            ragAnnotations.filter((item) => item.refusalCorrect === true).length /
-              ragAnnotations.length,
-          ),
+          correctRefusalRate:
+            annotatedRefusalItems.length === 0
+              ? null
+              : round(
+                  annotatedRefusalItems.filter(
+                    (item) => item.annotation.refusalCorrect === true,
+                  ).length / annotatedRefusalItems.length,
+                ),
           unsupportedClaimsAverage: round(
             mean(ragAnnotations.map((item) => item.unsupportedClaims)),
           ),
