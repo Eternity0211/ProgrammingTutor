@@ -22,6 +22,12 @@ import {
   getPromptDefinition,
   promptContractHeader,
 } from "@/server/model/prompts/registry";
+import {
+  groundNavigationOutput,
+  navigationEvidenceTags,
+  TRUSTED_LEARNING_RESOURCES,
+  validateNavigationGrounding,
+} from "./agent-grounding";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -84,11 +90,15 @@ export interface LearningNavigationResult {
 }
 
 // ================= 核心业务逻辑 =================
-function loadLeetCodeQuestions() {
+type ExerciseCatalogItem = Omit<RecommendedExercise, "purpose"> & {
+  topic?: string;
+};
+
+function loadLeetCodeQuestions(): ExerciseCatalogItem[] {
   try {
     const p = path.resolve(process.cwd(), "public/leetcode-questions.json");
     const raw = fs.readFileSync(p, "utf8");
-    return JSON.parse(raw);
+    return JSON.parse(raw) as ExerciseCatalogItem[];
   } catch {
     return [];
   }
@@ -117,6 +127,15 @@ function buildMessages(
   inputs: NavigatorInputs,
 ): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
   const leetCodeQuestions = loadLeetCodeQuestions();
+  const availableEvidenceTags = [
+    ...(inputs.codeReviewResult
+      ? ["[REVIEW] and the evidence tags already present in the code review"]
+      : []),
+    ...(inputs.knowledgeGraph ? ["[GRAPH]"] : []),
+    ...(inputs.studentHistory ? ["[HISTORY]"] : []),
+    ...(inputs.studentProfileSummary ? ["[PROFILE]"] : []),
+    ...(inputs.sessionContext?.length ? ["[DIALOGUE]"] : []),
+  ];
   const systemPrompt = `${promptContractHeader("agent.learning-navigation")}
 【角色定义】
 你是精准、科学、循序渐进的编程学习导航智能体。根据代码审查中发现的问题，结合知识图谱，为学生规划个性化的学习路径和推荐针对性的练习题目，帮助学生填补知识 gaps，培养良好的编程习惯和工程规范。
@@ -134,8 +153,13 @@ function buildMessages(
 
 【行为约束】
 - 学习路径不跳跃、不超前、不堆砌。
-- 推荐的题目和资源必须与学生的薄弱点高度相关。
-- 资源尽量通用、易获取，便于学生实践。
+- 每个 weakness、learning_path.topic 和 exercise.purpose 必须保留至少一个可用证据标签。
+- 引用代码审查整体时使用 [REVIEW]，引用其具体依据时保留 [CODE]、[TEST]、[SYM:*]；其他来源使用 [GRAPH]、[HISTORY]、[PROFILE]、[DIALOGUE]。
+- 只有代码审查明确确认的问题才能写成 weakness；可选优化不得冒充学生缺陷。
+- 如果审查包含 [REVIEW:NO_CONFIRMED_ISSUES]，weaknesses 必须为空；仍可根据明确目标给出进阶学习步骤，但必须说明它不是缺陷修复。
+- 最多输出 3 个 weaknesses、3 个学习步骤和 3 道练习，避免无证据扩展。
+- resources 只能逐字选择下方“可信资源目录”，不能编造教材章节、课程或链接。
+- 练习必须从提供的 LeetCode 题库中选择；不得修改题号、标题、难度和 URL。
 - 结构清晰，学生能直接照着执行。
 - 必须且只能输出合法的 JSON 格式。
 `;
@@ -158,6 +182,12 @@ ${inputs.studentProfileSummary || "无"}
 【近期对话】
 ${inputs.sessionContext?.map((message) => `${message.role}: ${message.content}`).join("\n") || "无"}
 
+【本次可用证据标签】
+${availableEvidenceTags.join("\n") || "无"}
+
+【可信资源目录（resources 只能逐字选取）】
+${JSON.stringify(TRUSTED_LEARNING_RESOURCES, null, 2)}
+
 【可推荐题库】
 ${JSON.stringify(leetCodeQuestions, null, 2)}
 
@@ -179,7 +209,7 @@ ${JSON.stringify(leetCodeQuestions, null, 2)}
         "id": "题目编号",
         "title": "题目名称",
         "difficulty": "入门/初级/中级/高级",
-        "purpose": "训练目标和预期收获"
+        "purpose": "训练目标和预期收获",
         "url": "LeetCode 链接"
       }
     ]
@@ -235,40 +265,77 @@ export async function generateLearningNavigation(
     const messages = buildMessages(inputs);
     const prompt = getPromptDefinition("agent.learning-navigation");
     recordPromptInvocation(prompt.id, prompt.version);
+    const exerciseCatalog = loadLeetCodeQuestions();
+    const allowedEvidenceTags = navigationEvidenceTags(inputs);
+    let parsedData: LearningNavigationResult | null = null;
+    let validationDetails = "";
 
-    const completion = await getClient().chat.completions.create({
-      model: getLlmModel(),
-      messages: messages,
-      // 强制要求 JSON 格式输出 (需模型支持，若不支持可在 prompt 中强调，deepseek在百炼平台支持的)
-      response_format: { type: "json_object" },
-      temperature: 0.3, // 降低随机性，保证 JSON 结构和专业度
-    });
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const attemptMessages = [...messages];
+      if (validationDetails) {
+        attemptMessages.push({
+          role: "user",
+          content: `上一版输出未通过证据校验，请只修正下列问题并重新输出完整 JSON：\n${validationDetails}\n不要删除本来有依据的学习步骤；请为每个 topic 补上可用证据标签，并逐字使用目录中的资源与题库元数据。`,
+        });
+      }
 
-    const answerContent = completion.choices[0]?.message?.content;
+      const completion = await getClient().chat.completions.create({
+        model: getLlmModel(),
+        messages: attemptMessages,
+        response_format: { type: "json_object" },
+        temperature: attempt === 0 ? 0.3 : 0.1,
+      });
+      recordLlmUsage(completion.usage, {
+        agent: "navigation",
+        model: getLlmModel(),
+      });
 
-    if (!answerContent) {
-      throw new Error("API 返回内容为空");
+      const answerContent = completion.choices[0]?.message?.content;
+      if (!answerContent) {
+        validationDetails = "API 返回内容为空";
+        continue;
+      }
+
+      try {
+        const parsed = navigationAgentEnvelopeSchema.safeParse(
+          JSON.parse(answerContent),
+        );
+        if (!parsed.success) {
+          validationDetails = parsed.error.message;
+          continue;
+        }
+
+        const groundingIssues = validateNavigationGrounding(
+          parsed.data,
+          allowedEvidenceTags,
+          exerciseCatalog,
+        );
+        if (groundingIssues.length === 0) {
+          parsedData = parsed.data as LearningNavigationResult;
+          break;
+        }
+
+        validationDetails = groundingIssues.join("\n");
+        if (attempt === 1) {
+          parsedData = groundNavigationOutput(
+            parsed.data,
+            allowedEvidenceTags,
+            exerciseCatalog,
+          ) as LearningNavigationResult;
+        }
+      } catch (error) {
+        validationDetails =
+          error instanceof Error ? error.message : "无法解析 JSON";
+      }
     }
 
-    console.log("\n" + "=".repeat(20) + " Token 消耗 " + "=".repeat(20));
-    console.log(completion.usage);
-    recordLlmUsage(completion.usage, {
-      agent: "navigation",
-      model: getLlmModel(),
-    });
-
-    // 解析 JSON
-    const parsed = navigationAgentEnvelopeSchema.safeParse(
-      JSON.parse(answerContent),
-    );
-    if (!parsed.success) {
+    if (!parsedData) {
       recordAgentOutputValidation("navigation", "invalid");
       throw new AgentOutputValidationError(
         "NavigationAgent",
-        parsed.error.message,
+        validationDetails || "模型输出未通过证据校验",
       );
     }
-    const parsedData: LearningNavigationResult = parsed.data;
     recordAgentOutputValidation("navigation", "valid");
 
     // 保存文件

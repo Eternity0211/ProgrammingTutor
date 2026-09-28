@@ -18,6 +18,7 @@ import {
   getPromptDefinition,
   promptContractHeader,
 } from "@/server/model/prompts/registry";
+import { extractEvidenceTags, validateGroundedStatements } from "./agent-grounding";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -92,18 +93,20 @@ function buildMessages(
 - guidance 必须包含一个当下就能做的小行动。
 - 语气像耐心的学习伙伴，不是老师。
 - 不制造焦虑，不夸大问题。
+- reason 必须明确引用可用证据标签：[REVIEW]、[PROFILE] 或 [DIALOGUE]；代码错误不能单独证明负面情绪。
+- 不得补充学生没有表达过的心理状态、经历或能力判断。
 `;
 
   const userPrompt = `
 请基于以下现有证据生成情绪分析 JSON：
 
-【代码审查结果】
+【代码审查结果 [REVIEW]】
 ${inputs.codeReviewResult || "本次没有代码审查证据"}
 
-【学生画像】
+【学生画像 [PROFILE]】
 ${inputs.studentProfileSummary || "本次没有学生画像证据"}
 
-【近期对话】
+【近期对话 [DIALOGUE]】
 ${inputs.sessionContext?.map((message) => `${message.role}: ${message.content}`).join("\n") || "本次没有近期对话证据"}
 
 【输出格式】
@@ -165,38 +168,73 @@ export async function generateEmotionalSupport(
     const prompt = getPromptDefinition("agent.emotion-support");
     recordPromptInvocation(prompt.id, prompt.version);
 
-    const completion = await getClient().chat.completions.create({
-      model: getLlmModel(),
-      messages: messages,
-      response_format: { type: "json_object" },
-      temperature: 0.8, // 适度温度，保持语言自然但稳定
-    });
+    const allowedEvidenceTags = new Set<string>();
+    if (inputs.codeReviewResult) {
+      allowedEvidenceTags.add("REVIEW");
+      for (const tag of extractEvidenceTags(inputs.codeReviewResult)) {
+        allowedEvidenceTags.add(tag);
+      }
+    }
+    if (inputs.studentProfileSummary) allowedEvidenceTags.add("PROFILE");
+    if (inputs.sessionContext?.length) allowedEvidenceTags.add("DIALOGUE");
+    let parsedData: EmotionAnalysisResult | null = null;
+    let validationDetails = "";
 
-    const answerContent = completion.choices[0]?.message?.content;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const attemptMessages = [...messages];
+      if (validationDetails) {
+        attemptMessages.push({
+          role: "user",
+          content: `上一版输出未通过校验：${validationDetails}。请重新输出完整 JSON，保留 detected_emotion、intensity、reason、supportive_guidance 四个字段，并让 reason 引用可用证据标签。`,
+        });
+      }
+      const completion = await getClient().chat.completions.create({
+        model: getLlmModel(),
+        messages: attemptMessages,
+        response_format: { type: "json_object" },
+        temperature: attempt === 0 ? 0.2 : 0.1,
+      });
+      recordLlmUsage(completion.usage, {
+        agent: "emotion",
+        model: getLlmModel(),
+      });
 
-    if (!answerContent) {
-      throw new Error("API 返回内容为空");
+      const answerContent = completion.choices[0]?.message?.content;
+      if (!answerContent) {
+        validationDetails = "API 返回内容为空";
+        continue;
+      }
+      try {
+        const parsed = emotionAgentEnvelopeSchema.safeParse(
+          JSON.parse(answerContent),
+        );
+        if (!parsed.success) {
+          validationDetails = parsed.error.message;
+          continue;
+        }
+        const groundingIssues = validateGroundedStatements(
+          [parsed.data.emotion_analysis.reason],
+          allowedEvidenceTags,
+        );
+        if (groundingIssues.length > 0) {
+          validationDetails = groundingIssues.join("; ");
+          continue;
+        }
+        parsedData = parsed.data;
+        break;
+      } catch (error) {
+        validationDetails =
+          error instanceof Error ? error.message : "无法解析 JSON";
+      }
     }
 
-    console.log("\n" + "=".repeat(20) + " Token 消耗 " + "=".repeat(20));
-    console.log(completion.usage);
-    recordLlmUsage(completion.usage, {
-      agent: "emotion",
-      model: getLlmModel(),
-    });
-
-    // 解析 JSON
-    const parsed = emotionAgentEnvelopeSchema.safeParse(
-      JSON.parse(answerContent),
-    );
-    if (!parsed.success) {
+    if (!parsedData) {
       recordAgentOutputValidation("emotion", "invalid");
       throw new AgentOutputValidationError(
         "EmotionAgent",
-        parsed.error.message,
+        validationDetails || "模型输出未通过证据校验",
       );
     }
-    const parsedData: EmotionAnalysisResult = parsed.data;
     recordAgentOutputValidation("emotion", "valid");
 
     // 保存文件

@@ -24,7 +24,7 @@
 
 每次调用都会从当前代码审查、学生画像、对话上下文和知识图谱重新构造输入。输入规范化后生成 16 位 `evidenceFingerprint`，并和 `evidenceSources` 一起写入 Agent Span。任一来源变化都会得到不同指纹，因此可以从 Trace 判断结果变化对应的是哪一版证据。
 
-Prompt `agent.emotion-support` 与 `agent.learning-navigation` 已提升到 `2.0.0`，Trace 同时记录 Prompt 版本和指纹。
+Prompt `agent.code-review` 为 `2.0.0`，`agent.emotion-support` 与 `agent.learning-navigation` 为 `3.0.0`；三者都要求输出引用可用证据，Trace 同时记录 Prompt 版本和指纹。
 
 ## 验证
 

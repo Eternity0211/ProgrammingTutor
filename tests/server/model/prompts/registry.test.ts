@@ -32,9 +32,10 @@ describe("prompt registry", () => {
   });
 
   it("versions adaptive downstream-agent evidence contracts", () => {
-    expect(getPromptDefinition("agent.emotion-support").version).toBe("2.0.0");
+    expect(getPromptDefinition("agent.code-review").version).toBe("2.0.0");
+    expect(getPromptDefinition("agent.emotion-support").version).toBe("3.0.0");
     expect(getPromptDefinition("agent.learning-navigation").version).toBe(
-      "2.0.0",
+      "3.0.0",
     );
   });
 });

@@ -9,6 +9,8 @@
 - RAG 只允许根据本次检索证据回答。证据不足时不调用大模型补充原生知识。
 - RAG 回答必须返回结构化引用；未知来源编号、缺失正文标记或非法 JSON 都会安全降级。
 - Code Review、Emotion、Navigation 都经过 Zod Schema 校验。关键输出无效时评测进入可重试的平台失败；可选输出无效时跳过，不影响确定性的测试分数。
+- Code Review 的每个结论和建议必须引用可用的代码行、测试计数或符号诊断标签；测试计数不能被用于猜测隐藏用例。Emotion 的情绪原因必须引用审查、画像或对话证据。
+- Navigation 对证据、资源和题库元数据进行校验，失败时自动纠错一次，仍不合格才执行安全过滤；确定性审查标记为“无已确认缺陷”时，weaknesses 强制为空。
 - MCP `knowledge_answer` 同时返回 `grounded`、`citations` 和 `groundingReason`，调用方能够区分有依据回答与降级回答。
 - Prompt 使用统一注册表。调用指标和 Trace 记录 Prompt ID、版本与指纹，便于复现线上结果。
 
@@ -39,6 +41,10 @@ GitHub `Quality` workflow 会在类型检查、全量测试和构建之外单独
 2. 修改 Agent JSON、MCP 输入输出或 RAG 响应时，同时修改 Schema、契约测试和评测数据。
 3. 不允许通过放宽 Schema、删除失败样本或把无效结果改成默认“成功”来让流水线通过。
 4. 需要真实模型判断的质量变化，应使用固定数据集、固定模型与温度重复运行，并保留报告；CI 的离线门禁负责结构与安全，不能替代人工标注的准确率评测。
+
+## 真实模型回归记录
+
+`benefit-grounding-final` 使用固定的 12 场景和真实 DeepSeek 模型验证证据门禁。12/12 场景的三个 Agent 均返回有效结果；36/36 个学习主题包含可用证据标签，可信目录外资源为 0，两个正确代码场景的 weakness 均为 0。Emotion 有 1 次、Navigation 有 2 次首轮校验失败并由自动纠错恢复。原始输出、Token 明细与汇总分别保存在 `data/evaluation/results/benefit-grounding-final.json`、`llm-usage-benefit-grounding-final.jsonl` 和 `benefit-grounding-final-summary.json`。
 
 ## 故障处理
 

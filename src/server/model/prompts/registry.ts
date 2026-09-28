@@ -64,27 +64,27 @@ const definitions = [
   }),
   definePrompt({
     id: "agent.code-review",
-    version: "1.0.0",
+    version: "2.0.0",
     owner: "code-review-agent",
     purpose: "Explain code defects using symbolic and runtime evidence.",
     contract:
-      "Return strict code-review JSON; prioritize symbolic evidence and provide executable suggestions with confidence in [0,1].",
+      "Return strict code-review JSON; cite CODE, TEST, or symbolic evidence in every field, distinguish confirmed defects from optional hardening, and provide executable suggestions with confidence in [0,1].",
   }),
   definePrompt({
     id: "agent.emotion-support",
-    version: "2.0.0",
+    version: "3.0.0",
     owner: "emotion-agent",
     purpose: "Infer learning emotion and provide a safe next action.",
     contract:
-      "Fuse code review (primary), recent dialogue, and student profile evidence; return strict emotion_analysis JSON, avoid diagnosis, and include one immediately executable action.",
+      "Fuse code review (primary), recent dialogue, and student profile evidence; cite the evidence used for the emotion reason, avoid diagnosis, and include one immediately executable action.",
   }),
   definePrompt({
     id: "agent.learning-navigation",
-    version: "2.0.0",
+    version: "3.0.0",
     owner: "navigation-agent",
     purpose: "Build a learning path from validated review evidence.",
     contract:
-      "Fuse code review, student profile, recent dialogue, and knowledge-graph evidence; return strict learning_navigation JSON and recommend exercises only from the supplied catalog.",
+      "Fuse and cite review, profile, dialogue, and graph evidence; limit unsupported expansion, use only trusted resources, and recommend exercises only from the supplied catalog.",
   }),
 ] as const;
 

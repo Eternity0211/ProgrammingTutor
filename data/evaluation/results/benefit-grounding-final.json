@@ -1,0 +1,1517 @@
+{
+  "schemaVersion": 2,
+  "mode": "benefit-grounding-final",
+  "variant": "current",
+  "execution": "parallel",
+  "rounds": 1,
+  "scenarioCount": 12,
+  "generatedAt": "2026-09-28T10:50:43.576Z",
+  "model": "deepseek-flash",
+  "projectRoot": "D:\\ProgrammingTutor_Update",
+  "results": [
+    {
+      "id": "logic-average",
+      "name": "运算符优先级逻辑错误",
+      "category": "logic",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "运算符优先级",
+          "括号",
+          "除法"
+        ],
+        "acceptableEmotions": [
+          "沮丧",
+          "挫败"
+        ],
+        "navigationTopics": [
+          "运算符优先级",
+          "整数除法"
+        ],
+        "seriousIssueExpected": true
+      },
+      "codeReview": {
+        "durationMs": 5793,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 6016,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 10866,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 10867,
+      "componentDurationMs": 22675,
+      "endToEndDurationMs": 16660,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] The single-line function at [CODE:L1] is a confirmed defect, not a style nit: the symbolic diagnostic [SYM:CPP_LOGIC_WRONG_CONDITION_OPERATOR@L1] flags operator precedence as changing the average calculation, and [REVIEW:CONFIRMED_ISSUES] marks this as a real bug rather than a false positive. [TEST] reports 4 tests with 1 passed and 3 failed, which is consistent with a wrong-result defect, but [TEST] alone does not reveal which inputs were used or why those specific cases failed. The code compiles and returns a double, so the problem is purely a logic/arithmetic issue.",
+          "causalAnalysis": "Two related defects are visible directly in [CODE:L1], and both are captured by [SYM:CPP_LOGIC_WRONG_CONDITION_OPERATOR@L1]. First, precedence: in C++, `/` binds tighter than `+`, so `return a + b / 2;` parses as `a + (b / 2)`, not `(a + b) / 2`. The divisor is applied only to `b`, so the sum is never halved as a whole. Second, integer division: both `a` and `b` are declared `int`, so the sub-expression `b / 2` is evaluated in `int` arithmetic, which truncates toward zero before the sum is promoted to `double` on return. The consequence is that the function's result is arithmetically equivalent to `a + floor(b / 2.0)` rather than `(a + b) / 2.0`; it is correct only when `b` happens to be even and `a` happens to be zero in the halving sense, which is why some tests can still pass while others fail, as reflected in the pass/fail split reported by [TEST]. No loops, recursion, or container use appears in [CODE:L1], so complexity is constant time and is not a contributing factor here.",
+          "suggestions": [
+            "Rewrite the return statement so the addition happens before the division and the division is floating-point, e.g. `return (a + b) / 2.0;` — this single change resolves both the precedence problem reported by [SYM:CPP_LOGIC_WRONG_CONDITION_OPERATOR@L1] and the truncation of `b / 2` visible in [CODE:L1].",
+            "Verify the fix by hand-tracing cases whose sum is odd, such as inputs that produce an odd `a + b`; the corrected expression from [CODE:L1] should yield a fractional result like x.5, whereas the original always produced a whole number because of integer division.",
+            "Add parentheses explicitly whenever mixing `+`, `-`, `*`, or `/` in one expression, and prefer a `double` literal (`2.0`) over the integer `2`, so the arithmetic type of [CODE:L1] matches the declared `double` return type.",
+            "Keep the current function signature and return type; only the expression body identified by [SYM:CPP_LOGIC_WRONG_CONDITION_OPERATOR@L1] needs to change, so no restructuring of surrounding code is required."
+          ],
+          "confidence": 0.95
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "沮丧",
+            "intensity": "中",
+            "reason": "你在对话中直接说到改了好几次还是不对，有点沮丧 [DIALOGUE]，这是当下最直接的证据。结合代码审查，这次的问题集中在单行返回表达式 [REVIEW]：运算符优先级和整数除法让平均值算法没有真正生效，4 个测试里 3 个未通过 [REVIEW]，所以反复修改仍看不到正确结果。画像也显示你正在学 C++ 表达式、最近两次提交都出现计算公式错误 [PROFILE]，说明这是新知识点带来的正常卡点，而不是你不行。",
+            "supportive_guidance": "改了好几次还在原地，会沮丧是很自然的，说明你真的很想把这件事做对。好消息是：这次不是一堆问题，只是那一行表达式的优先级和整数除法在捣乱。现在只做一件小事——把 return a + b / 2; 改成 return (a + b) / 2.0;，然后手动挑一组相加为奇数的数字（比如 a=1, b=2）算一遍，看看结果是不是 1.5。改完这一行就停下来，不用再动别的地方。你不是不会，只是刚认识这个坑，踩过一次就记住了。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "运算符优先级与括号明确求值顺序：`a + b / 2` 在 C++ 中按 `a + (b / 2)` 求值，加法没有先于除法发生 [REVIEW][CODE:L1][SYM:CPP_LOGIC_WRONG_CONDITION_OPERATOR@L1][GRAPH]",
+              "整数除法与浮点类型转换：`a`、`b` 均为 `int`，子表达式 `b / 2` 在整数算术中向零截断，与 `double` 返回类型不匹配 [REVIEW][CODE:L1][SYM:CPP_LOGIC_WRONG_CONDITION_OPERATOR@L1][GRAPH]"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "运算符优先级与括号：明确 `+` 与 `/` 的求值顺序，用括号固定意图 [REVIEW][CODE:L1][SYM:CPP_LOGIC_WRONG_CONDITION_OPERATOR@L1][GRAPH]",
+                "duration": "30 分钟",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "整数除法与浮点类型转换：让运算类型与 `double` 返回类型一致，避免截断 [REVIEW][CODE:L1][GRAPH]",
+                "duration": "30 分钟",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/",
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "表达式手算验证与奇数和边界用例测试：用 `(a + b)` 为奇数的手算结果确认修复，而不是只依赖编译通过 [TEST][REVIEW][HISTORY]",
+                "duration": "20 分钟",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc1",
+                "title": "两数之和",
+                "difficulty": "入门",
+                "purpose": "热身：在简单求和场景中确认表达式写法与返回值类型匹配，避免再次出现 `a + b / 2` 这类优先级与整数除法错误 [REVIEW][CODE:L1]",
+                "url": "https://leetcode.cn/problems/two-sum"
+              },
+              {
+                "id": "lc150",
+                "title": "逆波兰表达式求值",
+                "difficulty": "中级",
+                "purpose": "练习表达式求值中的运算符顺序与除法语义，重点关注整数除法截断，巩固 `整数除法 -> 类型转换` 知识 [GRAPH][CODE:L1]",
+                "url": "https://leetcode.cn/problems/evaluate-reverse-polish-notation"
+              },
+              {
+                "id": "lc227",
+                "title": "基本计算器 II",
+                "difficulty": "中级",
+                "purpose": "练习括号与优先级（先乘除后加减）的显式处理，并用浮点/更宽类型避免整数除法截断，直接巩固优先级与括号、整数除法两个薄弱点 [GRAPH][REVIEW][SYM:CPP_LOGIC_WRONG_CONDITION_OPERATOR@L1]",
+                "url": "https://leetcode.cn/problems/basic-calculator-ii"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "memory-leak",
+      "name": "动态内存泄漏",
+      "category": "memory",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "内存泄漏",
+          "delete",
+          "RAII"
+        ],
+        "acceptableEmotions": [
+          "迷茫",
+          "焦虑",
+          "沮丧"
+        ],
+        "navigationTopics": [
+          "内存释放",
+          "RAII",
+          "智能指针"
+        ],
+        "seriousIssueExpected": true
+      },
+      "codeReview": {
+        "durationMs": 6305,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 3001,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 10394,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 10394,
+      "componentDurationMs": 19700,
+      "endToEndDurationMs": 16699,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] [REVIEW:CONFIRMED_ISSUES] One confirmed defect is present: the heap array created in [CODE:L1] is never released, matching [SYM:CPP_MEMORY_LEAK@L1] (rule CPP_MEMORY_LEAK, severity High, concept 动态内存管理). [TEST] reports 3 tests total with 1 passing and 2 failing; the symbolic evidence explains the resource-management defect, while the specific hidden causes behind the failing tests are not inferred here.",
+          "causalAnalysis": "In [CODE:L1] the function body executes `int* p = new int[100]; p[0] = 42;` and then returns. The allocation operator hands back ownership of a 100-element array to the raw pointer `p`, but control reaches the closing brace with no matching `delete[]`. When `process()` returns, the local pointer `p` itself is destroyed as a stack variable, yet the array it pointed to stays allocated because a raw pointer carries no lifetime information. Each call therefore strands one array, which is exactly what [SYM:CPP_MEMORY_LEAK@L1] reports as \"allocated memory is not released.\" This is a logic/ownership defect rather than a compile error: the code is syntactically valid and the single write `p[0] = 42` succeeds, so the problem is silent at runtime and only visible through resource accounting. Note that [TEST] gives only the pass/fail counts (1 passed, 2 failed) and does not reveal inputs or failure mechanisms, so the test numbers are treated as a signal that something is wrong, not as proof of a specific runtime path; the leak in [CODE:L1] is the deterministically confirmed issue.",
+          "suggestions": [
+            "Add the matching release before the function exits: write `delete[] p;` after the assignment in [CODE:L1], i.e. `void process() { int* p = new int[100]; p[0] = 42; delete[] p; }`, which directly clears the High-severity finding [SYM:CPP_MEMORY_LEAK@L1] because the array allocated with `new[]` is freed with `delete[]`.",
+            "Replace the manual allocation in [CODE:L1] with a standard container: `void process() { std::vector<int> p(100); p[0] = 42; }` — the vector releases its buffer in its destructor on every return path, so the ownership problem behind [SYM:CPP_MEMORY_LEAK@L1] cannot recur even if early exits are added later.",
+            "If a raw array is required, hold it in a smart pointer such as `std::unique_ptr<int[]> p(new int[100]);` and use `p[0] = 42;` in [CODE:L1]; this keeps the same indexing syntax while guaranteeing release, which is the RAII fix for the leak class flagged by [SYM:CPP_MEMORY_LEAK@L1]."
+          ],
+          "confidence": 0.9
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "迷茫",
+            "intensity": "中",
+            "reason": "学生在 [DIALOGUE] 中明确说出「内存错误总是看不懂，我不知道下一步该做什么」，这是直接的困惑与方向感缺失的表达，属于迷茫情绪的主要依据。[PROFILE] 显示学生刚开始学习指针，对资源所有权和析构还不熟悉，这解释了为什么内存相关的问题会让他感到无从下手。[REVIEW] 的结果与这种感受相互印证：确实存在一个明确的、可定位的问题——[CODE:L1] 中用 new[] 申请的数组没有释放，对应高严重度的内存泄漏，且 3 个测试中有 2 个未通过。需要注意的是，代码存在缺陷本身只能说明当前学习内容有难度，并不能证明学生一定处于某种情绪；这里的迷茫判断主要来自学生自己的表达，代码审查只是说明「看不懂」是有具体、可解决的落点的，而不是他能力上的问题。",
+            "supportive_guidance": "看不懂内存错误真的很正常，它不会像语法错误那样跳出来提醒你——它悄悄发生，所以你才会觉得抓不住，这不是你的问题。好消息是，你这次的问题非常具体，只有一个：在 [CODE:L1] 里 `int* p = new int[100];` 申请了内存，但函数结束前忘记归还。现在就可以做一件小事：在 `p[0] = 42;` 这一行的下面，敲入 `delete[] p;`，然后再跑一次测试。先不用去理解所有内存知识，就做这一步，看看结果有什么变化。你已经在写指针了，这就是往前走的样子。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "[REVIEW][CODE:L1][SYM:CPP_MEMORY_LEAK@L1] 动态内存管理缺陷：在 process() 中用 new int[100] 分配堆数组后未配对 delete[]，函数返回时局部裸指针 p 被销毁但堆数组仍然存活，造成内存泄漏（High 严重度，概念：动态内存管理）。",
+              "[HISTORY][PROFILE][DIALOGUE] 资源所有权与对象生命周期意识薄弱：不清楚裸指针不携带所有权信息、离开作用域不会自动释放所指向内存，尚未建立 RAII（资源获取即初始化）与析构自动回收的思维模型。"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "[REVIEW][CODE:L1][SYM:CPP_MEMORY_LEAK@L1] 动态内存分配与释放基础：new/delete、new[]/delete[] 的配对规则与作用域退出行为",
+                "duration": "1 天（约 2 小时）",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/",
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "[GRAPH][HISTORY][PROFILE] RAII 与智能指针：从裸指针所有权到 std::unique_ptr 的自动释放",
+                "duration": "2 天（约 4 小时）",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "[REVIEW][GRAPH] 用标准容器替代裸数组：std::vector 的自动内存管理与析构回收，避免手动 new/delete",
+                "duration": "1 天（约 2 小时）",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "[HISTORY][PROFILE] 打好指针基础：练习快慢指针在链表上的移动与边界判断，先建立“指针指向哪里、何时有效”的直观感受，为理解资源所有权做铺垫。",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+              },
+              {
+                "id": "lc206",
+                "title": "反转链表",
+                "difficulty": "初级",
+                "purpose": "[REVIEW][SYM:CPP_MEMORY_LEAK@L1] 强化指针生命周期意识：通过翻转指向关系理解指针不会自动管理所指对象，错序使用会丢失节点（类比丢失释放机会的裸指针），养成操作指针前后检查指向与归属的习惯。",
+                "url": "https://leetcode.cn/problems/reverse-linked-list"
+              },
+              {
+                "id": "lc155",
+                "title": "最小栈",
+                "difficulty": "初级",
+                "purpose": "[GRAPH][REVIEW] 体会容器化资源管理：用 STL 容器承载内部数据，观察对象析构时资源自动回收，理解 RAII 如何替代手动 new/delete，从根本上规避本次的内存泄漏问题。",
+                "url": "https://leetcode.cn/problems/min-stack"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "clean-loop",
+      "name": "基本循环正确代码",
+      "category": "correct",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "正确",
+          "复杂度"
+        ],
+        "acceptableEmotions": [
+          "成就感",
+          "自信"
+        ],
+        "navigationTopics": [
+          "时间复杂度",
+          "等差数列"
+        ],
+        "seriousIssueExpected": false
+      },
+      "codeReview": {
+        "durationMs": 5180,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 2974,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 6722,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 6723,
+      "componentDurationMs": 14876,
+      "endToEndDurationMs": 11902,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:NO_CONFIRMED_ISSUES] Review of the single-line function at [CODE:L1] is clean: the deterministic status is [REVIEW:NO_CONFIRMED_ISSUES], and the supplied run summary reports [TEST] 5 of 5 tests passing. No confirmed defect (no out-of-bounds access, no leak, no unbounded recursion, no precedence bug) is present in the visible snippet, so the items below are optional hardening only, not student weaknesses.",
+          "causalAnalysis": "The behavior of [CODE:L1] is fully explained by the visible loop: `i` starts at 1 and runs while `i <= n`, accumulating `i` into `result`. Every index is a scalar loop counter, so there is no container access that could go out of bounds; there is no `new`/`delete`, so no leak path exists; there is no recursive call, so termination is guaranteed for any `n` reached by the loop condition. [TEST] confirms the aggregate outcome (5 passed, 0 failed) but reveals nothing about which inputs were exercised, so it cannot be used to claim anything about specific values of `n` or hidden cases. The accumulator `result` is `long long` while the counter `i` is `int`; because the loop is bounded by an `int` value of `n`, the mathematical maximum sum is about 2.3e18, which still fits in a signed 64-bit range, so this type mix is consistent rather than a confirmed overflow bug. Complexity follows directly from the visible loop at [CODE:L1]: O(n) time and O(1) extra space. Reasoning from [REVIEW:NO_CONFIRMED_ISSUES] together with the passing [TEST] counts, the correct conclusion is that the code is functionally sound as written and only documentation/verification hardening remains.",
+          "suggestions": [
+            "At [CODE:L1], add a one-line comment stating the intended domain of `n` and why the accumulator is `long long` (for example `// sum of 1..n; long long because n can be a large int`), so the deliberate type choice is visible to future readers and reviewers.",
+            "Extend the tests behind [TEST] with explicit boundary cases for this loop, such as n = 0 (expect 0) and n = 1 (expect 1), and assert the return type is `long long`; these cases pin down loop-condition behavior without changing the implementation at [CODE:L1]."
+          ],
+          "confidence": 0.9
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "成就感",
+            "intensity": "中",
+            "reason": "学生在[DIALOGUE]中明确表达了“这次终于全部通过了，我很有成就感”，这是直接表达的情绪，优先作为判定依据；[REVIEW]显示该单行函数为[REVIEW:NO_CONFIRMED_ISSUES]，且[TEST]报告5/5用例通过，与ta的正向体验一致，说明这份成就感有实际的通过结果支撑。[PROFILE]显示ta已掌握循环基础、希望继续学习复杂度分析，因此这份成就感可以自然衔接为下一步的学习动力。",
+            "supportive_guidance": "看到你说“终于全部通过了”，真的为你高兴——这份成就感是你一步步调试出来的，值得好好收下。如果想趁热再往前走一小步，可以做两件很轻的事：一是在[CODE:L1]上加一行注释，写下n的取值范围以及为什么累加器用long long，把这份“有意为之”记录下来；二是给[TEST]补上n=0（期望0）和n=1（期望1）两个边界用例。做完之后，你正好可以顺着[PROFILE]里想学的方向，看看这个循环为什么是O(n)时间、O(1)额外空间——你已经具备了理解它的基础，慢慢来就好。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "复杂度分析入门：从循环求和 O(n) 到等差数列公式 O(1)（本次代码审查为 [REVIEW:NO_CONFIRMED_ISSUES]，以下内容为进阶学习而非缺陷修复）[REVIEW][HISTORY][PROFILE][GRAPH]",
+                "duration": "1 天（约 1.5 小时）",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "（可选加固，非缺陷修复）累加器类型与边界用例：long long 与 int 的取舍、n = 0 与 n = 1 的验证思路 [REVIEW][CODE:L1][TEST]",
+                "duration": "半天（约 1 小时）",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "把复杂度思维迁移到递归与容器选择：一次遍历 O(n) 的时间与空间代价权衡 [GRAPH][HISTORY][DIALOGUE]",
+                "duration": "2 天（约 3 小时）",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/",
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc1",
+                "title": "两数之和",
+                "difficulty": "入门",
+                "purpose": "先用双重循环写出 O(n²) 解法，再用哈希表优化到 O(n)，亲手体会同题两种复杂度差异，巩固从循环到复杂度分析的迁移能力 [GRAPH][HISTORY]",
+                "url": "https://leetcode.cn/problems/two-sum"
+              },
+              {
+                "id": "lc509",
+                "title": "斐波那契数",
+                "difficulty": "入门",
+                "purpose": "对比朴素递归的时间开销与记忆化/迭代写法，理解 O(n) 与指数级增长的区别，认识“少算一次”对复杂度的意义 [GRAPH]",
+                "url": "https://leetcode.cn/problems/fibonacci-number"
+              },
+              {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "用一次线性扫描配合栈完成匹配，练习同时说明时间复杂度 O(n) 与额外空间 O(n)，把复杂度分析写成习惯 [GRAPH][DIALOGUE]",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "off-by-one",
+      "name": "数组越界与 off-by-one",
+      "category": "boundary",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "越界",
+          "<",
+          "半开区间"
+        ],
+        "acceptableEmotions": [
+          "迷茫",
+          "焦虑"
+        ],
+        "navigationTopics": [
+          "数组边界",
+          "半开区间"
+        ],
+        "seriousIssueExpected": true
+      },
+      "codeReview": {
+        "durationMs": 11422,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 4102,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 9184,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 9184,
+      "componentDurationMs": 24708,
+      "endToEndDurationMs": 20607,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] The [REVIEW:CONFIRMED_ISSUES] review confirms an off-by-one loop in [CODE:L1]: the condition uses i <= a.size(), and [SYM:CPP_ARRAY_OUT_OF_BOUNDS@L1] reports that this accesses a[a.size()]. [TEST] shows 2/6 passed and 4/6 failed, but it does not reveal hidden inputs or exact failure causes; the symbolic finding independently confirms the out-of-bounds defect.",
+          "causalAnalysis": "In [CODE:L1], i ranges from 0 through a.size() inclusive because the loop condition is i <= a.size(). For a vector of size N, valid indices are 0..N-1, so the final iteration evaluates a[N]. [SYM:CPP_ARRAY_OUT_OF_BOUNDS@L1] confirms this exact access at line 1. Because std::vector::operator[] does not bounds-check, this is undefined behavior: the extra read may add garbage, crash, or otherwise corrupt the sum. The [TEST] counts are consistent with a correctness defect, but they do not identify hidden inputs or prove that every failure comes from this one line. No caller, input limit, or compiler-flag assumptions are needed to see the defect. The intended logic in [CODE:L1] is a single O(n) pass; the off-by-one adds one invalid read rather than changing the asymptotic cost. Optional hardening: the accumulator int may overflow for large sums, but that is not confirmed by [SYM:CPP_ARRAY_OUT_OF_BOUNDS@L1] and should be treated separately.",
+          "suggestions": [
+            "Change the loop bound in [CODE:L1] from i <= a.size() to i < a.size(), so the last valid index processed is a.size() - 1; this directly prevents the [SYM:CPP_ARRAY_OUT_OF_BOUNDS@L1] access a[a.size()].",
+            "Replace the index loop in [CODE:L1] with a range-based for loop, e.g. for (int x : a) s += x;, or std::accumulate(a.begin(), a.end(), 0); both avoid the off-by-one [SYM:CPP_ARRAY_OUT_OF_BOUNDS@L1] by construction.",
+            "Add or keep a regression test that calls sum with an empty vector and a one-element vector; run it and confirm [TEST] passes after fixing [CODE:L1], because the current code can access a[a.size()] on every non-crashing execution."
+          ],
+          "confidence": 0.97
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "迷茫",
+            "intensity": "弱",
+            "reason": "学生在 [DIALOGUE] 中明确说出“为什么最后一次循环会崩溃？我有点困惑”，这是直接表达出的困惑，是本次判断的主要依据；[REVIEW] 显示循环条件写成 i <= a.size() 导致越界访问 a[a.size()]（2/6 通过），只说明当前遇到的是一个具体且原因清晰的知识点，不能单凭代码错误推断学生有挫败或焦虑情绪；[PROFILE] 提到循环条件常写错、对半开区间不熟悉，说明这是反复出现的熟悉难点，因此困惑属于暂时性的理解卡点，而非能力问题。",
+            "supportive_guidance": "能问出“为什么最后一次会崩”，说明你已经盯到了真正出问题的那一行，这本身就是很好的排查直觉。原因很简单：下标是从 0 开始数的，大小为 3 的数组只有 a[0]、a[1]、a[2]，可你写的是 i <= a.size()，于是 i 会走到 3，去读一个不存在的 a[3]，程序就崩在最后一次循环上。现在花一分钟做个小动作：把循环条件改成 i < a.size()，再拿一个只有 1 个元素的数组跑一遍，看看结果对不对；跑通之后你就把“左闭右开”这个点真正握在手里了。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "数组/vector 索引的半开区间语义 [0, n) 掌握不牢，循环终止条件写成 i <= a.size() 导致 off-by-one 越界访问 [REVIEW][CODE:L1][SYM:CPP_ARRAY_OUT_OF_BOUNDS@L1][GRAPH]",
+              "循环边界与边界用例（空容器、单元素容器）的自我验证意识不足，缺少回归测试习惯，导致 [TEST] 2/6 通过而未被提前发现 [REVIEW][TEST][PROFILE][HISTORY]",
+              "对 std::vector::operator[] 不做边界检查、越界即未定义行为的安全性认识不足，未意识到该读操作可能读入垃圾值、崩溃或破坏求和结果 [SYM:CPP_ARRAY_OUT_OF_BOUNDS@L1][CODE:L1]"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "半开区间 [0, n) 与循环边界：把 i <= a.size() 改成 i < a.size() [REVIEW][CODE:L1][GRAPH][HISTORY]",
+                "duration": "25 分钟",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "越界访问与未定义行为：operator[] 与 at() 的差别，以及用范围 for / std::accumulate 从构造上避免 off-by-one [REVIEW][SYM:CPP_ARRAY_OUT_OF_BOUNDS@L1][CODE:L1]",
+                "duration": "20 分钟",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "边界回归测试与循环不变量：为 sum 补充空 vector、单元素 vector 用例并确认 [TEST] 全部通过，用不变量描述每轮迭代后的状态 [REVIEW][TEST][GRAPH][DIALOGUE]",
+                "duration": "25 分钟",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc1",
+                "title": "两数之和",
+                "difficulty": "入门",
+                "purpose": "在双重下标循环中刻意练习 [0, n) 半开区间写法（内层从 i+1 开始、上界用 < size()），并用空数组与单元素数组自查边界，避免重现 i <= a.size() 的越界 [REVIEW][CODE:L1][TEST][GRAPH]",
+                "url": "https://leetcode.cn/problems/two-sum"
+              },
+              {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "用单层循环遍历字符串，强化下标上界与空串/单字符等边界用例的处理习惯，巩固循环不变量思维 [SYM:CPP_ARRAY_OUT_OF_BOUNDS@L1][HISTORY][PROFILE]",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+              },
+              {
+                "id": "lc705",
+                "title": "设计哈希集合",
+                "difficulty": "初级",
+                "purpose": "在取模映射下标与增删查操作中持续校验下标范围，把“先确认合法区间再访问”变成稳定习惯 [GRAPH][HISTORY][DIALOGUE]",
+                "url": "https://leetcode.cn/problems/design-hashset"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "division-zero",
+      "name": "缺少除零保护",
+      "category": "runtime",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "除零",
+          "count",
+          "边界"
+        ],
+        "acceptableEmotions": [
+          "焦虑",
+          "挫败"
+        ],
+        "navigationTopics": [
+          "边界测试",
+          "防御式编程"
+        ],
+        "seriousIssueExpected": true
+      },
+      "codeReview": {
+        "durationMs": 10578,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 2832,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 10638,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 10638,
+      "componentDurationMs": 24048,
+      "endToEndDurationMs": 21216,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] Confirmed issue: [SYM:CPP_DIVISION_BY_ZERO@L1] and [REVIEW:CONFIRMED_ISSUES] flag that [CODE:L1] divides by count without handling count == 0; [TEST] reports 4 passed and 1 failed but does not reveal hidden inputs or exact failure causes.",
+          "causalAnalysis": "At [CODE:L1], the expression static_cast<double>(total) / count uses count as the denominator. [SYM:CPP_DIVISION_BY_ZERO@L1] marks that count can be zero, so this path can produce a non-finite or otherwise invalid ratio when count is zero. That is a logic and robustness defect in the visible function, not merely a style issue. The [TEST] summary of 4 passed and 1 failed is consistent with a failure, but [TEST] alone cannot identify hidden inputs or prove the exact cause; the high-priority symbolic evidence is [SYM:CPP_DIVISION_BY_ZERO@L1], and [REVIEW:CONFIRMED_ISSUES] aligns with this confirmed zero-denominator issue.",
+          "suggestions": [
+            "In [CODE:L1], add an explicit zero guard before the division, such as if (count == 0) return 0.0; or throw std::invalid_argument(...); this directly remediates [SYM:CPP_DIVISION_BY_ZERO@L1].",
+            "Add a targeted test for the zero-denominator contract, e.g., call ratio(10, 0) and assert the chosen defined behavior; [TEST] currently reports only 4 passed and 1 failed, so use [SYM:CPP_DIVISION_BY_ZERO@L1] as the concrete condition to verify."
+          ],
+          "confidence": 0.92
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "焦虑",
+            "intensity": "中",
+            "reason": "学生在 [DIALOGUE] 中明确说“担心找不到原因”，这是直接表达的情绪，优先采信；[REVIEW] 显示 4 通过 1 失败，并已定位到 [CODE:L1] 的除零缺陷（[SYM:CPP_DIVISION_BY_ZERO@L1]），说明问题范围很小且原因已知，而不是“无从下手”；[PROFILE] 提到基础计算掌握较好、只是容易遗漏异常输入，与这个缺陷正好吻合。综合看，压力来自对未知失败的担心，而非能力不足，情绪为中等强度焦虑。",
+            "supportive_guidance": "只剩一个用例没过，说明你已经把大部分逻辑走通了，这份进度是实打实的。你担心的“找不到原因”，其实现在就有了一条明确线索：在 [CODE:L1] 那行除法前，如果 count 是 0 会出问题，这很可能就是那个隐藏用例。现在就做一个小动作——在除法前加一行 if (count == 0) return 0.0;（或按约定抛异常），然后补一个 ratio(10, 0) 的测试跑一遍。一次只验证这一件事，结果出来我们再一起看下一步。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "未对除数为零的边界情况做防御处理，函数在 count == 0 时仍执行 static_cast<double>(total) / count [SYM:CPP_DIVISION_BY_ZERO@L1][CODE:L1][REVIEW:CONFIRMED_ISSUES]",
+              "缺少针对零输入/边界契约的显式测试，本地仅有 4 通过 1 失败的结论，无法覆盖 count == 0 这一关键条件 [TEST][SYM:CPP_DIVISION_BY_ZERO@L1]",
+              "面对隐藏用例失败时，缺少从具体条件（如分母为零）反推定位的方法，容易停留在“找不到原因”的状态 [TEST][DIALOGUE]"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "除零语义与防御式编程：为每个除法/取模运算补上零值守卫 [SYM:CPP_DIVISION_BY_ZERO@L1][CODE:L1][GRAPH]",
+                "duration": "1 天（约 1.5 小时）",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "边界测试设计：把“前置条件→除数非零→边界测试”这条知识链落成可执行用例 [GRAPH][TEST]",
+                "duration": "1 天（约 1.5 小时）",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "隐藏用例定位：从符号证据与失败条件出发，先复现最小反例再修复 [DIALOGUE][TEST][SYM:CPP_DIVISION_BY_ZERO@L1]",
+                "duration": "1 天（约 1 小时）",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "练习空输入、单字符输入和结构不匹配等边界情况，养成先判断边界再处理主体的习惯，弥补遗漏异常输入的短板 [PROFILE][HISTORY][TEST]",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+              },
+              {
+                "id": "lc150",
+                "title": "逆波兰表达式求值",
+                "difficulty": "中级",
+                "purpose": "在运算前显式检查栈是否为空、除数是否为零，把“前置条件→除数非零”落实到代码守卫中，直接巩固本次除零缺陷的修复思路 [SYM:CPP_DIVISION_BY_ZERO@L1][GRAPH][CODE:L1]",
+                "url": "https://leetcode.cn/problems/evaluate-reverse-polish-notation"
+              },
+              {
+                "id": "lc227",
+                "title": "基本计算器 II",
+                "difficulty": "中级",
+                "purpose": "在处理乘除优先级时练习对运算符与操作数的合法性校验，为每个除法步骤补上零值与非法输入的防御分支，提升定位隐藏用例失败的能力 [TEST][DIALOGUE][REVIEW]",
+                "url": "https://leetcode.cn/problems/basic-calculator-ii"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "uninitialized-pointer",
+      "name": "未初始化指针解引用",
+      "category": "memory",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "未初始化",
+          "指针",
+          "ready"
+        ],
+        "acceptableEmotions": [
+          "焦虑",
+          "迷茫"
+        ],
+        "navigationTopics": [
+          "指针初始化",
+          "控制流分析"
+        ],
+        "seriousIssueExpected": true
+      },
+      "codeReview": {
+        "durationMs": 8149,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 6732,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 14717,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 14717,
+      "componentDurationMs": 29598,
+      "endToEndDurationMs": 22867,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] Confirmed critical defect: [SYM:CPP_UNINITIALIZED_DEREFERENCE@L1] reports that p may be uninitialized, and [CODE:L1] shows `int* p;` is assigned only when `ready` is true, while `*p` is returned unconditionally.",
+          "causalAnalysis": "At [CODE:L1], `p` is declared without initialization. The assignment `p = &value` occurs only inside the `if (ready)` branch. If `ready` is false, execution skips that assignment and reaches `return *p`, dereferencing an indeterminate pointer. This is undefined behavior, and the symbolic finding [SYM:CPP_UNINITIALIZED_DEREFERENCE@L1] confirms the uninitialized-dereference risk. [TEST] reports 2 passed and 2 failed, but those counts alone do not reveal hidden inputs or exact failure causes. No loops or recursion are visible in [CODE:L1], so no complexity issue follows directly from this snippet.",
+          "suggestions": [
+            "Fix the control flow so `p` is never dereferenced unless initialized: `int* p = nullptr; if (!ready) { return 0; } static int value = 7; p = &value; return *p;` This directly addresses [SYM:CPP_UNINITIALIZED_DEREFERENCE@L1].",
+            "Optional hardening: remove the pointer entirely for this small function: `if (!ready) return 0; static int value = 7; return value;` This avoids the uninitialized-pointer path visible in [CODE:L1] without treating the pointer style itself as a confirmed bug.",
+            "After making a change, rerun the test suite and confirm [TEST] no longer shows 2 failures; use [TEST] only as pass/fail evidence and do not infer hidden inputs from those counts."
+          ],
+          "confidence": 0.95
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "焦虑",
+            "intensity": "中",
+            "reason": "[DIALOGUE] 学生明确说“有时能运行有时崩溃，这让我很不安”，这是焦虑的直接证据；[REVIEW] 确认 p 未初始化且 ready 为 false 时会解引用未初始化指针，这正好解释了间歇性崩溃；[PROFILE] 提到分支路径分析较弱，可能让这种偶发问题更难看懂，但代码问题本身不单独证明情绪。",
+            "supportive_guidance": "这种时好时坏、突然崩溃的情况确实很消耗安全感，你会不安很正常。先不用把整个分支逻辑都理顺，只做一个小动作：在声明处写 `int* p = nullptr;`，并在 `return *p` 前加一句 `if (!p) return 0;`，让未初始化的路径直接安全返回。改完再跑一次测试，看看崩溃是否减少。你已经把问题缩小到可以修改的一行了，这就是重新拿回掌控感的开始。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "未初始化指针解引用：`int* p;` 只在 `ready` 为真时被赋值，而 `return *p` 在所有路径上都会执行，一旦 `ready` 为假即解引用不确定指针，属未定义行为 [SYM:CPP_UNINITIALIZED_DEREFERENCE@L1][CODE:L1][REVIEW]",
+              "分支路径上的确定赋值分析不足：只考虑了 `if (ready)` 分支内的赋值，未检查条件为假时 `p` 是否仍处于可用状态 [CODE:L1][HISTORY][PROFILE][GRAPH]",
+              "缺少返回前的前置条件校验（卫语句/提前返回），使未初始化路径直接到达解引用语句 [REVIEW][CODE:L1][GRAPH]"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "控制流与确定赋值：理解变量在每条分支路径上都应被确定赋值 [GRAPH][CODE:L1][REVIEW]",
+                "duration": "1 天（约 2 小时）",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "未初始化指针与空指针防护：用卫语句/提前返回消除未初始化解引用路径 [SYM:CPP_UNINITIALIZED_DEREFERENCE@L1][CODE:L1][HISTORY]",
+                "duration": "1 天（约 2 小时）",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "修复后的验证闭环：重跑测试确认失败用例转为通过，不凭运行结果猜测隐藏输入 [TEST][REVIEW][DIALOGUE]",
+                "duration": "半天（约 1 小时）",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc876",
+                "title": "链表的中间结点",
+                "difficulty": "入门",
+                "purpose": "在指针遍历中练习指针初始化与循环终止条件，避免出现未初始化/悬空指针的取值路径 [HISTORY][PROFILE][SYM:CPP_UNINITIALIZED_DEREFERENCE@L1]",
+                "url": "https://leetcode.cn/problems/middle-of-the-linked-list"
+              },
+              {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "练习在空链表、单节点等分支路径上分别判断，确保每个分支都先判空再解引用指针 [CODE:L1][REVIEW][GRAPH]",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+              },
+              {
+                "id": "lc21",
+                "title": "合并两个有序链表",
+                "difficulty": "初级",
+                "purpose": "在多分支场景中强化“先检查指针有效性再访问”的习惯，巩固分支路径上的确定赋值思维 [HISTORY][PROFILE][DIALOGUE]",
+                "url": "https://leetcode.cn/problems/merge-two-sorted-lists"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "quadratic-search",
+      "name": "可优化的双重循环",
+      "category": "performance",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "O(n^2)",
+          "哈希",
+          "复杂度"
+        ],
+        "acceptableEmotions": [
+          "平静",
+          "自信"
+        ],
+        "navigationTopics": [
+          "哈希表",
+          "复杂度"
+        ],
+        "seriousIssueExpected": false
+      },
+      "codeReview": {
+        "durationMs": 4580,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 5095,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 13900,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 13901,
+      "componentDurationMs": 23575,
+      "endToEndDurationMs": 18481,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] No confirmed correctness defect is shown by [TEST] (6 passed, 0 failed); the symbolic finding [SYM:CPP_NESTED_LOOP_COMPLEXITY@L1] flags the nested scan in [CODE:L1] as a Medium algorithmic-complexity risk.",
+          "causalAnalysis": "The implementation in [CODE:L1] uses two nested loops: for each i, it scans all j > i and compares a[i] == a[j]. This directly causes up to n(n-1)/2 equality checks, matching [SYM:CPP_NESTED_LOOP_COMPLEXITY@L1] as an O(n^2) time pattern. [TEST] confirms only that 6 of 6 tests passed and does not reveal hidden input sizes or performance behavior, so this is a complexity risk rather than a proven correctness bug.",
+          "suggestions": [
+            "Replace the nested pair scan in [CODE:L1] with a single pass using `unordered_set<int> seen; seen.reserve(a.size());`, returning true when `seen.count(x)` is nonzero and otherwise inserting x; this changes the expected time to O(n) for average-case hash operations while preserving the boolean result, addressing [SYM:CPP_NESTED_LOOP_COMPLEXITY@L1].",
+            "If preserving the original comparison semantics is preferred and sorting is acceptable, copy the vector from [CODE:L1], sort the copy, then use `adjacent_find` to detect equal neighbors; this reduces the pair-scan cost from O(n^2) to O(n log n) as an alternative to [SYM:CPP_NESTED_LOOP_COMPLEXITY@L1]."
+          ],
+          "confidence": 0.87
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "平静",
+            "intensity": "弱",
+            "reason": "综合来看，[DIALOGUE] 中学生自己说“答案通过了，但大数据时很慢，我想优化”，语气平稳且带着主动改进的意愿，没有表达出挫败、焦虑或迷茫；[REVIEW] 显示 6 个测试全部通过、没有确认的正确性缺陷，只标记出一处 [SYM:CPP_NESTED_LOOP_COMPLEXITY@L1] 的 O(n^2) 复杂度提示，因此这次反馈并不是“做错了”，而是“还能更好”；[PROFILE] 提到功能实现能力良好、但尚未系统学习哈希表与复杂度，这也解释了为什么“慢”会成为一个需要新知识的点，而不是一个打击。整体情绪是平静中带着一点进取心，强度较弱。",
+            "supportive_guidance": "先给自己一个小小的肯定：测试全过、逻辑正确，你还主动想到“大数据会慢”——这已经是很好的工程直觉了。接下来只做一件小事就好：把现在的程序用一个较大的输入跑一次（比如一万个数），亲眼看看耗时，再把 [REVIEW] 建议的排序 + adjacent_find 改法试一遍（这条路只用你已熟悉的排序），对比一下两次的时间。你不需要今天就弄懂哈希表，先亲手感受“数据变大之后发生了什么”，就已经在往前走一大步了。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "嵌套循环扫描导致的 O(n²) 时间复杂性问题：对每个 i 都扫描所有 j > i 做相等比较，达到 n(n-1)/2 次比较，属于中等风险的算法复杂度问题 [REVIEW] [CODE:L1] [SYM:CPP_NESTED_LOOP_COMPLEXITY@L1] [DIALOGUE]",
+              "哈希集合（unordered_set）这一「时间换空间」工具尚未掌握：不知道可以用 seen 集合把查找降到平均 O(1)，因此无法把 O(n²) 改写为 O(n) [GRAPH] [HISTORY] [PROFILE]",
+              "复杂度分析与性能预估意识薄弱：测试全部通过（6/6）却在大数据下变慢，说明缺少从代码结构推断时间开销、识别隐藏输入规模风险的习惯 [REVIEW] [TEST] [DIALOGUE]"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "时间复杂度基础与嵌套循环的 O(n²) 识别 [REVIEW] [SYM:CPP_NESTED_LOOP_COMPLEXITY@L1]",
+                "duration": "1.5 小时",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "哈希集合 std::unordered_set 的用法：insert / count / reserve 与平均 O(1) 查找 [GRAPH] [HISTORY] [PROFILE]",
+                "duration": "2 小时",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "把重复检测从双重循环改写为单次遍历 + 哈希集合（时间换空间，O(n²) → O(n)），并对比排序 + adjacent_find 的 O(n log n) 方案 [REVIEW] [CODE:L1] [DIALOGUE] [GRAPH]",
+                "duration": "2 小时",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc1",
+                "title": "两数之和",
+                "difficulty": "入门",
+                "purpose": "用哈希表在单次遍历中完成「查找是否存在」的判断，把原本的双重循环降为一次遍历，建立时间换空间与 O(n) 优化的第一直觉 [GRAPH] [HISTORY] [PROFILE]",
+                "url": "https://leetcode.cn/problems/two-sum"
+              },
+              {
+                "id": "lc705",
+                "title": "设计哈希集合",
+                "difficulty": "初级",
+                "purpose": "亲手实现 add / contains / remove，理解哈希集合的插入与查找语义，为直接替换 [CODE:L1] 中嵌套扫描所需的 seen.count(x) / seen.insert(x) 打基础 [GRAPH] [REVIEW] [SYM:CPP_NESTED_LOOP_COMPLEXITY@L1]",
+                "url": "https://leetcode.cn/problems/design-hashset"
+              },
+              {
+                "id": "lc141",
+                "title": "环形链表",
+                "difficulty": "初级",
+                "purpose": "用哈希集合记录「已经见过的结点」来判定重复访问，迁移 [CODE:L1] 中「扫描已出现元素判断是否重复」的思路，并体会复杂度从 O(n²) 降到 O(n) 的收益 [REVIEW] [CODE:L1] [DIALOGUE] [PROFILE]",
+                "url": "https://leetcode.cn/problems/linked-list-cycle"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "missing-base-case",
+      "name": "递归缺少有效终止条件",
+      "category": "recursion",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "递归",
+          "终止",
+          "基准"
+        ],
+        "acceptableEmotions": [
+          "迷茫",
+          "挫败"
+        ],
+        "navigationTopics": [
+          "递归终止条件",
+          "调用栈"
+        ],
+        "seriousIssueExpected": true
+      },
+      "codeReview": {
+        "durationMs": 13837,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 3864,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 5583,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 5584,
+      "componentDurationMs": 23284,
+      "endToEndDurationMs": 19421,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] The symbolic finding [SYM:CPP_RECURSION_NO_BASE_CASE@L1] marks a Critical missing recursion termination condition at line 1, and the visible code [CODE:L1] matches this: the factorial function only contains a recursive return with no base-case return. The supplied test summary [TEST] reports 0 passed / 4 failed, but it only supports those counts; the deterministic symbolic evidence is the high-priority confirmation of the defect.",
+          "causalAnalysis": "In [CODE:L1], `return n * factorial(n - 1);` always performs another recursive call before any value can be returned. Because there is no condition that returns a constant for a terminal input, the call chain cannot stop and will keep creating stack frames until a stack overflow or equivalent runtime failure occurs. [SYM:CPP_RECURSION_NO_BASE_CASE@L1] independently confirms the same cause: the recursive function lacks a base case. The [TEST] result of 4/4 failed is consistent with this defect, but [TEST] alone does not reveal hidden inputs or exact failure messages.",
+          "suggestions": [
+            "At [CODE:L1], add an explicit base case before the recursive call, e.g. `if (n <= 1) return 1;` and then `return n * factorial(n - 1);`; this directly resolves [SYM:CPP_RECURSION_NO_BASE_CASE@L1] by giving the recursion a terminating branch.",
+            "After editing [CODE:L1], add or run small executable tests for `factorial(0)`, `factorial(1)`, and `factorial(5)`, then re-run the existing [TEST] suite to confirm the 4 failures are addressed; keep the test assertions focused on returned values and termination.",
+            "Optional hardening: once the base case at [CODE:L1] is working, consider whether `int` is wide enough for the largest intended `n`, because factorial results grow quickly and may overflow; this is separate from the confirmed missing-base-case defect [SYM:CPP_RECURSION_NO_BASE_CASE@L1]."
+          ],
+          "confidence": 1
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "迷茫",
+            "intensity": "中",
+            "reason": "你在对话中明确问出「我以为公式是对的，为什么一直栈溢出？」[DIALOGUE]，这说明真正的疑惑点在于：公式看起来没错，结果却和预期不一样，属于理解上的卡壳而非能力问题。代码审查显示 [CODE:L1] 处的 factorial 只有递归调用 `return n * factorial(n - 1);`，缺少终止条件 [REVIEW]，这正是栈溢出的直接原因；结合画像中「刚接触递归，容易只关注递推关系」[PROFILE]，可以理解为你把注意力放在了 n 与 n-1 的递推关系上，而终止分支还没有进入视野——这是一个非常典型的入门阶段现象，不代表你写得差。",
+            "supportive_guidance": "先说一句：能写出正确的递推关系，本身已经抓住了递归的一半，剩下的那一半只是还没被点到。递归像走楼梯，除了「下一级怎么走」，还需要一个「到哪儿就停下」的台阶。现在就可以做一件小事：在 [CODE:L1] 的递归调用之前加一行 `if (n <= 1) return 1;`，然后只跑三个最小验证——factorial(0)、factorial(1)、factorial(5)，看它们是否分别返回 1、1、120。跑通这三个数，你就亲手验证了「终止条件」的作用，栈溢出的疑问也会随之落地。慢慢来，这一步值得你亲自试一次。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "递归基准情形（base case）缺失：只写出了递推式 `return n * factorial(n - 1);`，没有为终止输入返回常量，导致递归无法收敛 [REVIEW][SYM:CPP_RECURSION_NO_BASE_CASE@L1][CODE:L1]",
+              "对递归终止与调用栈的关系理解不足：不清楚每一层调用未返回就会持续压入栈帧，最终栈溢出，因此难以解释“公式对却栈溢出”的现象 [GRAPH][DIALOGUE]",
+              "递归规模递减的设计与自检意识薄弱：习惯只关注递推关系本身，未同步检查输入规模是否在每一步向基准情形收敛 [PROFILE][HISTORY]"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "递归三要素：基准情形、递归关系、规模递减 [REVIEW][GRAPH]",
+                "duration": "30 分钟",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/",
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "调用栈与递归终止：为什么缺少基准情形会栈溢出 [GRAPH][DIALOGUE]",
+                "duration": "30 分钟",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "用可执行测试验证递归的正确性与终止性（factorial(0)、factorial(1)、factorial(5)）[REVIEW][TEST]",
+                "duration": "25 分钟",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc509",
+                "title": "斐波那契数",
+                "difficulty": "入门",
+                "purpose": "在结构清晰的递推式中亲手补全基准情形 F(0)=0、F(1)=1，把“先写终止分支、再写递推”变成习惯 [REVIEW][SYM:CPP_RECURSION_NO_BASE_CASE@L1]",
+                "url": "https://leetcode.cn/problems/fibonacci-number"
+              },
+              {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "练习用空节点作为天然基准情形，感受“规模递减 + 终止分支”如何共同保证递归收敛 [GRAPH][PROFILE]",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+              },
+              {
+                "id": "lc226",
+                "title": "翻转二叉树",
+                "difficulty": "入门",
+                "purpose": "在更复杂的递归结构上验证终止条件的放置位置，并养成写完递归后手工跟踪调用栈、确认能逐层返回的习惯 [DIALOGUE][HISTORY]",
+                "url": "https://leetcode.cn/problems/invert-binary-tree"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "integer-overflow",
+      "name": "整数乘法溢出",
+      "category": "numeric",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "溢出",
+          "long long",
+          "转换"
+        ],
+        "acceptableEmotions": [
+          "迷茫",
+          "挫败"
+        ],
+        "navigationTopics": [
+          "整数提升",
+          "类型转换"
+        ],
+        "seriousIssueExpected": true
+      },
+      "codeReview": {
+        "durationMs": 12125,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 6133,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 12988,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 12988,
+      "componentDurationMs": 31246,
+      "endToEndDurationMs": 25114,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] Review status [REVIEW:CONFIRMED_ISSUES]: [SYM:CPP_INTEGER_OVERFLOW@L1] is high-priority evidence that the expression at [CODE:L1] multiplies two int values before conversion to long long, so the return type does not prevent an intermediate overflow.",
+          "causalAnalysis": "At [CODE:L1], width and height are both int, so C++ evaluates width * height using int arithmetic; the result is converted to long long only for the return. If the mathematical product is outside the int range, that multiplication has signed integer overflow, which is undefined behavior and may produce a wrong area. The [TEST] summary says 4 passed and 1 failed, but it gives only pass/fail counts and does not reveal hidden inputs or exact failure causes; the confirmed defect is the intermediate overflow identified by [SYM:CPP_INTEGER_OVERFLOW@L1]. This is an arithmetic correctness issue rather than a complexity issue, since [CODE:L1] contains only a single return expression.",
+          "suggestions": [
+            "Fix the confirmed defect at [CODE:L1] by casting before multiplication: `return static_cast<long long>(width) * height;` or `return 1LL * width * height;`. This forces 64-bit arithmetic and addresses [SYM:CPP_INTEGER_OVERFLOW@L1].",
+            "Add a regression test that exercises the 64-bit path, e.g. `EXPECT_EQ(area(65536, 65536), 4294967296LL);` for [CODE:L1]; this targets the overflow scenario flagged by [SYM:CPP_INTEGER_OVERFLOW@L1] without relying on hidden test inputs from [TEST].",
+            "Optional hardening: if the intended domain can include negative dimensions or products beyond `long long`, document or validate that contract near [CODE:L1]; this is not confirmed as a current defect by [SYM:CPP_INTEGER_OVERFLOW@L1]."
+          ],
+          "confidence": 0.97
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "迷茫",
+            "intensity": "弱",
+            "reason": "[DIALOGUE] 中你主动问“返回值已经是 long long 了，为什么还溢出”，显示出对表达式求值顺序和类型提升的困惑；[PROFILE] 显示类型基础尚可，但还不熟悉表达式提升规则；[REVIEW] 确认 L1 的 width * height 会先按 int 计算，再转换为 long long，因此中间结果可能溢出。代码问题本身只说明这里有概念卡点，不能单独证明负面情绪。",
+            "supportive_guidance": "你主动问出这个问题，说明已经在认真追踪原因了，这很好。这个疑惑很典型：乘法会先按 int 算完，再转成 long long。现在可以做一个小动作——把 L1 改成 return static_cast<long long>(width) * height;，然后单独跑一下那个失败用例，亲眼看到结果正确，你对“先转换再运算”的感觉就会清晰很多。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "表达式求值类型与整数提升规则不熟：`width * height` 中两个操作数都是 int，乘法在转换前就按 int 求值，返回类型 long long 无法阻止中间结果溢出 [REVIEW][SYM:CPP_INTEGER_OVERFLOW@L1][CODE:L1][GRAPH]",
+              "缺少在乘除运算前显式提升到 64 位的防护习惯（static_cast<long long> 或 1LL），在大数场景下产生有符号整数溢出（未定义行为），可能得到错误的面积结果 [REVIEW][SYM:CPP_INTEGER_OVERFLOW@L1][CODE:L1][DIALOGUE][HISTORY]"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "表达式求值类型与整数提升：为什么返回值已经是 long long 仍会溢出 [GRAPH][DIALOGUE][REVIEW]",
+                "duration": "30 分钟",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "显式类型转换：在乘法前用 static_cast<long long>(width) 或 1LL * width，修复 [CODE:L1] 的中间结果溢出 [SYM:CPP_INTEGER_OVERFLOW@L1][CODE:L1][REVIEW]",
+                "duration": "30 分钟",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "边界值与回归验证：为 64 位路径补写断言式用例（如 area(65536, 65536) == 4294967296LL），建立“先判断取值范围再写算术”的习惯 [TEST][SYM:CPP_INTEGER_OVERFLOW@L1][REVIEW]",
+                "duration": "25 分钟",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc509",
+                "title": "斐波那契数",
+                "difficulty": "入门",
+                "purpose": "在整数递推中练习估算结果范围，体会“运算过程中类型是否够用”，巩固对表达式求值类型的敏感度 [HISTORY][PROFILE][GRAPH]",
+                "url": "https://leetcode.cn/problems/fibonacci-number"
+              },
+              {
+                "id": "lc150",
+                "title": "逆波兰表达式求值",
+                "difficulty": "中级",
+                "purpose": "训练表达式求值时的中间结果类型控制与运算顺序判断，把“先决定中间结果类型，再参与运算”落到实现里 [GRAPH][SYM:CPP_INTEGER_OVERFLOW@L1]",
+                "url": "https://leetcode.cn/problems/evaluate-reverse-polish-notation"
+              },
+              {
+                "id": "lc227",
+                "title": "基本计算器 II",
+                "difficulty": "中级",
+                "purpose": "训练带优先级的表达式求值与边界输入处理，避免乘加过程中的中间量超出所选类型可表示范围 [GRAPH][REVIEW]",
+                "url": "https://leetcode.cn/problems/basic-calculator-ii"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "safe-raii",
+      "name": "RAII 资源管理正确实现",
+      "category": "correct",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "RAII",
+          "vector",
+          "正确"
+        ],
+        "acceptableEmotions": [
+          "自信",
+          "成就感",
+          "平静"
+        ],
+        "navigationTopics": [
+          "RAII",
+          "异常安全"
+        ],
+        "seriousIssueExpected": false
+      },
+      "codeReview": {
+        "durationMs": 7350,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 2622,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 6179,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 6180,
+      "componentDurationMs": 16151,
+      "endToEndDurationMs": 13530,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:NO_CONFIRMED_ISSUES] Based on [TEST] 4/4 passed and the absence of symbolic findings, [REVIEW:NO_CONFIRMED_ISSUES] indicates there is no confirmed defect in [CODE:L1].",
+          "causalAnalysis": "There is no confirmed defect to causally explain. [CODE:L1] directly constructs and returns a std::vector<int> with n copies of 42. [TEST] reports only 4 passed and 0 failed, and no symbolic findings were supplied, so no failure chain can be confirmed; [REVIEW:NO_CONFIRMED_ISSUES] is consistent with that evidence. Because [CODE:L1] constructs a container of n elements, its visible cost is O(n) initialization time and O(n) memory; no loops or recursion are present.",
+          "suggestions": [
+            "Keep the current implementation at [CODE:L1] since [TEST] shows 4/4 passing and [REVIEW:NO_CONFIRMED_ISSUES] confirms no defect; optionally add a boundary test for n equal to 0 to verify it returns an empty vector.",
+            "If the repeated value 42 may need to change, make it a parameter in [CODE:L1], for example std::vector<int>(n, value), and add a test covering a non-42 value; this is optional hardening, not a current bug."
+          ],
+          "confidence": 0.95
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "成就感",
+            "intensity": "中",
+            "reason": "依据 [DIALOGUE]，学生明确说“我用 vector 重写后测试通过了，感觉更清楚了”，这是直接表达的正向体验；[REVIEW] 显示 4/4 测试通过且 NO_CONFIRMED_ISSUES，没有确认缺陷，客观上印证了这次重写的稳定结果；[PROFILE] 提到学生正从裸指针逐步迁移到标准容器，说明这次改动延续了已有的学习路径，因此判断为中等强度的成就感，而非挫败或焦虑。",
+            "supportive_guidance": "这次重写能跑通、而且你自己感觉“更清楚了”，是很实在的一步，值得先记下来。如果现在还有五分钟，不妨给 [CODE:L1] 补一个 n 等于 0 的边界小测试，看它是否返回空 vector——不用改代码，只是让这份“清楚”更稳一点。做完就可以收工了。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "标准容器与 RAII 资源语义巩固（非缺陷修复，属进阶巩固；依据 [REVIEW:NO_CONFIRMED_ISSUES] 无需修复现有代码）",
+                "duration": "1 小时",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "自动资源管理：为自定义类型设计 RAII 封装（承接 [HISTORY] 从裸指针迁移到标准容器的进展）",
+                "duration": "1.5 小时",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "异常安全与边界条件：容器操作的构造、拷贝、移动与异常保证（呼应 [CODE:L1] 中容器构造的代价与 [TEST] 的边界用例建议）",
+                "duration": "2 小时",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "用标准容器替代手工数组管理配对关系，巩固 [HISTORY] 从裸指针迁移到容器后的容器用法习惯。",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+              },
+              {
+                "id": "lc232",
+                "title": "用栈实现队列",
+                "difficulty": "初级",
+                "purpose": "练习用标准容器封装抽象数据类型，体会 [GRAPH] 中 RAII→标准容器→自动资源管理的设计思路。",
+                "url": "https://leetcode.cn/problems/implement-queue-using-stacks"
+              },
+              {
+                "id": "lc155",
+                "title": "最小栈",
+                "difficulty": "初级",
+                "purpose": "在类中管理多个容器的生命周期，训练 [GRAPH] 中自动资源管理与边界（空容器访问）处理能力，回应 [TEST] 对边界用例的关注。",
+                "url": "https://leetcode.cn/problems/min-stack"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "empty-input",
+      "name": "空容器访问遗漏",
+      "category": "boundary",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "空",
+          "front",
+          "边界"
+        ],
+        "acceptableEmotions": [
+          "挫败",
+          "沮丧"
+        ],
+        "navigationTopics": [
+          "容器边界",
+          "空输入测试"
+        ],
+        "seriousIssueExpected": true
+      },
+      "codeReview": {
+        "durationMs": 8826,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 3333,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 5792,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 5792,
+      "componentDurationMs": 17951,
+      "endToEndDurationMs": 14618,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] The review confirms a defect at [CODE:L1]: first() returns values.front() with no emptiness guard. Symbolic evidence [SYM:CPP_EMPTY_CONTAINER_ACCESS@L1] flags this as a high-severity empty-container access; [TEST] reports 3/4 passed and 1 failed, but does not reveal hidden inputs or the exact runtime cause.",
+          "causalAnalysis": "At [CODE:L1], values.front() is defined only when values is non-empty; for an empty vector, calling front() is undefined behavior. The symbolic rule [SYM:CPP_EMPTY_CONTAINER_ACCESS@L1] directly identifies this missing precondition. The failing count in [TEST] is compatible with that defect, but [TEST] alone cannot prove the failure input or symptom. [REVIEW:CONFIRMED_ISSUES] treats the symbolic finding as confirmed, separate from optional hardening.",
+          "suggestions": [
+            "Add an explicit empty check before the access at [CODE:L1]: if (values.empty()) throw std::invalid_argument(\"first: empty vector\"); then return values.front(); This resolves the [SYM:CPP_EMPTY_CONTAINER_ACCESS@L1] high-severity finding.",
+            "If exceptions are not desired, change the return type to std::optional<int> and return std::nullopt when values.empty(), otherwise return values.front(); this makes the empty case explicit for [SYM:CPP_EMPTY_CONTAINER_ACCESS@L1].",
+            "Add a targeted unit test for the empty-vector case, e.g. calling first({}) and asserting the chosen exception or nullopt behavior; [TEST] currently shows aggregate counts only and cannot validate this branch."
+          ],
+          "confidence": 0.95
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "挫败",
+            "intensity": "弱",
+            "reason": "你在对话中直接说出「隐藏样例失败让我有点烦躁」[DIALOGUE]，这是最直接的证据，说明当下主要是轻度挫败感。结合 [REVIEW] 来看，问题并不是你整体思路错了——[TEST] 显示 3/4 通过，说明常规路径已经跑通；审查只确认了一处空缺：first() 里 values.front() 缺少空容器保护（[SYM:CPP_EMPTY_CONTAINER_ACCESS@L1]），而这正好是隐藏输入最容易踩到的地方。[PROFILE] 也显示你的常规输入处理是正确的，只是测试设计里还没覆盖空输入。所以这更像是一个边界条件没补上，而不是「能力不行」。",
+            "supportive_guidance": "先喘口气，你烦躁的点很合理：明明大部分都过了，偏偏卡在一个看不见的样例上。好消息是，这个坑已经被精确定位了——就在 `first()` 的那一行。现在只做一件小事：在 `values.front()` 前面加一句空检查，比如 `if (values.empty()) throw std::invalid_argument(\"first: empty vector\");`，然后再补一个只测空 vector 的小用例，跑一次。不用重写整个程序，也不用一次搞定所有隐藏样例，就把这一行补上、看一眼结果，你会重新感觉到「这事在我手里」。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "容器空状态前置条件缺失：first() 直接返回 values.front()，未先判断 values.empty() [REVIEW][CODE:L1][SYM:CPP_EMPTY_CONTAINER_ACCESS@L1]",
+              "对未定义行为与前置条件契约的认知不足：空 vector 调用 front() 属未定义行为，需显式表达空值语义（抛异常或 std::optional）[CODE:L1][SYM:CPP_EMPTY_CONTAINER_ACCESS@L1][GRAPH]",
+              "边界/空输入测试设计缺失：现有测试仅覆盖常规输入，缺少空容器分支用例 [TEST][HISTORY][PROFILE][DIALOGUE]"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "容器前置条件与 empty() 校验 [REVIEW][CODE:L1][SYM:CPP_EMPTY_CONTAINER_ACCESS@L1][GRAPH]",
+                "duration": "0.5-1 小时",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "空值语义的显式表达：异常 vs std::optional [CODE:L1][GRAPH]",
+                "duration": "1-1.5 小时",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "边界与空输入测试设计 [TEST][HISTORY][PROFILE][DIALOGUE]",
+                "duration": "1 小时",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc20",
+                "title": "有效的括号",
+                "difficulty": "入门",
+                "purpose": "在栈操作中反复判断容器是否为空，训练 empty() 前置条件检查与边界意识 [CODE:L1][SYM:CPP_EMPTY_CONTAINER_ACCESS@L1][GRAPH]",
+                "url": "https://leetcode.cn/problems/valid-parentheses"
+              },
+              {
+                "id": "lc155",
+                "title": "最小栈",
+                "difficulty": "初级",
+                "purpose": "实现 pop/top/getMin 时处理空容器访问，巩固空状态守卫与接口契约设计 [CODE:L1][SYM:CPP_EMPTY_CONTAINER_ACCESS@L1][REVIEW]",
+                "url": "https://leetcode.cn/problems/min-stack"
+              },
+              {
+                "id": "lc150",
+                "title": "逆波兰表达式求值",
+                "difficulty": "中级",
+                "purpose": "对非法输入与空栈等异常路径做显式处理，练习异常/空值语义表达及分支测试设计 [CODE:L1][TEST][DIALOGUE]",
+                "url": "https://leetcode.cn/problems/evaluate-reverse-polish-notation"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "explicit-confidence",
+      "name": "显式积极情绪优先",
+      "category": "emotion-evidence",
+      "round": 1,
+      "mode": "benefit-grounding-final",
+      "variant": "current",
+      "execution": "parallel",
+      "expected": {
+        "reviewConcepts": [
+          "负数",
+          "初始化",
+          "首元素"
+        ],
+        "acceptableEmotions": [
+          "自信",
+          "平静"
+        ],
+        "navigationTopics": [
+          "极值初始化",
+          "边界测试"
+        ],
+        "seriousIssueExpected": false
+      },
+      "codeReview": {
+        "durationMs": 12705,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "emotion": {
+        "durationMs": 2515,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "navigation": {
+        "durationMs": 12617,
+        "failed": false,
+        "hasResult": true,
+        "fallback": false
+      },
+      "supportWallDurationMs": 12618,
+      "componentDurationMs": 27837,
+      "endToEndDurationMs": 25323,
+      "output": {
+        "codeReview": {
+          "reviewSummary": "[REVIEW:CONFIRMED_ISSUES] Confirmed defect at [CODE:L1]: `best` is initialized to 0, so [SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1] indicates all-negative input fails. [TEST] reports 4 passed and 1 failed, consistent with one broken case; [REVIEW:CONFIRMED_ISSUES] marks it as a confirmed issue.",
+          "causalAnalysis": "The maximum accumulator invariant is broken at initialization. In [CODE:L1], `best = 0` means the first comparison `max(0, x)` keeps 0 for every negative `x`, so the loop never stores the true maximum when all values are negative; this matches [SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1]. The [TEST] count alone does not reveal hidden inputs, but it does not contradict the symbolic finding. Algorithmic complexity is O(n) time and O(1) extra space from the single loop over the vector in [CODE:L1]. Optional hardening: decide what an empty vector should return, but that is separate from the confirmed [SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1] defect.",
+          "suggestions": [
+            "Fix the confirmed [SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1] defect by initializing `best` from the first element for non-empty input, e.g. `int best = a[0]; for (int x : a) best = max(best, x); return best;`, and add an explicit empty-vector guard if your spec permits or denies empty input; this preserves the O(n) logic in [CODE:L1].",
+            "Add a regression test for all-negative input, e.g. `maxValue({-5, -2, -9}) == -2`, then re-check the [TEST] pass/fail count before and after the [SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1] fix."
+          ],
+          "confidence": 0.96
+        },
+        "emotion": {
+          "emotion_analysis": {
+            "detected_emotion": "自信",
+            "intensity": "中",
+            "reason": "你在 [DIALOGUE] 中明确说“已经定位到全负数这个边界了，现在很有信心能修好”，这是你主动表达的情绪，优先于间接推断；[REVIEW] 也确认问题范围很小——只有 [CODE:L1] 处 `best = 0` 的初始化在 [SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1] 上失效，其余 4 个测试通过，修复方向清晰可见；[PROFILE] 提到你过去遇到隐藏测试失败时容易焦虑，但这次你已经主动找到了边界条件，这份掌控感是你自己走出来的。",
+            "supportive_guidance": "能自己定位到全负数这个边界，真的很不容易，这份信心是有依据的——问题确实只在初始化那一行。接下来只做一件事就好：把 `int best = 0;` 改成用第一个元素起步，例如 `int best = a[0]; for (int x : a) best = max(best, x);`，然后加一条 `maxValue({-5, -2, -9}) == -2` 的回归测试，再跑一次测试看通过数变化。改完那一刻，你会发现这件事的边界比想象中窄得多。慢慢来，你已经走在正确的路上了。"
+          }
+        },
+        "navigation": {
+          "learning_navigation": {
+            "weaknesses": [
+              "极值/最大值初始化策略错误：把累加器初始化为 0，破坏了“最大值不变量”，导致全负数输入时 `max(0, x)` 永远保留 0 [REVIEW][CODE:L1][SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1]",
+              "边界输入（全负数、空输入）的测试覆盖与验证意识不足：现有测试 4 通过 1 失败，缺少针对全负数场景的回归用例与修复前后的对照验证 [TEST][REVIEW][SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1]"
+            ],
+            "learning_path": [
+              {
+                "step": 1,
+                "topic": "极值初始化的正确基准：用首元素而非 0 作为最大值起点 [CODE:L1][SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1][GRAPH]",
+                "duration": "30 分钟",
+                "resources": [
+                  "LearnCpp tutorials: https://www.learncpp.com/",
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp"
+                ]
+              },
+              {
+                "step": 2,
+                "topic": "数值边界与输入契约：全负数输入、空 vector 的返回值约定，以及 max/max_element 的边界语义 [GRAPH][SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1][REVIEW]",
+                "duration": "40 分钟",
+                "resources": [
+                  "cppreference C++ reference: https://en.cppreference.com/w/cpp",
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines"
+                ]
+              },
+              {
+                "step": 3,
+                "topic": "边界驱动测试与回归验证：为全负数编写用例，修复前后对照通过/失败计数 [TEST][REVIEW][HISTORY][DIALOGUE]",
+                "duration": "30 分钟",
+                "resources": [
+                  "C++ Core Guidelines: https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",
+                  "LearnCpp tutorials: https://www.learncpp.com/"
+                ]
+              }
+            ],
+            "recommended_exercises": [
+              {
+                "id": "lc104",
+                "title": "二叉树的最大深度",
+                "difficulty": "入门",
+                "purpose": "练习“先确定基准、再逐步聚合最大值”的思路：空树作为递归基返回 0，非空时取左右子树较大值加 1，体会初始化基准对最值结果的决定性影响 [CODE:L1][SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1][GRAPH]",
+                "url": "https://leetcode.cn/problems/maximum-depth-of-binary-tree"
+              },
+              {
+                "id": "lc111",
+                "title": "二叉树的最小深度",
+                "difficulty": "入门",
+                "purpose": "训练最小值的初始化与边界判别：不能简单对左右子树取 min，必须区分“单侧为空”的边界情形，避免用统一初值掩盖真实极值 [SYM:CPP_NEGATIVE_INPUT_ASSUMPTION@L1][GRAPH][TEST]",
+                "url": "https://leetcode.cn/problems/minimum-depth-of-binary-tree"
+              },
+              {
+                "id": "lc155",
+                "title": "最小栈",
+                "difficulty": "初级",
+                "purpose": "在动态数据流中维护极值并处理退化边界（空栈、单元素、单调递减序列），并要求自己补一组“全为更小值 / 全为更大值”的回归测试再提交 [TEST][REVIEW][CODE:L1]",
+                "url": "https://leetcode.cn/problems/min-stack"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

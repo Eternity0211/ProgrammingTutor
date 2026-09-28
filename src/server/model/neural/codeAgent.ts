@@ -16,6 +16,7 @@ import {
   getPromptDefinition,
   promptContractHeader,
 } from "@/server/model/prompts/registry";
+import { validateGroundedStatements } from "./agent-grounding";
 
 export interface CodeReviewAgentInput {
   code: string;
@@ -67,13 +68,21 @@ function buildCodeReviewPrompt(input: CodeReviewAgentInput): string {
   const detectedIssues = [
     ...input.symbolic.errors,
     ...input.symbolic.warnings,
-  ].map((issue) => ({
-    ruleId: issue.ruleId,
-    severity: issue.severity,
-    line: issue.location.line,
-    message: issue.message,
-    concept: issue.knowledge_concept,
-  }));
+  ].map((issue) => {
+    const ruleId = issue.ruleId.replace(/[^A-Za-z0-9_-]/g, "_");
+    return {
+      evidenceTag: `SYM:${ruleId}@L${issue.location.line}`,
+      ruleId: issue.ruleId,
+      severity: issue.severity,
+      line: issue.location.line,
+      message: issue.message,
+      concept: issue.knowledge_concept,
+    };
+  });
+  const numberedCode = input.code
+    .split(/\r?\n/)
+    .map((line, index) => `${index + 1}: ${line}`)
+    .join("\n");
 
   const neuralMetadata = loadNeuralMetadataContext();
 
@@ -92,9 +101,15 @@ Language: ${input.language}
 Test summary: ${JSON.stringify(input.testSummary)}
 Symbolic findings: ${JSON.stringify(detectedIssues)}
 
-Code:
+Available evidence tags:
+- [CODE:Lx] or [CODE:Lx-Ly] for directly visible code
+- [TEST] for pass/fail counts only; it does not reveal hidden inputs or failure causes
+- [${codeReviewStatusTag(input)}] is the deterministic review status derived from tests and symbolic findings
+${detectedIssues.map((issue) => `- [${issue.evidenceTag}]`).join("\n") || "- No symbolic evidence tags are available"}
+
+Line-numbered code:
 \`\`\`${input.language}
-${input.code}
+${numberedCode}
 \`\`\`
 
 Output JSON schema:
@@ -108,7 +123,35 @@ Output JSON schema:
 Rules:
 - confidence in [0, 1]
 - suggestions must be specific and executable
-- emphasize time complexity when loops or nested loops appear`;
+- Every reviewSummary, causalAnalysis, and suggestion string must include at least one available evidence tag.
+- [TEST] supports only the supplied counts. Never infer hidden test inputs, runtime values, or exact failure causes from it.
+- Do not claim facts about callers, compiler flags, missing includes outside the snippet, undocumented input limits, or student ability.
+- Separate confirmed defects from optional hardening. Do not describe optional hardening as a student weakness or current bug.
+- If no defect is confirmed, say so and keep optional suggestions to at most two.
+- Discuss complexity only when it follows directly from visible loops, recursion, or containers in [CODE].`;
+}
+
+function codeReviewEvidenceTags(input: CodeReviewAgentInput): Set<string> {
+  const tags = new Set(["TEST"]);
+  tags.add(codeReviewStatusTag(input));
+  for (let line = 1; line <= input.code.split(/\r?\n/).length; line += 1) {
+    tags.add(`CODE:L${line}`);
+  }
+  for (const issue of [...input.symbolic.errors, ...input.symbolic.warnings]) {
+    const ruleId = issue.ruleId.replace(/[^A-Za-z0-9_-]/g, "_");
+    tags.add(`SYM:${ruleId}@L${issue.location.line}`);
+  }
+  return tags;
+}
+
+function codeReviewStatusTag(input: CodeReviewAgentInput): string {
+  const confirmedByEvidence =
+    input.testSummary.failed > 0 ||
+    input.symbolic.errors.length > 0 ||
+    input.symbolic.warnings.length > 0;
+  return confirmedByEvidence
+    ? "REVIEW:CONFIRMED_ISSUES"
+    : "REVIEW:NO_CONFIRMED_ISSUES";
 }
 
 // export async function runCodeReviewAgent(
@@ -166,32 +209,70 @@ export async function runCodeReviewAgent(
     const promptDefinition = getPromptDefinition("agent.code-review");
     recordPromptInvocation(promptDefinition.id, promptDefinition.version);
 
-    const completion = await client.chat.completions.create({
-      model: getLlmModel(),
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" }, //
-      temperature: 0.2,
-    });
+    const allowedTags = codeReviewEvidenceTags(input);
+    let validationDetails = "";
 
-    const answerContent = completion.choices[0]?.message?.content;
-    if (!answerContent) throw new Error("API returned empty content");
-    recordLlmUsage(completion.usage, {
-      agent: "code-review",
-      model: getLlmModel(),
-    });
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      const completion = await client.chat.completions.create({
+        model: getLlmModel(),
+        messages: [
+          { role: "user", content: prompt },
+          ...(validationDetails
+            ? [
+                {
+                  role: "user" as const,
+                  content: `The previous JSON failed grounding validation: ${validationDetails}. Regenerate the complete JSON and cite available evidence in every field.`,
+                },
+              ]
+            : []),
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      });
 
-    const parsed = codeReviewAgentResultSchema.safeParse(
-      JSON.parse(answerContent),
-    );
-    if (!parsed.success) {
-      recordAgentOutputValidation("code-review", "invalid");
-      throw new AgentOutputValidationError(
-        "CodeReviewAgent",
-        parsed.error.message,
-      );
+      const answerContent = completion.choices[0]?.message?.content;
+      if (!answerContent) throw new Error("API returned empty content");
+      recordLlmUsage(completion.usage, {
+        agent: "code-review",
+        model: getLlmModel(),
+      });
+
+      try {
+        const parsed = codeReviewAgentResultSchema.safeParse(
+          JSON.parse(answerContent),
+        );
+        if (!parsed.success) {
+          validationDetails = parsed.error.message;
+          continue;
+        }
+        const groundingIssues = validateGroundedStatements(
+          [
+            parsed.data.reviewSummary,
+            parsed.data.causalAnalysis,
+            ...parsed.data.suggestions,
+          ],
+          allowedTags,
+        );
+        if (groundingIssues.length > 0) {
+          validationDetails = groundingIssues.join("; ");
+          continue;
+        }
+        recordAgentOutputValidation("code-review", "valid");
+        return {
+          ...parsed.data,
+          reviewSummary: `[${codeReviewStatusTag(input)}] ${parsed.data.reviewSummary}`,
+        };
+      } catch (error) {
+        validationDetails =
+          error instanceof Error ? error.message : String(error);
+      }
     }
-    recordAgentOutputValidation("code-review", "valid");
-    return parsed.data;
+
+    recordAgentOutputValidation("code-review", "invalid");
+    throw new AgentOutputValidationError(
+      "CodeReviewAgent",
+      validationDetails || "grounding validation failed",
+    );
   } catch (error) {
     console.error("❌ CodeReviewAgent Error:", error);
     if (!(error instanceof AgentOutputValidationError)) {
