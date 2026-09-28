@@ -16,9 +16,13 @@ function round(value) {
   return value === null ? null : Math.round(value * 1000) / 1000;
 }
 
-const reviewPath = argument("review");
-const keyPath = argument("key");
-const outputPath = argument("output");
+const positionalArguments = process.argv
+  .slice(2)
+  .filter((value) => !value.startsWith("--"));
+const reviewPath = argument("review") ?? positionalArguments[0];
+const keyPath =
+  argument("key") ?? process.env.npm_config_key ?? positionalArguments[1];
+const outputPath = argument("output") ?? positionalArguments[2];
 if (!reviewPath || !keyPath) {
   throw new Error("Provide --review and --key files.");
 }

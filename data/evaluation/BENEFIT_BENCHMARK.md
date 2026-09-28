@@ -9,7 +9,7 @@ npm run benchmark:agents
 npm run benchmark:rag
 npm run benchmark:analyze -- --result <result.json> --usage <usage.jsonl>
 npm run benchmark:blind-review -- --baseline <baseline.json> --candidate <candidate.json> --scenarios data/evaluation/benefit-scenarios.json --rag <rag.json> --output data/evaluation/benefit-blind-review.json --key-output data/evaluation/results/benefit-blind-review-key.json
-npm run benchmark:human-review -- --review data/evaluation/benefit-blind-review.json --key data/evaluation/results/benefit-blind-review-key.json --output data/evaluation/results/benefit-human-summary.json
+npm run benchmark:human-review -- data/evaluation/benefit-blind-review.json data/evaluation/results/benefit-blind-review-key.json data/evaluation/results/benefit-human-summary.json
 ```
 
 真实模型运行需要 `.env` 中的 `DEEPSEEK_API_KEY`。费用分析同时记录缓存命中/未命中 Token、输出 Token、运行时实际时段费用，以及统一峰值/低谷价下的归一化费用。自动词面指标仅用于回归提示，不能替代盲评。

@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-09-28T09:58:20.748Z",
+  "versions": {
+    "D-final": {
+      "codeReviewCorrectness": 4.583,
+      "emotionCorrectness": 4.75,
+      "navigationRelevance": 4.583,
+      "unsupportedClaimsAverage": 0.833,
+      "wins": 8,
+      "ties": 0
+    },
+    "A-final": {
+      "codeReviewCorrectness": 4.5,
+      "emotionCorrectness": 4.167,
+      "navigationRelevance": 4,
+      "unsupportedClaimsAverage": 0.583,
+      "wins": 4,
+      "ties": 0
+    }
+  },
+  "rag": {
+    "answerCorrectness": 4.833,
+    "evidenceSupport": 4.667,
+    "correctRefusalRate": 1,
+    "unsupportedClaimsAverage": 0.333
+  }
+}
