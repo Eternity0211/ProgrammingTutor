@@ -34,9 +34,7 @@
     "validate:dataset:strict": "node scripts/validate-neural-dataset.mjs --require-complete"
   },
   "dependencies": {
-    "@ai-sdk/groq": "^1.2.9",
-    "@auth/core": "^0.37.4",
-    "@auth/prisma-adapter": "^2.7.4",
+    "@auth/prisma-adapter": "2.11.3",
     "@hookform/resolvers": "^3.9.1",
     "@monaco-editor/react": "^4.7.0-rc.0",
     "@prisma/client": "^6.7.0",
@@ -61,7 +59,6 @@
     "@types/bcrypt": "^5.0.2",
     "@uidotdev/usehooks": "^2.4.1",
     "@use-gesture/react": "^10.3.1",
-    "ai": "^4.3.16",
     "bcrypt": "^6.0.0",
     "better-upload": "^0.1.0",
     "class-variance-authority": "^0.7.1",
@@ -74,8 +71,8 @@
     "lucide-react": "^0.477.0",
     "markitdown": "^0.0.4",
     "neo4j-driver": "^6.0.1",
-    "next": "15.5.6",
-    "next-auth": "^5.0.0-beta.25",
+    "next": "15.5.26",
+    "next-auth": "5.0.0-beta.32",
     "next-themes": "^0.4.3",
     "nextjs-toploader": "^3.7.15",
     "openai": "^6.32.0",
@@ -100,10 +97,10 @@
     "@types/react-dom": "^19",
     "cross-env": "^10.1.0",
     "eslint": "^9",
-    "eslint-config-next": "15.1.7",
+    "eslint-config-next": "15.5.26",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
-    "postcss": "^8",
+    "postcss": "8.5.28",
     "prettier": "3.9.9",
     "prisma": "^6.7.0",
     "tailwindcss": "^3.4.1",
@@ -111,5 +108,9 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "postcss": "8.5.28",
+    "sharp": "0.35.4"
   }
 }
