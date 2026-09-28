@@ -35,6 +35,27 @@
 
 当前指标注册表位于单个应用进程内。单实例部署可直接采集；多实例或 Serverless 部署应让 Prometheus 分别抓取每个常驻实例，或将指标改由 OpenTelemetry Collector 聚合。
 
+评测队列指标由 `/api/metrics` 在每次抓取时从 PostgreSQL 汇总，因此即使 Worker 与 Web 分属不同进程，也能看到 QUEUED/RUNNING/COMPLETED/FAILED 数量、最老排队任务等待时间和过期租约数量。数据库暂时不可用时指标接口仍会响应，并将 `programming_tutor_evaluation_queue_collection_success` 设为 0。
+
+## 本地监控栈
+
+仓库提供可直接运行的 Prometheus、Grafana、OpenTelemetry Collector 和 Tempo 配置。它通过 Compose override 启动，不影响只启动业务依赖的日常开发：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+```
+
+启动后可访问：
+
+- Grafana：`http://localhost:3001`（默认 `admin` / `admin`，可通过 `GRAFANA_ADMIN_USER`、`GRAFANA_ADMIN_PASSWORD` 修改）；
+- Prometheus：`http://localhost:9090`；
+- Tempo API：`http://localhost:3200`；
+- OpenTelemetry Collector 健康检查：`http://localhost:13133`。
+
+Grafana 会自动配置 Prometheus、Tempo 和 “Programming Tutor Operations” 仪表盘，无需手工导入。开发栈内部使用固定的 `local-observability-token` 采集指标；该值仅用于本机 Compose 网络，生产部署必须生成独立的 `METRICS_TOKEN` 并同步到采集系统的密钥配置，不能沿用本地值。
+
+监控容器已设置总计约 1.9GB 的内存上限。若本机同时运行另一套 Judge0 或其他重型容器，建议先停止不用的容器；Windows 报“页面文件太小”时应扩大系统页面文件或降低并发容器数量，而不是重置 Docker 数据盘。
+
 ## 日志与排障
 
 关键 API 会输出包含时间、级别、路由、状态码和耗时的单行 JSON。`LOG_LEVEL` 支持 `debug`、`info`、`warn`、`error`。字段名属于密码、密钥、令牌、Cookie、Authorization 或代码内容时会自动脱敏。
@@ -49,6 +70,6 @@
 
 ## 告警与发布门禁
 
-示例 Prometheus 告警位于 `ops/prometheus-alerts.yml`，包括硬依赖不可用、HTTP 5xx 超标、评测失败率超标和对话延迟超标。阈值是初始建议，取得真实流量基线后应按 P95/P99 与业务容忍度调整。
+示例 Prometheus 告警位于 `ops/prometheus-alerts.yml`，包括硬依赖不可用、HTTP 5xx 超标、评测失败率超标、对话延迟超标、评测队列积压、Worker 租约过期和队列指标采集失败。阈值是初始建议，取得真实流量基线后应按 P95/P99 与业务容忍度调整。
 
-CI 会依次执行数据集严格校验、类型检查、可观测性契约测试、完整 Jest 测试和生产构建。真实 PostgreSQL、Neo4j、Judge0 测试由独立任务启动一次性容器，应用 Prisma 迁移并执行真实 SQL、Cypher 和 C++ 编译运行；该任务每周自动运行，也可在 Quality workflow 中手动触发，不需要 GitHub Secrets。
+CI 会先校验组合后的 Compose、Prometheus 告警规则和 OpenTelemetry Collector 配置，再依次执行数据集严格校验、类型检查、可观测性契约测试、完整 Jest 测试和生产构建。真实 PostgreSQL、Neo4j、Judge0 测试由独立任务启动一次性容器，应用 Prisma 迁移并执行真实 SQL、Cypher 和 C++ 编译运行；该任务每周自动运行，也可在 Quality workflow 中手动触发，不需要 GitHub Secrets。

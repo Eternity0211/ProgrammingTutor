@@ -25,6 +25,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm audit --audit-level=high
+      - name: Validate observability Compose configuration
+        run: docker compose -f docker-compose.yml -f docker-compose.observability.yml config --quiet
+      - name: Validate Prometheus alert rules
+        run: docker run --rm --entrypoint promtool -v "$PWD/ops:/etc/programming-tutor:ro" prom/prometheus:v3.15.0 check rules /etc/programming-tutor/prometheus-alerts.yml
+      - name: Validate OpenTelemetry Collector configuration
+        run: docker run --rm -v "$PWD/ops/observability/otel-collector.yml:/etc/otelcol-contrib/config.yml:ro" otel/opentelemetry-collector-contrib:0.161.0 validate --config=/etc/otelcol-contrib/config.yml
       - run: npm run validate:dataset:strict
       - run: npm run lint:multi-agent
       - run: npm run typecheck

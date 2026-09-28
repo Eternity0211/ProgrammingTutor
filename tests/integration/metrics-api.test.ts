@@ -1,5 +1,10 @@
+jest.mock("@/server/observability/evaluation-queue", () => ({
+  collectEvaluationQueueMetrics: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { NextRequest } from "next/server";
 import { GET } from "@/app/api/metrics/route";
+import { collectEvaluationQueueMetrics } from "@/server/observability/evaluation-queue";
 import {
   incrementCounter,
   resetMetricsForTests,
@@ -9,6 +14,7 @@ describe("metrics API", () => {
   const originalToken = process.env.METRICS_TOKEN;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     process.env.METRICS_TOKEN = "monitoring-secret";
     resetMetricsForTests();
   });
@@ -19,9 +25,7 @@ describe("metrics API", () => {
   });
 
   it("rejects requests without the bearer token", async () => {
-    const response = await GET(
-      new NextRequest("http://localhost/api/metrics"),
-    );
+    const response = await GET(new NextRequest("http://localhost/api/metrics"));
     expect(response.status).toBe(401);
   });
 
@@ -33,6 +37,7 @@ describe("metrics API", () => {
       }),
     );
     expect(response.status).toBe(200);
+    expect(collectEvaluationQueueMetrics).toHaveBeenCalledTimes(1);
     expect(response.headers.get("content-type")).toContain("text/plain");
     expect(await response.text()).toContain("test_counter_total 1");
   });

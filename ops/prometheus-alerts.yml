@@ -74,3 +74,28 @@ groups:
           severity: warning
         annotations:
           summary: "ProgrammingTutor is rate-limiting more than 20% of requests"
+
+      - alert: ProgrammingTutorEvaluationQueueStalled
+        expr: programming_tutor_evaluation_queue_oldest_queued_age_seconds > 300
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ProgrammingTutor evaluation queue has stalled"
+          description: "The oldest evaluation job has waited for more than five minutes. Check worker health and PostgreSQL."
+
+      - alert: ProgrammingTutorEvaluationLeaseExpired
+        expr: programming_tutor_evaluation_queue_stale_running_jobs > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Evaluation worker leases have expired"
+
+      - alert: ProgrammingTutorEvaluationQueueMetricsUnavailable
+        expr: programming_tutor_evaluation_queue_collection_success == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Evaluation queue metrics cannot be read from PostgreSQL"

@@ -1,0 +1,88 @@
+services:
+  gradeit-dev:
+    environment:
+      - METRICS_TOKEN=local-observability-token
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+      - OTEL_SERVICE_NAME=programming-tutor-web
+    depends_on:
+      otel-collector:
+        condition: service_started
+
+  evaluation-worker:
+    environment:
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+      - OTEL_SERVICE_NAME=programming-tutor-evaluation-worker
+    depends_on:
+      otel-collector:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    # Numeric UID avoids relying on a passwd entry in minimal image layers.
+    user: "65534:65534"
+    mem_limit: 512m
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./ops/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./ops/prometheus-alerts.yml:/etc/prometheus/rules/programming-tutor.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      gradeit-dev:
+        condition: service_healthy
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.6.1
+    mem_limit: 512m
+    command: ["-config.file=/etc/tempo.yml"]
+    volumes:
+      - ./ops/observability/tempo.yml:/etc/tempo.yml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.161.0
+    mem_limit: 384m
+    command: ["--config=/etc/otelcol-contrib/config.yml"]
+    volumes:
+      - ./ops/observability/otel-collector.yml:/etc/otelcol-contrib/config.yml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "13133:13133"
+    depends_on:
+      tempo:
+        condition: service_started
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.1.5
+    mem_limit: 512m
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./ops/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./ops/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      prometheus:
+        condition: service_started
+      tempo:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  tempo_data:
+  grafana_data:
