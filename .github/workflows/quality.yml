@@ -45,6 +45,7 @@ jobs:
           NEO4J_PASSWORD: ci-placeholder
           METRICS_TOKEN: ci-placeholder
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://localhost:4318/v1/traces
+          EVALUATION_EXECUTION_MODE: queue
 
   external-integration:
     if: github.event_name == 'push' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_external)

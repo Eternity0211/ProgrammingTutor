@@ -50,6 +50,7 @@ export async function evaluateSubmissionInsidePlatform(
     traceId?: string;
     retryOfRunId?: string;
     attempt?: number;
+    evaluationJobId?: string;
   } = {},
 ) {
   const codeSubmission = await prisma.codeSubmission.findUnique({
@@ -81,6 +82,16 @@ export async function evaluateSubmissionInsidePlatform(
       attempt: options.attempt ?? 1,
     },
   });
+  if (options.evaluationJobId) {
+    await prisma.evaluationJob.updateMany({
+      where: {
+        id: options.evaluationJobId,
+        codeSubmissionId,
+        status: "RUNNING",
+      },
+      data: { evaluationRunId: evaluationRun.id },
+    });
+  }
   const traceLogger = new TraceLogger(
     options.traceId ?? evaluationRun.traceId ?? undefined,
     undefined,

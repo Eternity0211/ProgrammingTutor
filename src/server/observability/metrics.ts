@@ -26,7 +26,10 @@ const registry =
 function normalizeLabels(labels: Labels): Record<string, string> {
   return Object.fromEntries(
     Object.entries(labels)
-      .filter((entry): entry is [string, string | number | boolean] => entry[1] !== undefined)
+      .filter(
+        (entry): entry is [string, string | number | boolean] =>
+          entry[1] !== undefined,
+      )
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([key, value]) => [key, String(value)]),
   );
@@ -164,6 +167,14 @@ export function recordEvaluationOutcome(
   );
 }
 
+export function recordEvaluationJobTransition(status: string): void {
+  incrementCounter(
+    "programming_tutor_evaluation_jobs_total",
+    "Total durable evaluation job transitions by status.",
+    { status },
+  );
+}
+
 export function recordAgentOutputValidation(
   agent: string,
   outcome: "valid" | "invalid" | "unavailable",
@@ -175,7 +186,10 @@ export function recordAgentOutputValidation(
   );
 }
 
-export function recordPromptInvocation(promptId: string, version: string): void {
+export function recordPromptInvocation(
+  promptId: string,
+  version: string,
+): void {
   incrementCounter(
     "programming_tutor_prompt_invocations_total",
     "Total prompt invocations by registered prompt and version.",
@@ -208,7 +222,10 @@ export function recordDependencyCall(
 }
 
 function escapeLabel(value: string): string {
-  return value.replaceAll("\\", "\\\\").replaceAll("\n", "\\n").replaceAll('"', '\\"');
+  return value
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\n", "\\n")
+    .replaceAll('"', '\\"');
 }
 
 function renderLabels(labels: Record<string, string>): string {
@@ -218,12 +235,18 @@ function renderLabels(labels: Record<string, string>): string {
 }
 
 export function renderPrometheusMetrics(): string {
-  const points = [...registry.counters.values(), ...registry.gauges.values()].sort(
+  const points = [
+    ...registry.counters.values(),
+    ...registry.gauges.values(),
+  ].sort(
     (left, right) =>
       left.name.localeCompare(right.name) ||
       JSON.stringify(left.labels).localeCompare(JSON.stringify(right.labels)),
   );
-  const metadata = new Map<string, { help: string; type: "counter" | "gauge" }>();
+  const metadata = new Map<
+    string,
+    { help: string; type: "counter" | "gauge" }
+  >();
   for (const point of registry.counters.values()) {
     metadata.set(point.name, { help: point.help, type: "counter" });
   }

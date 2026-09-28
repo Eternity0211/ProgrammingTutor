@@ -28,13 +28,23 @@ DeepSeek、Embedding、Judge0 和 Neo4j 共用以下保护机制：
 
 ## 评测恢复
 
+生产环境使用 PostgreSQL 持久化队列（`EVALUATION_EXECUTION_MODE=queue`）。API 只负责幂等入队并返回 HTTP 202，独立 Worker 通过 `FOR UPDATE SKIP LOCKED` 原子认领任务。任务带租约和心跳；Worker 异常退出后，租约过期的任务会由其他 Worker 接管。失败任务按指数退避重试，达到 `maxAttempts` 后进入 `FAILED`，不会无限循环。
+
+启动 Worker：
+
+```bash
+npm run worker:evaluations
+```
+
+Docker Compose 中的 `evaluation-worker` 与 Web 服务使用同一 PostgreSQL。可通过 `EVALUATION_WORKER_POLL_MS` 和 `EVALUATION_WORKER_LEASE_MS` 调整轮询和租约时间。`programming_tutor_evaluation_jobs_total{transition=...}` 记录 queued、claimed、requeued、completed 和 failed 状态变化。
+
 外部平台错误会产生 `FAILED_RETRYABLE` 运行，已有分数不会被写成零。所有者可调用：
 
 ```text
 POST /api/submissions/{codeSubmissionId}/retry
 ```
 
-重试采用原子认领，避免两个请求同时消费同一个失败记录。新运行保存 `attempt` 和 `retryOfRunId`，可以从 Trace 和数据库还原完整重试链。只有最新运行明确标记为可重试时接口才接受请求。
+重试接口使用失败运行 ID 作为幂等键，重复请求只会得到同一队列任务。新运行保存 `attempt` 和 `retryOfRunId`，可以从 Trace 和数据库还原完整重试链。只有最新运行明确标记为可重试时接口才接受请求。
 
 ## MCP 与故障响应
 
@@ -42,7 +52,7 @@ MCP 工具默认最多执行 30 秒。超时的 REST 调用返回 HTTP 504；JSO
 
 ## 验证与告警
 
-`npm run test:resilience` 覆盖超时、熔断恢复、并发队列、用户限流、请求体限制、评测失败分类、原子重试和 MCP 超时。Prometheus 告警还覆盖熔断持续开启、舱壁饱和及 429 比例过高。
+`npm run test:resilience` 覆盖超时、熔断恢复、并发队列、用户限流、请求体限制、评测失败分类、持久化任务的幂等入队/原子认领/租约恢复/退避重试，以及 MCP 超时。Prometheus 告警还覆盖熔断持续开启、舱壁饱和及 429 比例过高。
 
 故障处理顺序建议：
 

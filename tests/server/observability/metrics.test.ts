@@ -1,6 +1,7 @@
 import {
   incrementCounter,
   observeHttpRequest,
+  recordEvaluationJobTransition,
   recordLlmTokenMetrics,
   renderPrometheusMetrics,
   resetMetricsForTests,
@@ -31,6 +32,19 @@ describe("observability metrics", () => {
     );
     expect(output).toContain(
       'programming_tutor_llm_prompt_tokens_total{agent="dialogue",model="deepseek-chat"} 100',
+    );
+  });
+
+  it("records durable evaluation queue transitions", () => {
+    recordEvaluationJobTransition("queued");
+    recordEvaluationJobTransition("completed");
+
+    const output = renderPrometheusMetrics();
+    expect(output).toContain(
+      'programming_tutor_evaluation_jobs_total{status="queued"} 1',
+    );
+    expect(output).toContain(
+      'programming_tutor_evaluation_jobs_total{status="completed"} 1',
     );
   });
 });

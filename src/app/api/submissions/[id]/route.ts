@@ -47,6 +47,20 @@ export async function GET(
             traceId: true,
           },
         },
+        evaluationJobs: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: {
+            id: true,
+            status: true,
+            attempts: true,
+            maxAttempts: true,
+            lastError: true,
+            evaluationRunId: true,
+            createdAt: true,
+            completedAt: true,
+          },
+        },
         testCaseResults: true,
         question: {
           include: {
@@ -163,6 +177,7 @@ export async function GET(
       emotion: parsedFeedback?.emotion || null,
       symbolicOutput: parsedFeedback?.symbolic || null,
       latestEvaluation: submission.evaluationRuns[0] ?? null,
+      latestEvaluationJob: submission.evaluationJobs[0] ?? null,
     });
   } catch (error: unknown) {
     console.error("Error fetching submission:", error);

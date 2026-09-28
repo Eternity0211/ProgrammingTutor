@@ -3,6 +3,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { evaluateSubmissionInsidePlatform } from "@/server/model/pipeline/submission-evaluation-service";
 import {
+  enqueueEvaluationJob,
+  evaluationQueueEnabled,
+} from "@/server/model/pipeline/evaluation-job-service";
+import {
   EvaluationPlatformError,
   classifyEvaluationError,
 } from "@/server/model/pipeline/evaluation-failure";
@@ -40,7 +44,10 @@ async function handlePost(req: NextRequest, context: RouteContext) {
     },
   });
   if (!codeSubmission) {
-    return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Submission not found" },
+      { status: 404 },
+    );
   }
 
   const previous = codeSubmission.evaluationRuns[0];
@@ -71,6 +78,23 @@ async function handlePost(req: NextRequest, context: RouteContext) {
   }
 
   try {
+    if (evaluationQueueEnabled()) {
+      const job = await enqueueEvaluationJob({
+        codeSubmissionId: codeSubmission.id,
+        traceId: req.headers.get("x-trace-id") ?? undefined,
+        retryOfRunId: previous.id,
+        attempt: previous.attempt + 1,
+        priority: 1,
+      });
+      return NextResponse.json(
+        {
+          evaluationJobId: job.id,
+          evaluationStatus: job.status,
+          retryOfRunId: previous.id,
+        },
+        { status: 202 },
+      );
+    }
     const result = await evaluateSubmissionInsidePlatform(codeSubmission.id, {
       traceId: req.headers.get("x-trace-id") ?? undefined,
       retryOfRunId: previous.id,

@@ -147,8 +147,13 @@ export function useCodeRunner({
         });
       }
 
-      setCodeStatus("Running test cases...");
-      toast.success("Running test cases...");
+      const queued = Boolean(data.evaluationJobId);
+      setCodeStatus(
+        queued
+          ? "Evaluation queued. Waiting for a worker..."
+          : "Running test cases...",
+      );
+      toast.success(queued ? "Evaluation queued" : "Running test cases...");
       await pollSubmissionStatus(submissionId);
     } catch (error: unknown) {
       console.error("Submission error:", error);
@@ -165,7 +170,7 @@ export function useCodeRunner({
   const pollSubmissionStatus = async (submissionId: string) => {
     let completed = false;
     let attempts = 0;
-    const maxAttempts = 30; // Poll for maximum of 30 attempts (30 seconds with 2s interval) that is for 60 seconds
+    const maxAttempts = 90; // Allow queued evaluations up to three minutes to start and finish.
 
     while (!completed && attempts < maxAttempts) {
       attempts++;
@@ -179,6 +184,13 @@ export function useCodeRunner({
         }
 
         const submissionData = await response.json();
+
+        if (submissionData.latestEvaluation?.id) {
+          saveEvaluationReference(window.localStorage, {
+            evaluationRunId: submissionData.latestEvaluation.id,
+            codeSubmissionId: submissionId,
+          });
+        }
 
         const mappedResults = submissionData.results.map(
           (result: CodeRunner & Record<string, unknown>) => ({
@@ -196,6 +208,16 @@ export function useCodeRunner({
         );
 
         setTestResults(mappedResults);
+
+        if (submissionData.latestEvaluationJob?.status === "FAILED") {
+          completed = true;
+          const failureMessage =
+            submissionData.latestEvaluationJob.lastError ||
+            "Evaluation could not be completed after the configured retries.";
+          setCodeStatus(`Evaluation failed: ${failureMessage}`);
+          toast.error("Evaluation failed. Please retry later.");
+          break;
+        }
 
         if (
           submissionData.status === "EVALUATION_COMPLETE" ||
@@ -231,7 +253,12 @@ export function useCodeRunner({
           break;
         }
 
-        setCodeStatus(`Running test cases (${attempts}/${maxAttempts})...`);
+        const jobStatus = submissionData.latestEvaluationJob?.status;
+        setCodeStatus(
+          jobStatus === "QUEUED"
+            ? `Evaluation queued (${attempts}/${maxAttempts})...`
+            : `Running test cases (${attempts}/${maxAttempts})...`,
+        );
       } catch (error) {
         console.error("Error polling submission status:", error);
       }

@@ -41,6 +41,7 @@ services:
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-change-me-in-env}
+      - EVALUATION_EXECUTION_MODE=queue
     depends_on:
       db:
         condition: service_healthy
@@ -61,6 +62,35 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  evaluation-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - gradeit_node_modules:/app/node_modules
+    environment:
+      - DATABASE_URL=postgresql://gradeitDB:mypassword@db:5432/gradeit
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com/v1}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-flash}
+      - JUDGE0_API_URL=http://judge0-server:2358
+      - JUDGE0_CPP_LANGUAGE_ID=54
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-change-me-in-env}
+      - EVALUATION_WORKER_POLL_MS=${EVALUATION_WORKER_POLL_MS:-1000}
+      - EVALUATION_WORKER_LEASE_MS=${EVALUATION_WORKER_LEASE_MS:-120000}
+    depends_on:
+      db:
+        condition: service_healthy
+      judge0-server:
+        condition: service_started
+      neo4j:
+        condition: service_started
+    command: sh -c "npx prisma generate && npx prisma migrate deploy && npm run worker:evaluations"
+    restart: unless-stopped
 
   judge0-server:
     image: judge0/judge0:latest

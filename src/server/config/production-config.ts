@@ -14,18 +14,30 @@ const requiredInProduction = [
   ["NEO4J_PASSWORD", "Neo4j 密码"],
   ["METRICS_TOKEN", "指标端点访问令牌"],
   ["OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "OTLP Trace 接收端点"],
+  ["EVALUATION_EXECUTION_MODE", "评测执行模式"],
 ] as const;
 
 export function checkProductionConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): ProductionConfigIssue[] {
   if (env.NODE_ENV !== "production") return [];
-  return requiredInProduction
+  const issues = requiredInProduction
     .filter(([key]) => !env[key]?.trim())
     .map(([key, label]) => ({
       key,
       message: `${label} (${key}) 未配置`,
     }));
+  if (
+    env.EVALUATION_EXECUTION_MODE?.trim() &&
+    env.EVALUATION_EXECUTION_MODE.toLowerCase() !== "queue"
+  ) {
+    issues.push({
+      key: "EVALUATION_EXECUTION_MODE",
+      message:
+        "生产环境必须使用持久化评测队列 (EVALUATION_EXECUTION_MODE=queue)",
+    });
+  }
+  return issues;
 }
 
 export function assertProductionConfig(

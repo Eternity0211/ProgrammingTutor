@@ -8,6 +8,10 @@ import {
 import { prisma } from "@/lib/prisma";
 import { evaluateSubmissionInsidePlatform } from "@/server/model/pipeline/submission-evaluation-service";
 import {
+  enqueueEvaluationJob,
+  evaluationQueueEnabled,
+} from "@/server/model/pipeline/evaluation-job-service";
+import {
   EvaluationPlatformError,
   EvaluationRunPlatformError,
   classifyEvaluationError,
@@ -158,6 +162,22 @@ async function handlePost(req: NextRequest) {
         status: TestCaseStatus.PENDING,
       })),
     });
+
+    if (evaluationQueueEnabled()) {
+      const job = await enqueueEvaluationJob({
+        codeSubmissionId: codeSubmission.id,
+        traceId: req.headers.get("x-trace-id") ?? undefined,
+      });
+      return NextResponse.json(
+        {
+          submissionId: codeSubmission.id,
+          evaluationJobId: job.id,
+          evaluationStatus: job.status,
+          message: "Submission created and queued for durable evaluation",
+        },
+        { status: 202 },
+      );
+    }
 
     try {
       const result = await evaluateSubmissionInsidePlatform(codeSubmission.id, {
