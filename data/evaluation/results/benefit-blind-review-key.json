@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2026-09-28T04:30:37.018Z",
+  "key": [
+    {
+      "id": "logic-average",
+      "candidate1": "D-final",
+      "candidate2": "A-final"
+    },
+    {
+      "id": "memory-leak",
+      "candidate1": "A-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "clean-loop",
+      "candidate1": "D-final",
+      "candidate2": "A-final"
+    },
+    {
+      "id": "off-by-one",
+      "candidate1": "A-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "division-zero",
+      "candidate1": "D-final",
+      "candidate2": "A-final"
+    },
+    {
+      "id": "uninitialized-pointer",
+      "candidate1": "A-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "quadratic-search",
+      "candidate1": "D-final",
+      "candidate2": "A-final"
+    },
+    {
+      "id": "missing-base-case",
+      "candidate1": "D-final",
+      "candidate2": "A-final"
+    },
+    {
+      "id": "integer-overflow",
+      "candidate1": "D-final",
+      "candidate2": "A-final"
+    },
+    {
+      "id": "safe-raii",
+      "candidate1": "A-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "empty-input",
+      "candidate1": "A-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "explicit-confidence",
+      "candidate1": "A-final",
+      "candidate2": "D-final"
+    }
+  ]
+}

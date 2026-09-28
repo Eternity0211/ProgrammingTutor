@@ -200,7 +200,9 @@ export async function generateEmotionalSupport(
     recordAgentOutputValidation("emotion", "valid");
 
     // 保存文件
-    saveResultToJson(parsedData);
+    if (process.env.EVAL_DISABLE_AGENT_ARTIFACTS !== "1") {
+      saveResultToJson(parsedData);
+    }
 
     return parsedData;
   } catch (error) {

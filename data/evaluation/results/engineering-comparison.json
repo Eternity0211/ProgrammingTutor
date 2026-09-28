@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "commit": "688863a872fa39d7bb973393c0a38fec9d78a803",
+    "testSuitesPassed": 25,
+    "testsPassed": 131,
+    "testFiles": 26,
+    "apiRoutes": 7,
+    "staticPageBuildCount": 18,
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "nativeLintCommand": "interactive_not_ci_usable",
+    "unifiedLint": {
+      "errors": 134,
+      "warnings": 7,
+      "filesWithErrors": 68,
+      "topErrorRules": {
+        "@typescript-eslint/no-explicit-any": 63,
+        "@typescript-eslint/no-unused-vars": 56,
+        "react/no-unescaped-entities": 6
+      }
+    },
+    "externalServiceIntegration": "not_present",
+    "dependencyAudit": {
+      "low": 28,
+      "moderate": 73,
+      "high": 33,
+      "critical": 6,
+      "total": 140
+    }
+  },
+  "current": {
+    "commitBeforeEvaluationHarness": "ab2424760427decc80ca7dc5f24c173477a0c539",
+    "commitsSinceBaseline": 99,
+    "testSuitesPassed": 68,
+    "testsPassed": 365,
+    "testFiles": 70,
+    "apiRoutes": 15,
+    "staticPageBuildCount": 25,
+    "typecheck": "passed",
+    "productionBuild": "passed",
+    "lint": {
+      "errors": 0,
+      "warnings": 0
+    },
+    "externalServiceIntegration": {
+      "postgresql": "passed",
+      "neo4j": "passed",
+      "judge0": "passed"
+    },
+    "dependencyAudit": {
+      "low": 28,
+      "moderate": 73,
+      "high": 33,
+      "critical": 6,
+      "total": 140
+    }
+  },
+  "notes": [
+    "Dependency audit was executed for both snapshots at the same time and is unchanged.",
+    "The current full test run skips the opt-in external suite; its three cases were run separately against real Docker services and passed.",
+    "Current build and tests include the user's existing uncommitted debug/import files because they are part of the active working tree; those files are not committed by this evaluation change."
+  ]
+}

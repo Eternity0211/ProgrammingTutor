@@ -21,6 +21,11 @@
     "test:resilience": "jest tests/server/resilience tests/integration/submission-retry-api.test.ts tests/server/model/pipeline/evaluation-failure.test.ts tests/server/model/mcp/tool-registry.test.ts --runInBand",
     "test:ai-quality": "jest tests/server/model/prompts tests/server/model/dialogue/rag-engine.test.ts tests/server/model/dialogue/agent-pipeline.test.ts tests/server/model/dialogue/eval-runner.test.ts tests/server/model/mcp/tool-registry.test.ts tests/server/model/pipeline/submission-evaluation-service.test.ts --runInBand",
     "test:multi-agent": "jest tests/server/model/dialogue/agent-evidence.test.ts tests/server/model/dialogue/dialogue-orchestrator.test.ts tests/server/model/pipeline/submission-evaluation-service.test.ts --runInBand",
+    "benchmark:agents": "tsx scripts/measure-agent-benefits.ts",
+    "benchmark:rag": "tsx scripts/measure-rag-benefits.ts",
+    "benchmark:analyze": "node scripts/analyze-benefit-results.mjs",
+    "benchmark:blind-review": "node scripts/create-blind-review.mjs",
+    "benchmark:human-review": "node scripts/analyze-human-review.mjs",
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "validate:dataset": "node scripts/validate-neural-dataset.mjs",
@@ -101,6 +106,7 @@
     "tailwindcss": "^3.4.1",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
 }

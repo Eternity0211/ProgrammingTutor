@@ -6,6 +6,9 @@ type CompletionUsage = {
   prompt_tokens?: number;
   completion_tokens?: number;
   total_tokens?: number;
+  prompt_tokens_details?: { cached_tokens?: number };
+  prompt_cache_hit_tokens?: number;
+  prompt_cache_miss_tokens?: number;
 };
 
 /**
@@ -20,10 +23,29 @@ export function recordLlmUsage(
 
   const promptTokens = usage.prompt_tokens ?? 0;
   const completionTokens = usage.completion_tokens ?? 0;
+  const cachedPromptTokens = Math.min(
+    promptTokens,
+    Math.max(
+      0,
+      usage.prompt_cache_hit_tokens ??
+        usage.prompt_tokens_details?.cached_tokens ??
+        0,
+    ),
+  );
+  const uncachedPromptTokens = Math.max(
+    0,
+    usage.prompt_cache_miss_tokens ?? promptTokens - cachedPromptTokens,
+  );
   const inputPrice = Number(process.env.EVAL_INPUT_PRICE_PER_1M ?? 0);
+  const cachedInputPrice = Number(
+    process.env.EVAL_INPUT_CACHE_HIT_PRICE_PER_1M ?? inputPrice,
+  );
   const outputPrice = Number(process.env.EVAL_OUTPUT_PRICE_PER_1M ?? 0);
   const estimatedCost =
-    (promptTokens * inputPrice + completionTokens * outputPrice) / 1_000_000;
+    (uncachedPromptTokens * inputPrice +
+      cachedPromptTokens * cachedInputPrice +
+      completionTokens * outputPrice) /
+    1_000_000;
   recordLlmTokenMetrics(
     metadata.agent,
     metadata.model,
@@ -41,10 +63,17 @@ export function recordLlmUsage(
       timestamp: new Date().toISOString(),
       ...metadata,
       promptTokens,
+      cachedPromptTokens,
+      uncachedPromptTokens,
       completionTokens,
       totalTokens: usage.total_tokens ?? promptTokens + completionTokens,
       estimatedCost,
-      pricing: { inputPer1M: inputPrice, outputPer1M: outputPrice },
+      pricing: {
+        label: process.env.EVAL_PRICING_LABEL ?? "unspecified",
+        uncachedInputPer1M: inputPrice,
+        cachedInputPer1M: cachedInputPrice,
+        outputPer1M: outputPrice,
+      },
     })}\n`,
     "utf8",
   );

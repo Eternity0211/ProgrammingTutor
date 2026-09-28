@@ -30,7 +30,7 @@
 - `programming_tutor_trace_spans_total`、`programming_tutor_trace_span_duration_seconds_*`：各阶段成功率与耗时。
 - `programming_tutor_evaluation_runs_total`：评测完成、阻塞和失败终态。
 - `programming_tutor_llm_prompt_tokens_total`、`programming_tutor_llm_completion_tokens_total`：模型实际返回的 token 用量。
-- `programming_tutor_llm_estimated_cost_total`：按 `EVAL_INPUT_PRICE_PER_1M`、`EVAL_OUTPUT_PRICE_PER_1M` 计算的估算费用。
+- `programming_tutor_llm_estimated_cost_total`：按 `EVAL_INPUT_PRICE_PER_1M`、`EVAL_INPUT_CACHE_HIT_PRICE_PER_1M`、`EVAL_OUTPUT_PRICE_PER_1M` 以及供应商返回的缓存命中 Token 计算的估算费用。用 `EVAL_PRICING_LABEL` 标记执行时采用的模型和峰谷价格版本。
 - `programming_tutor_dependency_ready`：依赖就绪状态。
 
 当前指标注册表位于单个应用进程内。单实例部署可直接采集；多实例或 Serverless 部署应让 Prometheus 分别抓取每个常驻实例，或将指标改由 OpenTelemetry Collector 聚合。

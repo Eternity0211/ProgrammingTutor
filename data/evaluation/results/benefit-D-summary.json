@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-28T04:30:37.232Z",
+  "runs": [
+    {
+      "mode": "D-final",
+      "variant": "current",
+      "execution": "parallel",
+      "model": "deepseek-flash",
+      "rounds": 3,
+      "cases": 36,
+      "latency": {
+        "averageMs": 15248.69,
+        "p50Ms": 15000,
+        "p95Ms": 18945,
+        "supportAverageMs": 9288.22,
+        "componentAverageMs": 18944.75,
+        "parallelOverlapSavedMs": 3696.06
+      },
+      "qualityProxy": {
+        "reviewConceptCoverage": 0.2963,
+        "emotionReferenceMatch": 0.9722,
+        "navigationTopicCoverage": 0.6806
+      },
+      "agents": {
+        "codeReview": {
+          "availabilityRate": 0.9167,
+          "failureRate": 0.0833,
+          "fallbackRate": 0.0833,
+          "averageDurationMs": 5960.42
+        },
+        "emotion": {
+          "availabilityRate": 0.9722,
+          "failureRate": 0,
+          "fallbackRate": 0.0278,
+          "averageDurationMs": 3935.31
+        },
+        "navigation": {
+          "availabilityRate": 0.9722,
+          "failureRate": 0,
+          "fallbackRate": 0.0278,
+          "averageDurationMs": 9049.03
+        }
+      }
+    }
+  ],
+  "usage": {
+    "requests": 107,
+    "promptTokens": 182692,
+    "cachedPromptTokens": 29696,
+    "completionTokens": 137231,
+    "totalTokens": 319923,
+    "estimatedCostUsd": 0.10537709,
+    "officialDeepSeekFlashCostUsd": 0.18255392,
+    "normalizedDeepSeekFlashPeakCostUsd": 0.21075418,
+    "normalizedDeepSeekFlashOffPeakCostUsd": 0.10537709,
+    "officialPricingReference": "DeepSeek flash peak/off-peak rates effective 2026-09-28; classified by each record's UTC timestamp"
+  },
+  "notes": [
+    "qualityProxy uses deterministic lexical/reference checks and is not a substitute for blinded human review",
+    "estimatedCostUsd uses prices configured at execution time and provider-reported token usage"
+  ]
+}

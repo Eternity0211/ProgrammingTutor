@@ -2,31 +2,381 @@
   {
     "id": "logic-average",
     "name": "运算符优先级逻辑错误",
-    "code": "int average(int a, int b) { return a + b / 2; }",
+    "category": "logic",
+    "code": "double average(int a, int b) { return a + b / 2; }",
     "language": "cpp",
-    "symbolic": { "errors": [{ "ruleId": "CPP_LOGIC_WRONG_CONDITION_OPERATOR", "severity": "High", "message": "operator precedence changes the average calculation", "location": { "line": 1, "column": 1 } }], "warnings": [], "metadata": { "parseTime": 4 } },
-    "testSummary": { "total": 3, "passed": 1, "failed": 2 },
-    "emotionContext": "我改了好几次还是不对，有点沮丧。",
-    "studentHistory": "最近连续两次提交逻辑错误，正在学习 C++ 基础。"
+    "symbolic": {
+      "errors": [
+        {
+          "ruleId": "CPP_LOGIC_WRONG_CONDITION_OPERATOR",
+          "severity": "High",
+          "message": "operator precedence changes the average calculation",
+          "location": { "line": 1, "column": 39 },
+          "knowledge_concept": "运算符优先级"
+        }
+      ],
+      "warnings": [],
+      "metadata": { "parseTime": 4 }
+    },
+    "testSummary": { "total": 4, "passed": 1, "failed": 3 },
+    "studentProfileSummary": "正在学习 C++ 表达式，最近两次提交都出现计算公式错误。",
+    "sessionContext": [
+      { "role": "user", "content": "我改了好几次还是不对，有点沮丧。" }
+    ],
+    "knowledgeGraph": "运算符优先级 -> 括号明确求值顺序；整数除法 -> 类型转换",
+    "expected": {
+      "reviewConcepts": ["运算符优先级", "括号", "除法"],
+      "acceptableEmotions": ["沮丧", "挫败"],
+      "navigationTopics": ["运算符优先级", "整数除法"],
+      "seriousIssueExpected": true
+    }
   },
   {
     "id": "memory-leak",
     "name": "动态内存泄漏",
-    "code": "int* makeValue() { int* p = new int(42); return p; }",
+    "category": "memory",
+    "code": "void process() { int* p = new int[100]; p[0] = 42; }",
     "language": "cpp",
-    "symbolic": { "errors": [{ "ruleId": "CPP_MEMORY_LEAK", "severity": "High", "message": "allocated memory is not released", "location": { "line": 1, "column": 1 } }], "warnings": [], "metadata": { "parseTime": 5 } },
-    "testSummary": { "total": 2, "passed": 0, "failed": 2 },
-    "emotionContext": "这次提交失败了，我想知道下一步怎么改。",
-    "studentHistory": "正在学习指针和内存管理。"
+    "symbolic": {
+      "errors": [
+        {
+          "ruleId": "CPP_MEMORY_LEAK",
+          "severity": "High",
+          "message": "allocated memory is not released",
+          "location": { "line": 1, "column": 24 },
+          "knowledge_concept": "动态内存管理"
+        }
+      ],
+      "warnings": [],
+      "metadata": { "parseTime": 5 }
+    },
+    "testSummary": { "total": 3, "passed": 1, "failed": 2 },
+    "studentProfileSummary": "刚开始学习指针，对资源所有权和析构不熟悉。",
+    "sessionContext": [
+      {
+        "role": "user",
+        "content": "内存错误总是看不懂，我不知道下一步该做什么。"
+      }
+    ],
+    "knowledgeGraph": "动态分配 -> 资源释放 -> RAII -> 智能指针",
+    "expected": {
+      "reviewConcepts": ["内存泄漏", "delete", "RAII"],
+      "acceptableEmotions": ["迷茫", "焦虑", "沮丧"],
+      "navigationTopics": ["内存释放", "RAII", "智能指针"],
+      "seriousIssueExpected": true
+    }
   },
   {
     "id": "clean-loop",
     "name": "基本循环正确代码",
-    "code": "int sum(int n) { int result = 0; for (int i = 1; i <= n; ++i) result += i; return result; }",
+    "category": "correct",
+    "code": "long long sum(int n) { long long result = 0; for (int i = 1; i <= n; ++i) result += i; return result; }",
     "language": "cpp",
-    "symbolic": { "errors": [], "warnings": [], "metadata": { "parseTime": 3 } },
-    "testSummary": { "total": 3, "passed": 3, "failed": 0 },
-    "emotionContext": "这次运行通过了，我想继续学习。",
-    "studentHistory": "已经掌握基础循环，准备学习算法复杂度。"
+    "symbolic": {
+      "errors": [],
+      "warnings": [],
+      "metadata": { "parseTime": 3 }
+    },
+    "testSummary": { "total": 5, "passed": 5, "failed": 0 },
+    "studentProfileSummary": "已掌握循环基础，希望继续学习复杂度分析。",
+    "sessionContext": [
+      { "role": "user", "content": "这次终于全部通过了，我很有成就感。" }
+    ],
+    "knowledgeGraph": "循环求和 -> 时间复杂度 O(n) -> 等差数列公式 O(1)",
+    "expected": {
+      "reviewConcepts": ["正确", "复杂度"],
+      "acceptableEmotions": ["成就感", "自信"],
+      "navigationTopics": ["时间复杂度", "等差数列"],
+      "seriousIssueExpected": false
+    }
+  },
+  {
+    "id": "off-by-one",
+    "name": "数组越界与 off-by-one",
+    "category": "boundary",
+    "code": "int sum(const vector<int>& a) { int s = 0; for (size_t i = 0; i <= a.size(); ++i) s += a[i]; return s; }",
+    "language": "cpp",
+    "symbolic": {
+      "errors": [
+        {
+          "ruleId": "CPP_ARRAY_OUT_OF_BOUNDS",
+          "severity": "Critical",
+          "message": "loop accesses a[a.size()]",
+          "location": { "line": 1, "column": 86 },
+          "knowledge_concept": "数组边界"
+        }
+      ],
+      "warnings": [],
+      "metadata": { "parseTime": 4 }
+    },
+    "testSummary": { "total": 6, "passed": 2, "failed": 4 },
+    "studentProfileSummary": "循环条件经常写错，对半开区间还不熟悉。",
+    "sessionContext": [
+      { "role": "user", "content": "为什么最后一次循环会崩溃？我有点困惑。" }
+    ],
+    "knowledgeGraph": "数组索引 -> 半开区间 [0,n) -> 循环不变量",
+    "expected": {
+      "reviewConcepts": ["越界", "<", "半开区间"],
+      "acceptableEmotions": ["迷茫", "焦虑"],
+      "navigationTopics": ["数组边界", "半开区间"],
+      "seriousIssueExpected": true
+    }
+  },
+  {
+    "id": "division-zero",
+    "name": "缺少除零保护",
+    "category": "runtime",
+    "code": "double ratio(int total, int count) { return static_cast<double>(total) / count; }",
+    "language": "cpp",
+    "symbolic": {
+      "errors": [
+        {
+          "ruleId": "CPP_DIVISION_BY_ZERO",
+          "severity": "High",
+          "message": "count can be zero",
+          "location": { "line": 1, "column": 75 },
+          "knowledge_concept": "异常输入处理"
+        }
+      ],
+      "warnings": [],
+      "metadata": { "parseTime": 3 }
+    },
+    "testSummary": { "total": 5, "passed": 4, "failed": 1 },
+    "studentProfileSummary": "基础计算掌握较好，但容易遗漏异常输入。",
+    "sessionContext": [
+      { "role": "user", "content": "只剩一个隐藏测试没过，我担心找不到原因。" }
+    ],
+    "knowledgeGraph": "前置条件 -> 除数非零 -> 边界测试",
+    "expected": {
+      "reviewConcepts": ["除零", "count", "边界"],
+      "acceptableEmotions": ["焦虑", "挫败"],
+      "navigationTopics": ["边界测试", "防御式编程"],
+      "seriousIssueExpected": true
+    }
+  },
+  {
+    "id": "uninitialized-pointer",
+    "name": "未初始化指针解引用",
+    "category": "memory",
+    "code": "int readValue(bool ready) { int* p; if (ready) { static int value = 7; p = &value; } return *p; }",
+    "language": "cpp",
+    "symbolic": {
+      "errors": [
+        {
+          "ruleId": "CPP_UNINITIALIZED_DEREFERENCE",
+          "severity": "Critical",
+          "message": "p may be uninitialized",
+          "location": { "line": 1, "column": 92 },
+          "knowledge_concept": "指针初始化"
+        }
+      ],
+      "warnings": [],
+      "metadata": { "parseTime": 4 }
+    },
+    "testSummary": { "total": 4, "passed": 2, "failed": 2 },
+    "studentProfileSummary": "能写简单指针代码，但分支路径分析较弱。",
+    "sessionContext": [
+      { "role": "user", "content": "有时能运行有时崩溃，这让我很不安。" }
+    ],
+    "knowledgeGraph": "控制流 -> 确定赋值 -> 空指针/未初始化指针",
+    "expected": {
+      "reviewConcepts": ["未初始化", "指针", "ready"],
+      "acceptableEmotions": ["焦虑", "迷茫"],
+      "navigationTopics": ["指针初始化", "控制流分析"],
+      "seriousIssueExpected": true
+    }
+  },
+  {
+    "id": "quadratic-search",
+    "name": "可优化的双重循环",
+    "category": "performance",
+    "code": "bool hasDuplicate(const vector<int>& a) { for (size_t i=0;i<a.size();++i) for (size_t j=i+1;j<a.size();++j) if(a[i]==a[j]) return true; return false; }",
+    "language": "cpp",
+    "symbolic": {
+      "errors": [],
+      "warnings": [
+        {
+          "ruleId": "CPP_NESTED_LOOP_COMPLEXITY",
+          "severity": "Medium",
+          "message": "nested scan is O(n^2)",
+          "location": { "line": 1, "column": 43 },
+          "knowledge_concept": "算法复杂度"
+        }
+      ],
+      "metadata": { "parseTime": 5 }
+    },
+    "testSummary": { "total": 6, "passed": 6, "failed": 0 },
+    "studentProfileSummary": "功能实现能力良好，尚未系统学习哈希表和复杂度。",
+    "sessionContext": [
+      { "role": "user", "content": "答案通过了，但大数据时很慢，我想优化。" }
+    ],
+    "knowledgeGraph": "重复检测 -> 哈希集合 -> 时间换空间 -> O(n)",
+    "expected": {
+      "reviewConcepts": ["O(n^2)", "哈希", "复杂度"],
+      "acceptableEmotions": ["平静", "自信"],
+      "navigationTopics": ["哈希表", "复杂度"],
+      "seriousIssueExpected": false
+    }
+  },
+  {
+    "id": "missing-base-case",
+    "name": "递归缺少有效终止条件",
+    "category": "recursion",
+    "code": "int factorial(int n) { return n * factorial(n - 1); }",
+    "language": "cpp",
+    "symbolic": {
+      "errors": [
+        {
+          "ruleId": "CPP_RECURSION_NO_BASE_CASE",
+          "severity": "Critical",
+          "message": "recursive call has no base case",
+          "location": { "line": 1, "column": 35 },
+          "knowledge_concept": "递归终止条件"
+        }
+      ],
+      "warnings": [],
+      "metadata": { "parseTime": 3 }
+    },
+    "testSummary": { "total": 4, "passed": 0, "failed": 4 },
+    "studentProfileSummary": "刚接触递归，容易只关注递推关系。",
+    "sessionContext": [
+      { "role": "user", "content": "我以为公式是对的，为什么一直栈溢出？" }
+    ],
+    "knowledgeGraph": "递归 -> 基准情形 -> 规模递减 -> 调用栈",
+    "expected": {
+      "reviewConcepts": ["递归", "终止", "基准"],
+      "acceptableEmotions": ["迷茫", "挫败"],
+      "navigationTopics": ["递归终止条件", "调用栈"],
+      "seriousIssueExpected": true
+    }
+  },
+  {
+    "id": "integer-overflow",
+    "name": "整数乘法溢出",
+    "category": "numeric",
+    "code": "long long area(int width, int height) { return width * height; }",
+    "language": "cpp",
+    "symbolic": {
+      "errors": [],
+      "warnings": [
+        {
+          "ruleId": "CPP_INTEGER_OVERFLOW",
+          "severity": "High",
+          "message": "multiplication occurs as int before conversion",
+          "location": { "line": 1, "column": 55 },
+          "knowledge_concept": "整数溢出"
+        }
+      ],
+      "metadata": { "parseTime": 3 }
+    },
+    "testSummary": { "total": 5, "passed": 4, "failed": 1 },
+    "studentProfileSummary": "类型基础尚可，但不熟悉表达式提升规则。",
+    "sessionContext": [
+      { "role": "user", "content": "返回值已经是 long long 了，为什么还溢出？" }
+    ],
+    "knowledgeGraph": "整数提升 -> 表达式求值类型 -> 显式转换",
+    "expected": {
+      "reviewConcepts": ["溢出", "long long", "转换"],
+      "acceptableEmotions": ["迷茫", "挫败"],
+      "navigationTopics": ["整数提升", "类型转换"],
+      "seriousIssueExpected": true
+    }
+  },
+  {
+    "id": "safe-raii",
+    "name": "RAII 资源管理正确实现",
+    "category": "correct",
+    "code": "std::vector<int> makeValues(size_t n) { return std::vector<int>(n, 42); }",
+    "language": "cpp",
+    "symbolic": {
+      "errors": [],
+      "warnings": [],
+      "metadata": { "parseTime": 3 }
+    },
+    "testSummary": { "total": 4, "passed": 4, "failed": 0 },
+    "studentProfileSummary": "已经从裸指针逐步迁移到标准容器。",
+    "sessionContext": [
+      {
+        "role": "user",
+        "content": "我用 vector 重写后测试通过了，感觉更清楚了。"
+      }
+    ],
+    "knowledgeGraph": "RAII -> 标准容器 -> 自动资源管理 -> 异常安全",
+    "expected": {
+      "reviewConcepts": ["RAII", "vector", "正确"],
+      "acceptableEmotions": ["自信", "成就感", "平静"],
+      "navigationTopics": ["RAII", "异常安全"],
+      "seriousIssueExpected": false
+    }
+  },
+  {
+    "id": "empty-input",
+    "name": "空容器访问遗漏",
+    "category": "boundary",
+    "code": "int first(const vector<int>& values) { return values.front(); }",
+    "language": "cpp",
+    "symbolic": {
+      "errors": [
+        {
+          "ruleId": "CPP_EMPTY_CONTAINER_ACCESS",
+          "severity": "High",
+          "message": "front() is undefined for an empty vector",
+          "location": { "line": 1, "column": 54 },
+          "knowledge_concept": "容器边界"
+        }
+      ],
+      "warnings": [],
+      "metadata": { "parseTime": 3 }
+    },
+    "testSummary": { "total": 4, "passed": 3, "failed": 1 },
+    "studentProfileSummary": "常规输入处理正确，但测试设计缺少空输入。",
+    "sessionContext": [
+      {
+        "role": "user",
+        "content": "普通样例都过了，隐藏样例失败让我有点烦躁。"
+      }
+    ],
+    "knowledgeGraph": "容器前置条件 -> empty() -> optional/异常 -> 边界测试",
+    "expected": {
+      "reviewConcepts": ["空", "front", "边界"],
+      "acceptableEmotions": ["挫败", "沮丧"],
+      "navigationTopics": ["容器边界", "空输入测试"],
+      "seriousIssueExpected": true
+    }
+  },
+  {
+    "id": "explicit-confidence",
+    "name": "显式积极情绪优先",
+    "category": "emotion-evidence",
+    "code": "int maxValue(const vector<int>& a) { int best = 0; for (int x : a) best = max(best, x); return best; }",
+    "language": "cpp",
+    "symbolic": {
+      "errors": [],
+      "warnings": [
+        {
+          "ruleId": "CPP_NEGATIVE_INPUT_ASSUMPTION",
+          "severity": "Medium",
+          "message": "initial value fails for all-negative input",
+          "location": { "line": 1, "column": 43 },
+          "knowledge_concept": "初始化策略"
+        }
+      ],
+      "metadata": { "parseTime": 4 }
+    },
+    "testSummary": { "total": 5, "passed": 4, "failed": 1 },
+    "studentProfileSummary": "过去遇到隐藏测试失败时容易焦虑。",
+    "sessionContext": [
+      {
+        "role": "user",
+        "content": "我已经定位到全负数这个边界了，现在很有信心能修好。"
+      }
+    ],
+    "knowledgeGraph": "极值初始化 -> 首元素/数值边界 -> 全负数测试",
+    "expected": {
+      "reviewConcepts": ["负数", "初始化", "首元素"],
+      "acceptableEmotions": ["自信", "平静"],
+      "navigationTopics": ["极值初始化", "边界测试"],
+      "seriousIssueExpected": false
+    }
   }
 ]
