@@ -1,268 +1,179 @@
-# GradeIT - Online Code Evaluation & Grading System
+# Programming Tutor / GradeIT
 
-GradeIT is an automated online coding platform designed for college-level programming lab assignments. It simplifies grading by automatically executing student submissions, checking correctness against test cases, and providing instant feedback.
+Programming Tutor is a full-stack programming education platform built on GradeIT. It combines classroom and assignment management, Judge0 code execution, neuro-symbolic code analysis, retrieval-augmented tutoring, student memory, and coordinated Code Review, Emotion, and Navigation agents.
 
-🔗 [Live Demo](https://gradeit.habeel.live/)
+## What the project provides
 
-🔗 [Alternate Live Link](https://grade-it-ten.vercel.app/)
-📘 Student Classroom Join Code: `8e343e`
+- Faculty and student authentication, classrooms, assignments, test cases, submissions, grading, and analytics.
+- Sandboxed multi-language execution through Judge0.
+- A durable PostgreSQL-backed evaluation queue and independently runnable worker.
+- Static and dynamic symbolic analysis plus LLM-assisted code review.
+- RAG with keyword retrieval by default and optional embedding/vector retrieval.
+- Neo4j-backed knowledge relationships with graceful degradation when the graph is unavailable.
+- MCP-compatible JSON-RPC tools at `/api/mcp`.
+- Explicit dialogue state, context compression, session memory, student profiles, and coordinated multi-agent feedback.
+- Structured logs, metrics, readiness checks, OTLP traces, Prometheus, Tempo, and Grafana.
+- Offline evaluation datasets, benchmark scripts, blinded human review, and LLM token/cost capture.
 
-## Features
+## Architecture
 
-### 🎯 **Core Features**
-
-- **Automated Code Execution & Grading** - Runs submissions and checks correctness against test cases
-- **Multiple Language Support** - Supports Python, Java, C++, JavaScript, TypeScript, and more
-- **Secure Execution Environment** - Runs code in a sandboxed, isolated environment using Judge0
-- **Custom Test Cases** - Teachers can define their own test cases with hidden/public visibility
-- **AI-Powered Test Case Generation** - Automatically generate comprehensive test cases using AI based on question descriptions
-- **Instant Feedback** - Provides real-time feedback to students with detailed execution results
-- **Role-Based Access Control** - Separate interfaces for Faculty and Students
-
-### 🏫 **Faculty Features**
-
-- **Classroom Management** - Create and manage virtual classrooms with unique codes
-- **Assignment Creation** - Build multi-question assignments with detailed problem statements
-- **Live Student Monitoring** - Real-time tracking of student progress and activity
-- **Analytics Dashboard** - Comprehensive student progress tracking with export capabilities
-- **Submission Review** - Detailed view of student submissions with test case results
-- **Performance Analytics** - Track completion rates, scores, and submission patterns
-- **AI-Powered Test Case Generation** - Automatically generate comprehensive test cases based on question descriptions using AI
-
-### 👨‍🎓 **Student Features**
-
-- **Interactive Code Editor** - Monaco editor with syntax highlighting and auto-completion
-- **Custom Test Case Testing** - Run code against custom inputs before submission
-- **Submission History** - View all previous submissions with detailed feedback
-- **Real-time Status Updates** - Live updates on code execution and grading status
-- **Restriction Notifications** - Clear feedback when attempting restricted actions
-
-### 🔒 **Security & Proctoring**
-
-- **Copy-Paste Prevention** - Disable copy/paste functionality during assignments
-- **Fullscreen Enforcement** - Require fullscreen mode to prevent cheating
-- **Secure Code Execution** - Sandboxed environment for safe code testing
-- **Session Management** - Secure authentication and session handling
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend:** Next.js 14, React, TypeScript, Tailwind CSS
-- **Backend:** Next.js API Routes, Prisma ORM
-- **Database:** PostgreSQL
-- **Execution Engine:** Judge0 API + Custom Execution Server
-- **Authentication:** NextAuth.js with OAuth providers
-- **UI Components:** Shadcn
-- **Animations:** Framer Motion
-- **Code Editor:** Monaco Editor with syntax highlighting
-- **Deployment:** Vercel, Docker support
-
----
-
-## Installation & Setup
-
-### 1️⃣ Prerequisites
-
-Before you begin, ensure you have **Node.js** installed locally on your machine. You can download it from [nodejs.org](https://nodejs.org/).
-
----
-
-### 2️⃣ Clone the Repository
-
-```sh
-git clone https://github.com/Habeel-Shamsudeen/GradeIt.git
-cd GradeIt
+```text
+Next.js UI / API
+  |-- PostgreSQL + Prisma: users, classes, submissions, memory, evaluation queue
+  |-- Judge0 RuntimeHarness: compile and execute code
+  |-- Symbolic engine: parser, CFG, rules, static/dynamic diagnostics
+  |-- DeepSeek-compatible LLM client: dialogue and qualitative evaluation
+  |-- RAG: keyword retrieval or optional external embedding service
+  |-- Neo4j: prerequisite and knowledge relationships
+  |-- MCP tool registry: RAG, runtime, graph, and evaluation tools
+  `-- Observability: logs, Prometheus metrics, OTLP -> Collector -> Tempo/Grafana
 ```
 
----
+The dialogue orchestrator uses an internal `DialogueStateGraph` with explicit state, nodes, edges, loop protection, and step limits. It intentionally does not depend on the external LangGraph package yet; the migration criteria are documented in [`docs/langgraph-evaluation.md`](docs/langgraph-evaluation.md).
 
-### **3️⃣ Option A: Local Setup (without Docker Compose)**
+## Technology
 
-If you prefer to run services directly on your machine:
+- Next.js 15, React 19, TypeScript, Tailwind CSS
+- Prisma 6 and PostgreSQL 15
+- NextAuth 5
+- Judge0, Redis, and a dedicated Judge0 PostgreSQL database
+- Neo4j 5
+- OpenAI-compatible DeepSeek and embedding clients
+- Jest 30 and ESLint 9
+- Docker Compose, Prometheus, Grafana, Tempo, and OpenTelemetry Collector
 
-#### 3.1 Install Dependencies
+## Local setup
 
-```sh
-npm install
+Requirements:
+
+- Node.js 20 or later
+- npm
+- Docker Desktop for real PostgreSQL, Neo4j, Judge0, and observability services
+
+Install and configure:
+
+```powershell
+npm ci
+Copy-Item .env.example .env
 ```
 
-#### 3.2 Set Up Environment Variables
+At minimum, review these variables in `.env`:
 
-A template file, `.env.example`, is provided in the root directory of this project. It outlines all the necessary environment variables.
+- `DATABASE_URL`
+- `AUTH_SECRET`
+- `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL`
+- `JUDGE0_API_URL`, `JUDGE0_API_KEY`, and `JUDGE0_API_HOST`
+- `NEO4J_URI`, `NEO4J_USER`, and `NEO4J_PASSWORD`
+- `NEXT_PUBLIC_APP_URL`
 
-To set up your environment variables:
+DeepSeek chat models do not provide embeddings. Keep `RAG_RETRIEVAL_MODE=keyword` when only a DeepSeek API key is available. To enable vector retrieval, configure `EMBEDDING_API_KEY`, `EMBEDDING_BASE_URL`, and `EMBEDDING_MODEL`, then select the vector retrieval mode.
 
-1.  **Duplicate the `.env.example` file** in the root directory.
-2.  **Rename the duplicated file to `.env`**.
-3.  **Open the new `.env` file** and replace the placeholder values with your actual credentials.
+Prepare the database and start the application:
 
-**Do not commit your `.env` file to Git**, as it contains sensitive information. It's usually already ignored by a `.gitignore` file, but it's good to be aware.
-
-##### Where to get the API Keys:
-
-- **`AUTH_SECRET`**: This is a random string used to sign session cookies. You can generate a strong, random string using an online tool or a command like `openssl rand -base64 32` in your terminal.
-- **Google OAuth Credentials (`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`)**:
-  1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
-  2.  Create a new project (if you don't have one).
-  3.  Navigate to **APIs & Services \> Credentials**.
-  4.  Click **+ CREATE CREDENTIALS** and choose **OAuth client ID**.
-  5.  Select "Web application" as the application type.
-  6.  Set "Authorized JavaScript origins" to `http://localhost:3000` (for local development).
-  7.  Set "Authorized redirect URIs" to `http://localhost:3000/api/auth/callback/google` (this is crucial for NextAuth.js).
-  8.  After creation, your Client ID and Client Secret will be displayed. These are your `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` respectively.
-- **Judge0 API (`JUDGE0_API_KEY`, `JUDGE0_API_HOST`)**:
-  1.  Go to [RapidAPI Hub](https://www.google.com/search?q=https://rapidapi.com/judge0/api/judge0-ce).
-  2.  Sign up or log in.
-  3.  Subscribe to the Judge0 API (even the free tier will give you an API key).
-  4.  On the API details page, you'll find your `X-RapidAPI-Key` (which is your `JUDGE0_API_KEY`) and `X-RapidAPI-Host` (which is your `JUDGE0_API_HOST`).
-
-#### 3.3 Database Setup
-
-For local development, you'll need a PostgreSQL database running. You can use Docker, set up PostgreSQL directly on your machine, or use a cloud provider for testing. Ensure your `DATABASE_URL` is correctly formatted to connect to your instance.
-
-Example format: `postgresql://username:password@localhost:5432/mydatabase?sslmode=disable` (note `sslmode=disable` for local development, or `require` for production environments).
-
-#### 3.4 Run Database Migrations
-
-After setting up your `DATABASE_URL`, apply the database schema:
-
-```sh
-npx prisma migrate dev --name init
-```
-
-This command will create the necessary tables in your PostgreSQL database.
-
-#### 3.5 Start the Development Server
-
-```sh
+```powershell
+npx prisma migrate deploy
 npm run dev
 ```
 
-Your application should now be running at `http://localhost:3000`.
+The application is available at `http://localhost:3000` by default.
 
----
+## Docker Compose
 
-### **3️⃣ Option B: Docker Compose Setup (Recommended)**
+Start the real dependencies and run their integration test:
 
-This method simplifies setup by running the application and its database inside Docker containers.
+```powershell
+docker compose up -d db neo4j judge0-server judge0-worker
+npm run services:wait
+npx prisma migrate deploy
+npm run test:integration:external
+```
 
-#### 3.1 Prerequisites for Docker Compose
+Start the full application stack:
 
-Ensure you have **Docker Desktop** installed and running on your machine. You can download it from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/).
+```powershell
+docker compose up -d
+```
 
-#### 3.2 Set Up Environment Variables
+Add the local observability stack:
 
-Follow the same steps as in Option A for creating and populating your **`.env`** file.
-**Important:** When using Docker Compose for the database, your `DATABASE_URL` in `.env` should point to the Docker service name (e.g., `postgresql://gradeitDB:mypassword@db:5432/gradeit`) instead of `localhost`. The `db` hostname will be resolved by Docker Compose.
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
+```
 
-#### 3.3 Build and Run Services with Docker Compose
+Default local endpoints:
 
-1.  **Build the Docker images and start all services:**
+- Application: `http://localhost:3000`
+- Neo4j Browser: `http://localhost:7474`
+- Judge0: `http://localhost:2358`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3001`
+- Tempo API: `http://localhost:3200`
 
-    ```sh
-    docker-compose up --build
-    ```
+Do not run `docker compose down -v` unless persistent local data is intentionally being deleted.
 
-    This command will:
-    - Build the application Docker image based on the `Dockerfile`.
-    - Start a PostgreSQL database container.
-    - Start the application container.
-    - Automatically apply database migrations (as defined in `docker-compose.yml`).
+## Quality gates
 
-2.  **Access the Application:**
-    Your application should now be running at `http://localhost:3000`.
+Run the same core checks used by CI:
 
-#### 3.4 Useful Docker Compose Commands
+```powershell
+npm run validate:dataset:strict
+npm run lint
+npm run typecheck
+npm run test:ci
+npm run build
+```
 
-- **Stop services:** `docker-compose down`
-- **Stop and remove containers, networks, and volumes:** `docker-compose down -v`
-- **Run migrations manually (if needed, inside the app container):**
-  ```sh
-  docker-compose exec app npx prisma migrate dev --name your_migration_name
-  ```
-- **View logs for all services:** `docker-compose logs -f`
-- **View logs for a specific service (e.g., `app`):** `docker-compose logs -f app`
+Focused suites:
 
----
+```powershell
+npm run test:observability
+npm run test:resilience
+npm run test:ai-quality
+npm run test:multi-agent
+npm run test:integration:external
+```
 
-## Project Overview
+The external integration suite is skipped unless `RUN_EXTERNAL_INTEGRATION=1`; it performs real PostgreSQL, Neo4j, and Judge0 requests. GitHub Actions starts disposable service containers and runs this suite on branch pushes and scheduled checks.
 
-GradeIT is a classroom management and coding assignment platform with two primary roles:
+## Evaluation and benefit measurement
 
-1.  **Faculty (Teachers)**
-2.  **Students**
+Evaluation assets live under `data/evaluation/`. Available commands include:
 
-### Faculty Flow
+```powershell
+npm run benchmark:agents
+npm run benchmark:rag
+npm run benchmark:analyze
+npm run benchmark:blind-review
+npm run benchmark:human-review
+```
 
-#### Home Page
+The benchmark path records reproducible outputs, latency, token use, estimated provider cost, grounding behavior, and human labels. Generated results should be compared with the same scenarios, rounds, provider settings, and reference labels.
 
-- Displays all classrooms created by the faculty
-- Option to create a new classroom
+## Production requirements
 
-#### Classroom Page
+Production startup validates required configuration. In addition to application secrets, production deployments must set:
 
-- Shows a list of assignments (e.g., Week 1, Week 2) in card format
-- "Create Assignment" button
-- Option to view & manage students in the class
+- `METRICS_TOKEN`
+- `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`
+- `EVALUATION_EXECUTION_MODE=queue`
 
-#### Assignment Page
+Run at least one `evaluation-worker` instance when queue mode is enabled. Configure HTTPS, secret storage, database backups, alert delivery, retention, and capacity limits in the target environment.
 
-- Displays questions & assignment configuration/settings
-- Shows students’ progress (submission history, marks, etc.)
-- Live monitoring of student activity
-- Analytics & insights
+Knowledge import is an operational action, not a public feature. It is disabled by default and requires both `KNOWLEDGE_IMPORT_ENABLED=1` and an authenticated faculty account.
 
-### Student Flow
+## Repository layout
 
-#### Home Page
+- `src/app`: pages and API routes
+- `src/server/model/dialogue`: dialogue orchestration, RAG, memory, profiles, traces, and evaluation
+- `src/server/model/neural`: Code Review, Emotion, and Navigation agents
+- `src/server/model/symbolic`: parser, CFG, rules, and symbolic diagnostics
+- `src/server/model/pipeline`: runtime harness, submission evaluation, evidence, and queue processing
+- `src/server/model/mcp`: MCP protocol and tool registry
+- `tests`: unit, integration, resilience, observability, and external-service tests
+- `scripts`: workers, readiness probes, datasets, and benchmarks
+- `ops`: Prometheus rules and observability provisioning
+- `prisma`: schema and migrations
 
-- Displays all classrooms the student is enrolled in
-- Option to join a new classroom using a join link or class code
+## Current boundary
 
-#### Classroom Page
-
-- Shows a list of assignments (e.g., Week 1, Week 2) in card format
-
-#### Assignment Page
-
-- Displays questions & instructions
-- Integrated code editor (LeetCode-style)
-- Option to run custom test cases or submit code for evaluation
-- Submission history
-- Analytics
-
----
-
-## 💡 The Idea Behind the Project
-
-In many colleges, computer labs rely on outdated manual systems that require constant faculty involvement at every stage of the lab program:
-
-1.  Faculty need to review and approve student algorithms before allowing them to proceed.
-2.  Students then write code in an outdated environment.
-3.  Faculty manually test each student’s code, often missing boundary and edge cases.
-4.  Copying among students is a significant issue.
-
-### How GradeIT Solves These Issues
-
-- **Automates the grading process**: From algorithm approval to final code evaluation.
-- **Reduces faculty workload**: No need for constant manual supervision.
-- **Provides instant feedback**: Ensures students get immediate insights into their performance.
-- **Detects plagiarism**: Prevents copying and encourages genuine learning.
-
-### Future Scope
-
-- **Algorithm Evaluation**: Automating the algorithm review process.
-- **Dynamic Viva Generation**: AI-based viva questions based on student submissions.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! If you find any bugs or want to enhance the project, feel free to raise an issue or submit a pull request to the test branch.
-
----
-
-## 📧 Contact
-
-For any inquiries or support, please reach out to [me](habeelshamsudeen9895@gmail.com).
+This repository contains a release-candidate implementation. A production release still requires environment-specific secrets, infrastructure, backup and alert policies, and a final end-to-end acceptance run. The older [`DOCUMENTATION.md`](DOCUMENTATION.md) describes the upstream GradeIT product and is retained as historical reference; this README is authoritative for the current branch.

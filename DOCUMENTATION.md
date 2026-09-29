@@ -1,4 +1,8 @@
-# GradeIT - Official Documentation
+# GradeIT - Upstream Product Documentation (Historical Reference)
+
+> This document describes the original GradeIT product and may contain legacy
+> versions, providers, and deployment commands. For the current Programming
+> Tutor architecture and verified setup, use [`README.md`](README.md).
 
 ## Table of Contents
 
