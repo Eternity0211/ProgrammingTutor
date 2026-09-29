@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2026-09-29T04:15:48.204Z",
+  "key": [
+    {
+      "id": "logic-average",
+      "candidate1": "benefit-grounding-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "memory-leak",
+      "candidate1": "D-final",
+      "candidate2": "benefit-grounding-final"
+    },
+    {
+      "id": "clean-loop",
+      "candidate1": "benefit-grounding-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "off-by-one",
+      "candidate1": "D-final",
+      "candidate2": "benefit-grounding-final"
+    },
+    {
+      "id": "division-zero",
+      "candidate1": "benefit-grounding-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "uninitialized-pointer",
+      "candidate1": "D-final",
+      "candidate2": "benefit-grounding-final"
+    },
+    {
+      "id": "quadratic-search",
+      "candidate1": "benefit-grounding-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "missing-base-case",
+      "candidate1": "benefit-grounding-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "integer-overflow",
+      "candidate1": "benefit-grounding-final",
+      "candidate2": "D-final"
+    },
+    {
+      "id": "safe-raii",
+      "candidate1": "D-final",
+      "candidate2": "benefit-grounding-final"
+    },
+    {
+      "id": "empty-input",
+      "candidate1": "D-final",
+      "candidate2": "benefit-grounding-final"
+    },
+    {
+      "id": "explicit-confidence",
+      "candidate1": "D-final",
+      "candidate2": "benefit-grounding-final"
+    }
+  ]
+}

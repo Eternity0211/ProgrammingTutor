@@ -4,6 +4,7 @@ import path from "node:path";
 
 function parseArgs(argv) {
   const values = {};
+  const positional = [];
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (token === "--baseline") values.baseline = argv[++index];
@@ -12,7 +13,19 @@ function parseArgs(argv) {
     else if (token === "--output") values.output = argv[++index];
     else if (token === "--key-output") values.keyOutput = argv[++index];
     else if (token === "--rag") values.rag = argv[++index];
+    else positional.push(token);
   }
+  const positionalNames = [
+    "baseline",
+    "candidate",
+    "scenarios",
+    "output",
+    "keyOutput",
+    "rag",
+  ];
+  positionalNames.forEach((name, index) => {
+    values[name] ??= positional[index];
+  });
   for (const required of ["baseline", "candidate", "scenarios", "output"]) {
     if (!values[required]) throw new Error(`Missing --${required}`);
   }
