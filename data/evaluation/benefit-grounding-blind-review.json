@@ -229,16 +229,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "1",
+        "codeReviewCorrectness1": 4,
+        "codeReviewCorrectness2": 4,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 4,
+        "navigationRelevance1": 5,
+        "navigationRelevance2": 3,
+        "unsupportedClaims1": 0,
+        "unsupportedClaims2": 2,
+        "notes": "Candidate1更严格依托现有证据且学习路径更聚焦；其核心修复正确，但用floor描述负奇数整数除法不严谨。Candidate2虽正确定位优先级与整数除法，却无证据推测唯一通过用例为退化输入，并声称学生已定位到具体代码行。"
       }
     },
     {
@@ -494,16 +494,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "2",
+        "codeReviewCorrectness1": 4,
+        "codeReviewCorrectness2": 5,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 5,
+        "navigationRelevance1": 3,
+        "navigationRelevance2": 5,
+        "unsupportedClaims1": 1,
+        "unsupportedClaims2": 0,
+        "notes": "两者都正确识别new[]后缺少delete[]并给出RAII方案；Candidate2明确区分符号诊断与未知测试原因，学习路径也更贴合初学者。Candidate1把泄漏直接认定为测试失败主因，超出了仅有通过/失败计数能够支持的范围。"
       }
     },
     {
@@ -722,16 +722,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "1",
+        "codeReviewCorrectness1": 4,
+        "codeReviewCorrectness2": 4,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 4,
+        "navigationRelevance1": 4,
+        "navigationRelevance2": 5,
+        "unsupportedClaims1": 0,
+        "unsupportedClaims2": 2,
+        "notes": "两者都识别出循环为O(n)且可用等差数列公式优化；Candidate2更贴合学生学习复杂度的目标，但无证据断言现有测试仅使用小n，并引入具体运算吞吐与超时判断。Candidate1较谨慎，但“任意int n都能保证终止”的表述忽略了n为INT_MAX时循环变量递增溢出的极端情况。"
       }
     },
     {
@@ -976,16 +976,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "2",
+        "codeReviewCorrectness1": 4,
+        "codeReviewCorrectness2": 5,
+        "emotionCorrectness1": 4,
+        "emotionCorrectness2": 5,
+        "navigationRelevance1": 4,
+        "navigationRelevance2": 5,
+        "unsupportedClaims1": 1,
+        "unsupportedClaims2": 0,
+        "notes": "两者都准确定位i<=a.size()导致访问a[a.size()]；Candidate2明确说明测试计数不能证明隐藏输入或具体失败原因，情绪强度也更贴近“有点困惑”。Candidate1直接称该缺陷解释了失败测试，超出汇总证据。"
       }
     },
     {
@@ -1197,16 +1197,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "1",
+        "codeReviewCorrectness1": 5,
+        "codeReviewCorrectness2": 4,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 4,
+        "navigationRelevance1": 5,
+        "navigationRelevance2": 4,
+        "unsupportedClaims1": 1,
+        "unsupportedClaims2": 1,
+        "notes": "两者都正确识别count可能为0并给出守卫与边界测试；Candidate1的分析和学习路径更完整且紧扣知识图谱。两者在情绪引导中都把唯一隐藏失败很可能归因于count==0，测试汇总本身并未提供该输入。"
       }
     },
     {
@@ -1461,16 +1461,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "2",
+        "codeReviewCorrectness1": 5,
+        "codeReviewCorrectness2": 5,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 5,
+        "navigationRelevance1": 4,
+        "navigationRelevance2": 5,
+        "unsupportedClaims1": 0,
+        "unsupportedClaims2": 0,
+        "notes": "两者都准确说明ready为false时p未初始化却被解引用，并给出安全修复；Candidate2对测试信息的使用更克制，学习路径更集中于确定赋值、分支路径和解引用前校验，因此略优。"
       }
     },
     {
@@ -1733,16 +1733,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "1",
+        "codeReviewCorrectness1": 5,
+        "codeReviewCorrectness2": 4,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 5,
+        "navigationRelevance1": 5,
+        "navigationRelevance2": 4,
+        "unsupportedClaims1": 0,
+        "unsupportedClaims2": 1,
+        "notes": "Candidate1准确区分“功能正确”和O(n^2)性能风险，哈希与排序建议均与证据吻合。Candidate2核心分析正确，但排序方案一方面声称不占额外空间、另一方面实际复制vector并承认O(n)空间，且给出的典型运算吞吐判断没有输入证据支持。"
       }
     },
     {
@@ -2001,16 +2001,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "1",
+        "codeReviewCorrectness1": 5,
+        "codeReviewCorrectness2": 4,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 5,
+        "navigationRelevance1": 5,
+        "navigationRelevance2": 4,
+        "unsupportedClaims1": 0,
+        "unsupportedClaims2": 1,
+        "notes": "两者都准确定位递归缺少基准情形；Candidate1简洁、严谨并直接对应初学者需要。Candidate2使用O(∞)描述递归深度不严谨，并给出“通常约10^5层栈帧”的外部经验阈值，文件证据未提供该结论。"
       }
     },
     {
@@ -2217,16 +2217,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "1",
+        "codeReviewCorrectness1": 5,
+        "codeReviewCorrectness2": 4,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 4,
+        "navigationRelevance1": 5,
+        "navigationRelevance2": 4,
+        "unsupportedClaims1": 0,
+        "unsupportedClaims2": 2,
+        "notes": "两者都正确解释width和height先按int相乘、之后才转换为long long；Candidate1明确不推断隐藏输入并给出直接修复。Candidate2断言唯一失败来自大数输入，并具体声称溢出后会得到包装的负值，但有符号溢出属于未定义行为，这些结论均不能由当前证据确定。"
       }
     },
     {
@@ -2448,16 +2448,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "2",
+        "codeReviewCorrectness1": 3,
+        "codeReviewCorrectness2": 5,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 5,
+        "navigationRelevance1": 2,
+        "navigationRelevance2": 5,
+        "unsupportedClaims1": 2,
+        "unsupportedClaims2": 0,
+        "notes": "Candidate2正确认可vector与RAII实现且不虚构现有缺陷，巩固路径与学生迁移到标准容器的背景一致。Candidate1把负数经size_t转换和分配失败列为主要风险与学生弱点，但文件没有调用方、输入域或超大规模证据，导致审查和导航偏离当前样例。"
       }
     },
     {
@@ -2682,16 +2682,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "2",
+        "codeReviewCorrectness1": 4,
+        "codeReviewCorrectness2": 5,
+        "emotionCorrectness1": 4,
+        "emotionCorrectness2": 5,
+        "navigationRelevance1": 5,
+        "navigationRelevance2": 5,
+        "unsupportedClaims1": 2,
+        "unsupportedClaims2": 0,
+        "notes": "两者都准确识别空vector调用front()的未定义行为并给出异常或optional方案；Candidate2明确区分符号证据与未知隐藏测试。Candidate1无证据断言失败测试就是空输入且其余三个测试都含元素，因此Candidate2更严谨。"
       }
     },
     {
@@ -2916,16 +2916,16 @@
         }
       },
       "annotation": {
-        "betterCandidate": "",
-        "codeReviewCorrectness1": null,
-        "codeReviewCorrectness2": null,
-        "emotionCorrectness1": null,
-        "emotionCorrectness2": null,
-        "navigationRelevance1": null,
-        "navigationRelevance2": null,
-        "unsupportedClaims1": null,
-        "unsupportedClaims2": null,
-        "notes": ""
+        "betterCandidate": "2",
+        "codeReviewCorrectness1": 5,
+        "codeReviewCorrectness2": 5,
+        "emotionCorrectness1": 5,
+        "emotionCorrectness2": 5,
+        "navigationRelevance1": 4,
+        "navigationRelevance2": 5,
+        "unsupportedClaims1": 1,
+        "unsupportedClaims2": 1,
+        "notes": "两者都准确识别best初始化为0会使全负数输入失败，也都正确识别学生明确表达的自信。Candidate2更简洁并紧扣初始化策略与回归验证；两者都把测试汇总进一步解释为缺少全负数回归覆盖，但文件并未展示具体测试内容。"
       }
     }
   ],

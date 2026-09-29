@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-09-29T04:34:35.625Z",
+  "versions": {
+    "benefit-grounding-final": {
+      "codeReviewCorrectness": 4.833,
+      "emotionCorrectness": 5,
+      "navigationRelevance": 4.917,
+      "unsupportedClaimsAverage": 0.167,
+      "wins": 12,
+      "ties": 0
+    },
+    "D-final": {
+      "codeReviewCorrectness": 4.083,
+      "emotionCorrectness": 4.5,
+      "navigationRelevance": 3.833,
+      "unsupportedClaimsAverage": 1.333,
+      "wins": 0,
+      "ties": 0
+    }
+  },
+  "rag": null
+}
