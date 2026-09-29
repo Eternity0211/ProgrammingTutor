@@ -2,3 +2,9 @@ node_modules
 .next
 .git
 .env
+.npm-cache
+.data
+.idea
+coverage
+temp-dist
+npm-debug.log*
