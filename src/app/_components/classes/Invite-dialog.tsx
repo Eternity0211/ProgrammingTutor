@@ -7,6 +7,8 @@ import {
 } from "@/app/_components/ui/dialog";
 import { Button } from "@/app/_components/ui/button";
 import { Input } from "@/app/_components/ui/input";
+import { ROUTES } from "@/config/route";
+import { absoluteUrl } from "@/lib/utils";
 
 interface InvitePeopleDialogProps {
   open: boolean;
@@ -19,7 +21,7 @@ export default function InvitePeopleDialog({
   onOpenChange,
   classCode,
 }: InvitePeopleDialogProps) {
-  const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/api/join?code=${classCode}`;
+  const inviteLink = absoluteUrl(ROUTES.JOIN_CLASS(classCode));
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">

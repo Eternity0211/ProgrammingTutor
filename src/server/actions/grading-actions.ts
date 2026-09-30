@@ -306,6 +306,9 @@ export const updateStudentScore = async (
       },
       include: {
         metrics: true,
+        classroom: {
+          select: { code: true },
+        },
       },
     });
 
@@ -346,7 +349,9 @@ export const updateStudentScore = async (
       // Update submission final score
       await updateSubmissionStatus(codeSubmission.submissionId);
 
-      revalidatePath(ROUTES.ASSIGNMENT_GRADING(assignment.id));
+      revalidatePath(
+        ROUTES.ASSIGNMENT_GRADING(assignment.classroom.code, assignment.id),
+      );
     }
 
     return { success: true };

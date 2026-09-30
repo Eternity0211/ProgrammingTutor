@@ -31,6 +31,8 @@ import { toast } from "sonner";
 import { Role } from "@prisma/client";
 import { deleteClass } from "@/server/actions/class-actions";
 import { useRouter } from "next/navigation";
+import { ROUTES } from "@/config/route";
+import { absoluteUrl } from "@/lib/utils";
 
 interface ClassSettingsTabProps {
   classData: UserClassroom;
@@ -42,6 +44,7 @@ export function ClassSettingsTab({ classData, role }: ClassSettingsTabProps) {
   const [section, setSection] = useState(classData.section);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const inviteLink = absoluteUrl(ROUTES.JOIN_CLASS(classData.code));
 
   const handleCopy = (text: string) => {
     copyToClipboard(text);
@@ -167,7 +170,7 @@ export function ClassSettingsTab({ classData, role }: ClassSettingsTabProps) {
                 <Button
                   variant="outline"
                   className="gap-1"
-                  onClick={() => handleCopy(classData.inviteLink)}
+                  onClick={() => handleCopy(inviteLink)}
                 >
                   <Link className="h-4 w-4" />
                   <span>Copy Link</span>

@@ -31,7 +31,10 @@ export const createClass = async (data: classCreation) => {
       code = generateClassroomCode();
     } while (!(await isCodeUnique(code)));
 
-    const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}${ROUTES.INVITE(code)}`;
+    const inviteLink = new URL(
+      ROUTES.JOIN_CLASS(code),
+      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    ).toString();
     const newclass = await prisma.classroom.create({
       data: {
         facultyId: faculty.id,

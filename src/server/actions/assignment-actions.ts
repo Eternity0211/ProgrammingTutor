@@ -267,8 +267,8 @@ export const deleteAssignment = async (formData: {
     });
 
     revalidatePath(ROUTES.CLASS_DETAILS(classCode));
-    revalidatePath(ROUTES.ASSIGNMENT_DETAILS(assignmentId));
-    revalidatePath(ROUTES.ASSIGNMENT_GRADING(assignmentId));
+    revalidatePath(ROUTES.ASSIGNMENT_DETAILS(classCode, assignmentId));
+    revalidatePath(ROUTES.ASSIGNMENT_GRADING(classCode, assignmentId));
 
     return { status: "success" };
   } catch (error) {

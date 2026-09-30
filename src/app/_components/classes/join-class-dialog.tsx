@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/app/_components/ui/button";
 import {
   Dialog,
@@ -21,24 +21,34 @@ import { joinClassUsingCode } from "@/server/actions/class-actions";
 interface JoinClassDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialCode?: string;
 }
 
-export function JoinClassDialog({ open, onOpenChange }: JoinClassDialogProps) {
+export function JoinClassDialog({
+  open,
+  onOpenChange,
+  initialCode,
+}: JoinClassDialogProps) {
   const [loading, setLoading] = useState(false);
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(initialCode ?? "");
   const router = useRouter();
+
+  useEffect(() => {
+    if (initialCode) setCode(initialCode);
+  }, [initialCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const result = await joinClassUsingCode(code);
+      const normalizedCode = code.trim();
+      const result = await joinClassUsingCode(normalizedCode);
 
       if (result.status === "success") {
         toast.success("Joined Class Successfully!");
         onOpenChange(false);
         setCode("");
-        router.push(`/classes/${code}`);
+        router.push(`/classes/${normalizedCode}`);
       } else {
         toast.warning("Failed to join class");
       }
@@ -66,6 +76,7 @@ export function JoinClassDialog({ open, onOpenChange }: JoinClassDialogProps) {
               id="code"
               placeholder="Enter 6-digit class code"
               className="border-border text-lg tracking-wider"
+              value={code}
               onChange={(e) => setCode(e.target.value)}
             />
           </div>

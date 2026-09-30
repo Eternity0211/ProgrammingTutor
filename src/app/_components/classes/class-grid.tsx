@@ -16,12 +16,14 @@ import { ClassGridSkeleton } from "./skeleton/class-grid-skeleton";
 export function ClassGrid({
   classes,
   role,
+  initialJoinCode,
 }: {
   classes: UserClassroom[];
   role: Role;
+  initialJoinCode?: string;
 }) {
   const [createOpen, setCreateOpen] = useState(false);
-  const [joinOpen, setJoinOpen] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(Boolean(initialJoinCode));
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -79,7 +81,11 @@ export function ClassGrid({
       </div>
 
       <CreateClassDialog open={createOpen} onOpenChange={setCreateOpen} />
-      <JoinClassDialog open={joinOpen} onOpenChange={setJoinOpen} />
+      <JoinClassDialog
+        open={joinOpen}
+        onOpenChange={setJoinOpen}
+        initialCode={initialJoinCode}
+      />
     </>
   );
 }

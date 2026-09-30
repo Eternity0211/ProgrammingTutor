@@ -19,7 +19,11 @@ export const metadata: Metadata = {
   description: "Manage and access your coding classes",
 };
 
-export default async function ClassesPage() {
+export default async function ClassesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ join?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) {
     return (
@@ -28,6 +32,8 @@ export default async function ClassesPage() {
       </div>
     );
   }
+  const { join } = await searchParams;
+  const initialJoinCode = join?.trim().slice(0, 32) || undefined;
   const { classes, role } = await getUserClasses();
   return (
     <div className="flex flex-col gap-8 p-6 py-0">
@@ -45,7 +51,11 @@ export default async function ClassesPage() {
           </Link>
         )}
       </div>
-      <ClassGrid classes={classes || []} role={(role as Role) || "STUDENT"} />
+      <ClassGrid
+        classes={classes || []}
+        role={(role as Role) || "STUDENT"}
+        initialJoinCode={role === "STUDENT" ? initialJoinCode : undefined}
+      />
     </div>
   );
 }
