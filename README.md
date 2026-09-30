@@ -155,6 +155,11 @@ npm run benchmark:blind-review
 npm run benchmark:human-review
 ```
 
+The data catalog and separation rules are documented in
+[`data/README.md`](data/README.md). Rebuild the 36-case, leakage-checked neural
+regression corpus with `npm run build:dataset`; CI rejects uncommitted generated
+changes or incomplete split/category coverage.
+
 The benchmark path records reproducible outputs, latency, token use, estimated provider cost, grounding behavior, and human labels. Generated results should be compared with the same scenarios, rounds, provider settings, and reference labels.
 
 ## Production requirements

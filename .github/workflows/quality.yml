@@ -31,6 +31,10 @@ jobs:
         run: docker run --rm --entrypoint promtool -v "$PWD/ops:/etc/programming-tutor:ro" prom/prometheus:v3.15.0 check rules /etc/programming-tutor/prometheus-alerts.yml
       - name: Validate OpenTelemetry Collector configuration
         run: docker run --rm -v "$PWD/ops/observability/otel-collector.yml:/etc/otelcol-contrib/config.yml:ro" otel/opentelemetry-collector-contrib:0.161.0 validate --config=/etc/otelcol-contrib/config.yml
+      - name: Regenerate versioned neural dataset
+        run: npm run build:dataset
+      - name: Verify generated dataset is committed
+        run: git diff --exit-code -- data/neural
       - run: npm run validate:dataset:strict
       - run: npm run lint:multi-agent
       - run: npm run typecheck

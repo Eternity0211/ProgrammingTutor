@@ -1,34 +1,67 @@
 {
   "project_name": "ProgrammingTutor",
-  "dataset_version": "1.0.0",
-  "last_updated": "2026-01-27",
-  "source": "curated symbolic-analysis teaching examples",
+  "dataset_version": "2.0.0",
+  "dataset_revision": "2026.09.30.1",
+  "last_updated": "2026-09-30",
+  "source": "curated symbolic-analysis regression cases",
+  "generation_command": "npm run build:dataset",
   "languages": ["cpp"],
-  "error_types": ["ArrayOutOfBounds", "MemoryLeak", "InfiniteRecursion", "LogicError"],
-  "difficulty_levels": ["beginner", "intermediate"],
-  "dataset_revision": "2026.09.23.1",
+  "error_types": [
+    "ArrayOutOfBounds",
+    "MemoryLeak",
+    "InfiniteRecursion",
+    "LogicError",
+    "NullDereference",
+    "DivisionByZero",
+    "UseAfterFree",
+    "DoubleFree",
+    "UninitializedVariable",
+    "IntegerOverflow",
+    "FormatString",
+    "MissingReturn"
+  ],
+  "difficulty_levels": ["beginner", "intermediate", "advanced"],
   "knowledge_concept_ids": {
     "ArrayOutOfBounds": "cpp.memory.array_bounds",
     "MemoryLeak": "cpp.memory.leak",
     "InfiniteRecursion": "cpp.control.recursion",
-    "LogicError": "cpp.logic.operator_precedence"
+    "LogicError": "cpp.logic.operator_precedence",
+    "NullDereference": "cpp.memory.null_dereference",
+    "DivisionByZero": "cpp.arithmetic.division_by_zero",
+    "UseAfterFree": "cpp.memory.use_after_free",
+    "DoubleFree": "cpp.memory.double_free",
+    "UninitializedVariable": "cpp.memory.uninitialized",
+    "IntegerOverflow": "cpp.arithmetic.overflow",
+    "FormatString": "cpp.io.format_string",
+    "MissingReturn": "cpp.control.missing_return"
   },
   "statistics": {
-    "total_samples": 4,
-    "language_distribution": {
-      "cpp": 4,
-      "python": 0
-    },
+    "total_samples": 36,
+    "split_distribution": { "train": 12, "val": 12, "test": 12 },
     "error_categories": {
-      "ArrayOutOfBounds": 1,
-      "MemoryLeak": 1,
-      "InfiniteRecursion": 1,
-      "LogicError": 1
+      "ArrayOutOfBounds": 3,
+      "MemoryLeak": 3,
+      "InfiniteRecursion": 3,
+      "LogicError": 3,
+      "NullDereference": 3,
+      "DivisionByZero": 3,
+      "UseAfterFree": 3,
+      "DoubleFree": 3,
+      "UninitializedVariable": 3,
+      "IntegerOverflow": 3,
+      "FormatString": 3,
+      "MissingReturn": 3
     }
   },
   "data_schema": {
+    "id": "Stable sample identifier",
+    "language": "Source language",
+    "error_type": "Expected diagnostic category",
+    "difficulty": "beginner, intermediate, or advanced",
+    "concept_id": "Shared knowledge concept identifier",
+    "source": "Data provenance",
     "instruction": "Prompt template for code review",
-    "input": "Combined student code and symbolic diagnostic tags",
-    "output": "Causal feedback explanation"
+    "input": "Student code and symbolic diagnostic",
+    "output": "Causal teaching feedback"
   }
 }

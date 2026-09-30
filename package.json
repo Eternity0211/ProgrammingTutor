@@ -12,6 +12,7 @@
     "postinstall": "prisma generate",
     "docker:start": "npx prisma migrate deploy && npm run dev",
     "db:seed": "ts-node --project tsconfig.seed.json --transpile-only prisma/seed.ts",
+    "build:dataset": "node scripts/build-neural-dataset.mjs",
     "services:wait": "node scripts/wait-for-external-services.mjs",
     "worker:evaluations": "tsx scripts/evaluation-worker.ts",
     "format": "prettier --write .",
