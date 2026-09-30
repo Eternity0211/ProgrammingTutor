@@ -21,7 +21,6 @@ import { Badge } from "@/app/_components/ui/badge";
 import { getStudentFeedbackHistory } from "@/server/actions/submission-actions";
 import { SkillRadar } from "./_components/skill-radar";
 import Link from "next/link";
-import { generateLearningNavigation } from "@/server/model/neural/navigationAgent";
 import type {
   LearningPathStep,
   RecommendedExercise,
@@ -115,16 +114,28 @@ export default async function ProfilePage() {
     .slice(0, 2)
     .map((item) => item.subject);
 
-  const fullNavigation = await generateLearningNavigation({
-    codeReviewResult: `学生薄弱点：${weakTopics.join("、")}`,
-    knowledgeGraph: `C++ 6大维度知识图谱：指针/引用、内存管理、STL容器、面向对象、递归算法、异常处理`,
-  });
-
-  const learningPath = fullNavigation?.learning_navigation.learning_path || [];
-  const latestRecommendations =
-    fullNavigation?.learning_navigation.recommended_exercises || [];
-  const weaknesses =
-    fullNavigation?.learning_navigation.weaknesses || weakTopics;
+  const storedTopics = Array.from(
+    new Set(
+      feedbackHistory
+        .map((item) => item.navigatorTips)
+        .filter((topic) => topic && topic !== "暂无学习建议"),
+    ),
+  );
+  const pathTopics = storedTopics.length > 0 ? storedTopics : weakTopics;
+  const learningPath: LearningPathStep[] = pathTopics.map((topic, index) => ({
+    step: index + 1,
+    topic,
+    duration: "20-30 分钟",
+    resources: ["复习相关概念", "完成一道针对性练习"],
+  }));
+  const latestRecommendations = Array.from(
+    new Map<string, RecommendedExercise>(
+      feedbackHistory
+        .flatMap((item) => item.recommendations as RecommendedExercise[])
+        .map((item) => [item.url || item.id, item] as const),
+    ).values(),
+  ).slice(0, 3);
+  const weaknesses = weakTopics;
 
   return (
     <div className="flex flex-col gap-8 p-6 py-0 pb-10">

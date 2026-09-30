@@ -139,9 +139,14 @@ npm run test:resilience
 npm run test:ai-quality
 npm run test:multi-agent
 npm run test:integration:external
+npm run test:e2e:authenticated
 ```
 
 The external integration suite is skipped unless `RUN_EXTERNAL_INTEGRATION=1`; it performs real PostgreSQL, Neo4j, and Judge0 requests. GitHub Actions starts disposable service containers and runs this suite on branch pushes and scheduled checks.
+
+The authenticated browser suite expects `npm run db:seed` to have completed and
+checks both faculty and student journeys against the versioned demo dataset. It
+runs in the real-service CI job as well as locally.
 
 ## Evaluation and benefit measurement
 

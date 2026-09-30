@@ -98,6 +98,27 @@ jobs:
       - name: Apply the real PostgreSQL schema
         run: npx prisma migrate deploy
       - run: npm run test:integration:external
+      - name: Seed authenticated acceptance data
+        run: npm run db:seed
+        env:
+          DEMO_PASSWORD: ci-demo-password
+      - name: Build application for authenticated acceptance tests
+        run: npm run build
+        env:
+          AUTH_SECRET: ci-only-secret-at-least-32-characters
+          DEEPSEEK_API_KEY: ci-placeholder
+          JUDGE0_API_KEY: ci-placeholder
+          JUDGE0_API_HOST: localhost
+          METRICS_TOKEN: ci-placeholder
+          OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://localhost:4318/v1/traces
+          EVALUATION_EXECUTION_MODE: queue
+      - name: Install browser for authenticated acceptance tests
+        run: npx playwright install --with-deps chromium
+      - name: Run seeded faculty and student journeys
+        run: npm run test:e2e:authenticated
+        env:
+          AUTH_SECRET: ci-only-secret-at-least-32-characters
+          DEMO_PASSWORD: ci-demo-password
       - name: Print service diagnostics
         if: always()
         run: docker compose ps -a && docker compose logs --no-color --tail=200 db neo4j judge0-server judge0-worker
