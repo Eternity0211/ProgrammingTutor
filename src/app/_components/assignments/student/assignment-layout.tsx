@@ -14,10 +14,15 @@ import { useFullScreen } from "@/hooks/use-fullscreen";
 import { useCodeRunner } from "@/hooks/use-code-runner";
 import { useDebounce } from "@uidotdev/usehooks";
 import { AIFeedbackPanel } from "./ai-feedback-panel";
+import {
+  buildAssignmentQuestionUrl,
+  resolveAssignmentQuestionIndex,
+} from "@/lib/assignment-question";
 
 interface AssignmentLayoutProps {
   assignment: AssignmentById;
   classCode: string;
+  initialQuestionId?: string;
 }
 
 type DraftSyncState = "loading" | "saving" | "saved" | "error";
@@ -40,8 +45,14 @@ function getDraftStorageKey(assignmentId: string) {
 export function AssignmentLayout({
   assignment,
   classCode,
+  initialQuestionId,
 }: AssignmentLayoutProps) {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(() =>
+    resolveAssignmentQuestionIndex(
+      assignment.questions.map((question) => question.id),
+      initialQuestionId,
+    ),
+  );
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [codeByQuestion, setCodeByQuestion] = useState<Record<string, string>>(
     {},
@@ -77,6 +88,19 @@ export function AssignmentLayout({
   });
 
   const showFullscreenAlert = assignment.fullScreenEnforcement && !isFullscreen;
+
+  const selectQuestion = (index: number) => {
+    const question = assignment.questions[index];
+    if (!question) return;
+
+    setCurrentQuestionIndex(index);
+    const nextUrl = buildAssignmentQuestionUrl(
+      window.location.pathname,
+      window.location.search,
+      question.id,
+    );
+    window.history.replaceState(window.history.state, "", nextUrl);
+  };
 
   const draftStatusText =
     draftSyncState === "loading"
@@ -321,7 +345,7 @@ export function AssignmentLayout({
             <QuestionNav
               questions={assignment.questions}
               currentIndex={currentQuestionIndex}
-              onSelect={setCurrentQuestionIndex}
+              onSelect={selectQuestion}
               questionStatuses={questionStatuses}
             />
             <div className="flex items-center gap-2">

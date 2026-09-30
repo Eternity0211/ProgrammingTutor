@@ -15,10 +15,13 @@ export const metadata: Metadata = {
 
 export default async function AssignmentPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ assignmentId: string; classCode: string }>;
+  searchParams: Promise<{ question?: string }>;
 }) {
   const { assignmentId, classCode } = await params;
+  const { question: requestedQuestionId } = await searchParams;
   const { assignment } = await getAssignmentById(assignmentId);
   const { role } = await getUserRole();
   const initialStudentData: StudentProgress[] =
@@ -40,7 +43,11 @@ export default async function AssignmentPage({
 
   return (
     <div className="relative min-h-screen">
-      <AssignmentLayout assignment={assignment} classCode={classCode} />
+      <AssignmentLayout
+        assignment={assignment}
+        classCode={classCode}
+        initialQuestionId={requestedQuestionId}
+      />
     </div>
   );
 }

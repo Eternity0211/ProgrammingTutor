@@ -41,4 +41,21 @@ test.describe("seeded authenticated journeys", () => {
     await page.getByRole("link", { name: "个人中心" }).click();
     await expect(page).toHaveURL(/\/profile$/);
   });
+
+  test("student recommendation deep links select the requested question", async ({
+    page,
+  }) => {
+    await login(page, "anna.student@gradeit.local");
+    await page.goto(
+      "/classes/DEMODSA/demo-assignment-containers?question=demo-question-queue",
+    );
+
+    await expect(page).toHaveURL(/question=demo-question-queue/);
+    await expect(
+      page.getByRole("button", { name: /2 Queue simulator/ }),
+    ).toHaveClass(/bg-accent/);
+    await expect(
+      page.getByText("Process push, pop, and front operations."),
+    ).toBeVisible();
+  });
 });
