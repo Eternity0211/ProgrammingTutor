@@ -7,7 +7,7 @@ import AnimatedLine from "../../animations/AnimatedLine";
 
 export default function WorkflowSection() {
   return (
-    <section className="py-24 flex justify-center  bg-accent">
+    <section className="py-24 flex justify-center bg-accent" id="how-it-works">
       <div className="container px-6">
         <AnimatedSection>
           <div className="mx-auto max-w-3xl text-center mb-16">

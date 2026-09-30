@@ -34,7 +34,7 @@ export default function SiteHeader() {
 
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-foreground">
             <Link
-              href="#features"
+              href="/#features"
               className="relative group px-3 py-2 rounded-md transition-all duration-200 hover:text-main-600 hover:bg-main-50 dark:hover:bg-main-900/20"
             >
               <span className="relative z-10">Features</span>
@@ -45,7 +45,7 @@ export default function SiteHeader() {
               />
             </Link>
             <Link
-              href="#how-it-works"
+              href="/#how-it-works"
               className="relative group px-3 py-2 rounded-md transition-all duration-200 hover:text-main-600 hover:bg-main-50 dark:hover:bg-main-900/20"
             >
               <span className="relative z-10">How It Works</span>
@@ -56,7 +56,7 @@ export default function SiteHeader() {
               />
             </Link>
             <Link
-              href="#contact"
+              href="/#contact"
               className="relative group px-3 py-2 rounded-md transition-all duration-200 hover:text-main-600 hover:bg-main-50 dark:hover:bg-main-900/20"
             >
               <span className="relative z-10">Contact</span>
@@ -111,7 +111,7 @@ export default function SiteHeader() {
             >
               <div className="flex flex-col gap-1">
                 <Link
-                  href="#features"
+                  href="/#features"
                   className="group relative px-3 py-2 rounded-md transition-all duration-200 hover:text-main-600 hover:bg-main-50 dark:hover:bg-main-900/20"
                 >
                   <span className="relative z-10 font-medium">Features</span>
@@ -122,7 +122,7 @@ export default function SiteHeader() {
                   />
                 </Link>
                 <Link
-                  href="#how-it-works"
+                  href="/#how-it-works"
                   className="group relative px-3 py-2 rounded-md transition-all duration-200 hover:text-main-600 hover:bg-main-50 dark:hover:bg-main-900/20"
                 >
                   <span className="relative z-10 font-medium">
@@ -135,7 +135,7 @@ export default function SiteHeader() {
                   />
                 </Link>
                 <Link
-                  href="#contact"
+                  href="/#contact"
                   className="group relative px-3 py-2 rounded-md transition-all duration-200 hover:text-main-600 hover:bg-main-50 dark:hover:bg-main-900/20"
                 >
                   <span className="relative z-10 font-medium">Contact</span>

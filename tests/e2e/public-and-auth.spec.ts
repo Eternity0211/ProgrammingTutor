@@ -54,3 +54,32 @@ test("liveness endpoint is available to deployment probes", async ({
   expect(response.ok()).toBe(true);
   await expect(response.json()).resolves.toMatchObject({ status: "alive" });
 });
+
+test("public legal pages are reachable without authentication", async ({
+  page,
+}) => {
+  await page.goto("/privacy");
+  await expect(
+    page.getByRole("heading", { name: "Privacy Policy", level: 1 }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/privacy$/);
+
+  await page.goto("/terms");
+  await expect(
+    page.getByRole("heading", { name: "Terms of Service", level: 1 }),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/terms$/);
+});
+
+test("landing navigation contains no placeholder links", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator("#features")).toBeAttached();
+  await expect(page.locator("#how-it-works")).toBeAttached();
+  await expect(page.locator("#contact")).toBeAttached();
+
+  const placeholderLinks = await page
+    .locator('a[href="#"], a:not([href])')
+    .count();
+  expect(placeholderLinks).toBe(0);
+});
