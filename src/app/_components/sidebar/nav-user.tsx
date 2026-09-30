@@ -26,6 +26,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Settings01Icon, UnfoldMoreIcon } from "hugeicons-react";
 import { signOut } from "next-auth/react";
+import Link from "next/link";
+import { ROUTES } from "@/config/route";
 
 const NavUser = memo(function NavUser({
   user,
@@ -94,12 +96,12 @@ const NavUser = memo(function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <a href="/settings">
-                <DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={ROUTES.SETTINGS}>
                   <Settings01Icon />
                   Settings
-                </DropdownMenuItem>
-              </a>
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem

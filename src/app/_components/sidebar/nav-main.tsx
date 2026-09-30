@@ -15,10 +15,10 @@ import {
   SidebarMenuSubItem,
 } from "@/app/_components/ui/sidebar";
 import { getIconComponent } from "@/config/icons";
+import { isNavigationPathActive } from "@/lib/navigation";
 import { ArrowRight01Icon } from "hugeicons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
 export function NavMain({
   items,
@@ -37,11 +37,6 @@ export function NavMain({
   label?: string;
 }) {
   const pathname = usePathname();
-  const [activeItem, setActiveItem] = useState<string>(pathname);
-
-  useEffect(() => {
-    setActiveItem(pathname);
-  }, [pathname]);
 
   return (
     <>
@@ -62,7 +57,15 @@ export function NavMain({
               >
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={item.title}>
+                    <SidebarMenuButton
+                      tooltip={item.title}
+                      isActive={
+                        isNavigationPathActive(pathname, item.url) ||
+                        item.items.some((subItem) =>
+                          isNavigationPathActive(pathname, subItem.url),
+                        )
+                      }
+                    >
                       {item.icon && <IconComponent size={20} />}
                       <span className="ml-1 text-sm font-medium">
                         {item.title}
@@ -77,8 +80,10 @@ export function NavMain({
                           <SidebarMenuButton
                             asChild
                             tooltip={subItem.title}
-                            isActive={activeItem === subItem.url}
-                            onClick={() => setActiveItem(subItem.url)}
+                            isActive={isNavigationPathActive(
+                              pathname,
+                              subItem.url,
+                            )}
                           >
                             <Link href={subItem.url}>
                               <span className="text-sm font-medium">
@@ -96,9 +101,8 @@ export function NavMain({
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
                   asChild
-                  isActive={activeItem === item.url}
+                  isActive={isNavigationPathActive(pathname, item.url)}
                   tooltip={item.title}
-                  onClick={() => setActiveItem(item.url)}
                 >
                   <Link href={item.url}>
                     {item.icon && <IconComponent size={20} />}

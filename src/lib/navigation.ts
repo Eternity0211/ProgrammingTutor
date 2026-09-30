@@ -20,3 +20,14 @@ export function resolveSafeCallbackPath(
     return ROUTES.CLASSES;
   }
 }
+
+export function isNavigationPathActive(
+  pathname: string,
+  targetPath: string,
+): boolean {
+  if (targetPath === "/") return pathname === targetPath;
+  const normalizedTarget = targetPath.replace(/\/+$/, "");
+  return (
+    pathname === normalizedTarget || pathname.startsWith(`${normalizedTarget}/`)
+  );
+}
