@@ -72,8 +72,16 @@ Prepare the database and start the application:
 
 ```powershell
 npx prisma migrate deploy
+npm run db:seed
 npm run dev
 ```
+
+The idempotent demo seed creates two teachers, four students, three classes,
+five assignments, six C++ questions with test cases, representative
+submissions, student profiles, and conversation history. All demo accounts use
+`DEMO_PASSWORD` (default: `GradeitDemo!2026`). The seed refuses to run in
+production unless `ALLOW_DEMO_SEED=1` is intentionally supplied for a
+disposable environment.
 
 The application is available at `http://localhost:3000` by default.
 
