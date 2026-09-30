@@ -23,13 +23,15 @@ test("protected classroom route redirects anonymous users to login", async ({
   await expect(page.getByRole("button", { name: "登录" })).toBeVisible();
 });
 
-test("login form requires a role and credentials", async ({ page }) => {
+test("login form requires credentials without a role selector", async ({
+  page,
+}) => {
   await page.goto("/login");
 
   const submit = page.getByRole("button", { name: "登录" });
   await expect(submit).toBeDisabled();
+  await expect(page.getByText("身份", { exact: true })).toHaveCount(0);
 
-  await page.getByRole("button", { name: "学生" }).click();
   await page.getByLabel("邮箱").fill("student@example.com");
   await page.getByLabel("密码").fill("example-password");
   await expect(submit).toBeEnabled();

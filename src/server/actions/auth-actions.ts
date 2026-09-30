@@ -4,13 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { Role } from "@prisma/client";
 
-export async function checkEmailExists(email: string): Promise<boolean> {
-  const user = await prisma.user.findUnique({
-    where: { email },
-  });
-  return !!user;
-}
-
 export async function registerUser(
   name: string,
   email: string,
