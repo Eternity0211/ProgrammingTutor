@@ -17,6 +17,9 @@ test("protected classroom route redirects anonymous users to login", async ({
   await page.goto("/classes");
 
   await expect(page).toHaveURL(/\/login/);
+  const callbackUrl = new URL(page.url()).searchParams.get("callbackUrl");
+  expect(callbackUrl).toBeTruthy();
+  expect(new URL(callbackUrl!).pathname).toBe("/classes");
   await expect(page.getByRole("button", { name: "登录" })).toBeVisible();
 });
 

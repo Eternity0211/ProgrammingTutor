@@ -18,6 +18,7 @@ import {
 import { Role } from "@prisma/client";
 import { ROUTES } from "@/config/route";
 import { checkEmailExists } from "@/server/actions/auth-actions";
+import { resolveSafeCallbackPath } from "@/lib/navigation";
 
 export default function LoginPage() {
   const [role, setRole] = useState<Role | null>(null);
@@ -53,7 +54,12 @@ export default function LoginPage() {
       if (result?.error) {
         setError("邮箱或密码错误");
       } else {
-        router.push(ROUTES.CLASSES);
+        const callbackUrl = new URLSearchParams(window.location.search).get(
+          "callbackUrl",
+        );
+        router.replace(
+          resolveSafeCallbackPath(callbackUrl, window.location.origin),
+        );
         router.refresh();
       }
     } catch {
