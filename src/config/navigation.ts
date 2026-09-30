@@ -5,20 +5,24 @@ import { getUserClasses } from "@/server/actions/class-actions";
 
 export const getNavigationConfig = async (): Promise<{
   navGroups: NavGroupInterface[];
+  status: "ready" | "unavailable";
 }> => {
   try {
-    if (process.env.NODE_ENV === "development") {
+    const response = await getUserClasses();
+    if (response.status !== "success") {
       return {
         navGroups: [],
+        status: "unavailable",
       };
     }
-    const response = await getUserClasses();
+
     const classes: UserClassroom[] = response.classes || [];
     const iconMap: Record<string, string> = {};
     classes.forEach((classroom) => {
       iconMap[classroom.code] = getRandomEducationIcon();
     });
     return {
+      status: "ready",
       navGroups: classes.map((classroom) => ({
         title: classroom.name,
         url: `/classes/${classroom.code}`,
@@ -29,14 +33,8 @@ export const getNavigationConfig = async (): Promise<{
   } catch (error) {
     console.error("Error fetching navigation config:", error);
     return {
-      navGroups: [
-        {
-          title: "Home",
-          url: "/",
-          icon: "UserAccountIcon",
-          isActive: true,
-        },
-      ],
+      navGroups: [],
+      status: "unavailable",
     };
   }
 };

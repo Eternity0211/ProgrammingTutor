@@ -22,12 +22,14 @@ export default async function DashboardLayout({
 }) {
   const sessionData = await auth();
   let navGroups: NavGroupInterface[] = [];
+  let navigationUnavailable = false;
   let isoOnboarded = false;
   let userRole: string | null = null;
 
   if (sessionData?.user) {
     const config = await getNavigationConfig();
     navGroups = config.navGroups;
+    navigationUnavailable = config.status === "unavailable";
     isoOnboarded = await isUserOnboarded(sessionData.user.id);
 
     const dbUser = await prisma.user.findUnique({
@@ -44,7 +46,10 @@ export default async function DashboardLayout({
       <SessionProvider>
         {sessionData && <OnboardingCheck onboarded={isoOnboarded} />}
         <SidebarProvider>
-          <AppSidebar navGroups={navGroups} />
+          <AppSidebar
+            navGroups={navGroups}
+            navigationUnavailable={navigationUnavailable}
+          />
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
               <div className="flex items-center gap-2 px-4">

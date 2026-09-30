@@ -8,7 +8,13 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
   useSidebar,
 } from "@/app/_components/ui/sidebar";
@@ -16,13 +22,19 @@ import { isValidUrl, titleCase } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { useClientSession } from "@/hooks/use-auth-session";
 import { NavGroupInterface } from "@/lib/types/config-types";
-import { Code } from "lucide-react";
+import { ROUTES } from "@/config/route";
+import { BookOpen, CircleAlert, Code } from "lucide-react";
 import Link from "next/link";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   navGroups: NavGroupInterface[];
+  navigationUnavailable?: boolean;
 }
-export function AppSidebar({ navGroups, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  navGroups,
+  navigationUnavailable = false,
+  ...props
+}: AppSidebarProps) {
   const { resolvedTheme } = useTheme();
   const { open, isMobile } = useSidebar();
   const { user: sessionUser } = useClientSession();
@@ -73,7 +85,42 @@ export function AppSidebar({ navGroups, ...props }: AppSidebarProps) {
           </div>
         </SidebarHeader>
         <SidebarContent>
-          <NavMain items={navGroups} label="Classes" />
+          {navGroups.length > 0 ? (
+            <NavMain items={navGroups} label="Classes" />
+          ) : (
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-xs font-bold text-sidebar-primary-foreground">
+                Classes
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={
+                        navigationUnavailable
+                          ? "Class list unavailable"
+                          : "View classes"
+                      }
+                    >
+                      <Link href={ROUTES.CLASSES}>
+                        {navigationUnavailable ? (
+                          <CircleAlert size={20} />
+                        ) : (
+                          <BookOpen size={20} />
+                        )}
+                        <span className="ml-1 text-sm font-medium">
+                          {navigationUnavailable
+                            ? "Class list unavailable"
+                            : "View classes"}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
         </SidebarContent>
         <SidebarFooter className="flex flex-col gap-2">
           {userProfile && (
