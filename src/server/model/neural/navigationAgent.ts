@@ -72,6 +72,7 @@ export interface RecommendedExercise {
   difficulty: "入门" | "初级" | "中级" | "高级";
   purpose: string;
   url: string;
+  source?: "classroom" | "leetcode";
 }
 
 export interface LearningPathStep {

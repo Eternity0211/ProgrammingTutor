@@ -25,9 +25,15 @@ import type {
   LearningPathStep,
   RecommendedExercise,
 } from "@/server/model/neural/navigationAgent";
-import { isTrustedLeetCodeExerciseUrl } from "@/lib/leetcode";
+import { getTrustedExerciseDestination } from "@/lib/exercise-url";
+import { auth } from "@/lib/auth";
+import {
+  getClassroomExerciseRecommendations,
+  mergeExerciseRecommendations,
+} from "@/server/model/neural/exercise-recommendations";
 
 export default async function ProfilePage() {
+  const session = await auth();
   const feedbackHistory = await getStudentFeedbackHistory();
 
   const generateSkillDataFromHistory = () => {
@@ -128,7 +134,7 @@ export default async function ProfilePage() {
     duration: "20-30 分钟",
     resources: ["复习相关概念", "完成一道针对性练习"],
   }));
-  const latestRecommendations = Array.from(
+  const storedRecommendations = Array.from(
     new Map<string, RecommendedExercise>(
       feedbackHistory
         .flatMap((item) => item.recommendations as RecommendedExercise[])
@@ -136,6 +142,19 @@ export default async function ProfilePage() {
     ).values(),
   ).slice(0, 3);
   const weaknesses = weakTopics;
+  const classroomRecommendations = session?.user?.id
+    ? await getClassroomExerciseRecommendations(
+        session.user.id,
+        weaknesses,
+      ).catch(() => [])
+    : [];
+  const latestRecommendations = mergeExerciseRecommendations(
+    classroomRecommendations,
+    storedRecommendations.map((item) => ({
+      ...item,
+      source: item.source || ("leetcode" as const),
+    })),
+  );
 
   return (
     <div className="flex flex-col gap-8 p-6 py-0 pb-10">
@@ -284,14 +303,14 @@ export default async function ProfilePage() {
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-orange-500" /> 今日弱点强化
               </CardTitle>
-              <CardDescription>AI 推荐真实 LeetCode 练习题</CardDescription>
+              <CardDescription>
+                优先匹配班级作业，并用 LeetCode 补充练习
+              </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {latestRecommendations.length > 0 ? (
                 latestRecommendations.map((item: RecommendedExercise) => {
-                  const trustedUrl = isTrustedLeetCodeExerciseUrl(item.url)
-                    ? item.url
-                    : null;
+                  const destination = getTrustedExerciseDestination(item.url);
                   return (
                     <div
                       key={item.id}
@@ -304,9 +323,20 @@ export default async function ProfilePage() {
                       <p className="text-xs text-muted-foreground mb-3">
                         {item.purpose}
                       </p>
-                      {trustedUrl ? (
+                      {destination?.kind === "classroom" ? (
+                        <Link href={destination.url} className="block">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-between"
+                          >
+                            打开班级作业
+                            <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      ) : destination?.kind === "leetcode" ? (
                         <a
-                          href={trustedUrl}
+                          href={destination.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block"

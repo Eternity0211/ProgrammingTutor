@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   BrainCircuit,
   ExternalLink,
@@ -10,7 +11,7 @@ import {
 import { Card } from "@/app/_components/ui/card";
 import { Badge } from "@/app/_components/ui/badge";
 import { AIFeedback } from "@/lib/types/code-types";
-import { isTrustedLeetCodeExerciseUrl } from "@/lib/leetcode";
+import { getTrustedExerciseDestination } from "@/lib/exercise-url";
 import { LearningNavigationResult } from "@/server/model/neural/navigationAgent";
 import { EmotionAnalysisResult } from "@/server/model/neural/emotionAgent";
 
@@ -206,13 +207,11 @@ export function AIFeedbackPanel({
           </div>
           <div className="grid gap-3">
             {recommendedExercises.map((ex) => {
-              const trustedUrl = isTrustedLeetCodeExerciseUrl(ex.url)
-                ? ex.url
-                : null;
+              const destination = getTrustedExerciseDestination(ex.url);
               const content = (
                 <Card
                   className={`p-4 transition-all border-dashed bg-orange-50/20 ${
-                    trustedUrl ? "group-hover:border-orange-400" : "opacity-70"
+                    destination ? "group-hover:border-orange-400" : "opacity-70"
                   }`}
                 >
                   <div className="flex justify-between items-center">
@@ -225,7 +224,12 @@ export function AIFeedbackPanel({
                     {ex.purpose}
                   </p>
                   <div className="mt-3 flex items-center justify-end gap-1 text-xs font-medium text-orange-700">
-                    {trustedUrl ? (
+                    {destination?.kind === "classroom" ? (
+                      <>
+                        打开班级作业
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </>
+                    ) : destination?.kind === "leetcode" ? (
                       <>
                         前往 LeetCode 练习
                         <ExternalLink className="h-3.5 w-3.5" />
@@ -237,10 +241,18 @@ export function AIFeedbackPanel({
                 </Card>
               );
 
-              return trustedUrl ? (
+              return destination?.kind === "classroom" ? (
+                <Link
+                  key={ex.id}
+                  href={destination.url}
+                  className="block group"
+                >
+                  {content}
+                </Link>
+              ) : destination?.kind === "leetcode" ? (
                 <a
                   key={ex.id}
-                  href={trustedUrl}
+                  href={destination.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block group"

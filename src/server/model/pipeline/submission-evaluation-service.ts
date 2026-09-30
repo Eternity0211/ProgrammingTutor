@@ -7,6 +7,10 @@ import { updateSubmissionStatus } from "@/server/actions/submission-actions";
 import { runCodeReviewAgent } from "@/server/model/neural/codeAgent";
 import { generateEmotionalSupport } from "@/server/model/neural/emotionAgent";
 import { generateLearningNavigation } from "@/server/model/neural/navigationAgent";
+import {
+  getClassroomExerciseRecommendations,
+  mergeExerciseRecommendations,
+} from "@/server/model/neural/exercise-recommendations";
 import { analyzeCode } from "@/server/model/symbolic/service";
 import {
   EvaluationPlatformError,
@@ -399,6 +403,31 @@ export async function evaluateSubmissionInsidePlatform(
     }
     if (supportResults.navigation?.status === "fulfilled") {
       navigation = supportResults.navigation.value;
+      const agentNavigation = supportResults.navigation.value;
+      if (agentNavigation) {
+        try {
+          const internalExercises = await getClassroomExerciseRecommendations(
+            codeSubmission.submission.studentId,
+            agentNavigation.learning_navigation.weaknesses,
+          );
+          navigation = {
+            learning_navigation: {
+              ...agentNavigation.learning_navigation,
+              recommended_exercises: mergeExerciseRecommendations(
+                internalExercises,
+                agentNavigation.learning_navigation.recommended_exercises.map(
+                  (exercise) => ({ ...exercise, source: "leetcode" as const }),
+                ),
+              ),
+            },
+          };
+        } catch (error) {
+          console.warn(
+            "Classroom exercise lookup unavailable, keeping external recommendations",
+            error,
+          );
+        }
+      }
     } else if (supportResults.navigation?.status === "rejected") {
       console.warn(
         "Navigation Agent 不可用，跳过学习导航",

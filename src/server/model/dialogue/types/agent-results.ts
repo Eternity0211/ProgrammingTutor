@@ -33,8 +33,8 @@ export const emotionAgentInputSchema = z
     (input) =>
       Boolean(
         input.codeReviewResult ||
-          input.studentProfileSummary ||
-          input.sessionContext?.length,
+        input.studentProfileSummary ||
+        input.sessionContext?.length,
       ),
     { message: "emotion agent requires at least one evidence source" },
   );
@@ -51,9 +51,9 @@ export const navigationAgentInputSchema = z
     (input) =>
       Boolean(
         input.codeReviewResult ||
-          input.studentHistory ||
-          input.studentProfileSummary ||
-          input.sessionContext?.length,
+        input.studentHistory ||
+        input.studentProfileSummary ||
+        input.sessionContext?.length,
       ),
     {
       message: "navigation agent requires at least one student evidence source",
@@ -95,6 +95,7 @@ export const navigationAgentResultSchema = z.object({
       difficulty: z.enum(["入门", "初级", "中级", "高级"]),
       purpose: z.string(),
       url: z.string(),
+      source: z.enum(["classroom", "leetcode"]).optional(),
     }),
   ),
 });

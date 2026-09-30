@@ -24,6 +24,10 @@ jest.mock("@/server/model/neural/navigationAgent", () => ({
 jest.mock("@/server/model/neural/emotionAgent", () => ({
   generateEmotionalSupport: jest.fn(),
 }));
+jest.mock("@/server/model/neural/exercise-recommendations", () => ({
+  getClassroomExerciseRecommendations: jest.fn().mockResolvedValue([]),
+  mergeExerciseRecommendations: jest.fn((_classroom, external) => external),
+}));
 jest.mock("@/server/actions/submission-actions", () => ({
   updateSubmissionStatus: jest.fn(),
 }));
