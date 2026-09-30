@@ -26,6 +26,7 @@ import type {
   LearningPathStep,
   RecommendedExercise,
 } from "@/server/model/neural/navigationAgent";
+import { isTrustedLeetCodeExerciseUrl } from "@/lib/leetcode";
 
 export default async function ProfilePage() {
   const feedbackHistory = await getStudentFeedbackHistory();
@@ -276,35 +277,46 @@ export default async function ProfilePage() {
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               {latestRecommendations.length > 0 ? (
-                latestRecommendations.map((item: RecommendedExercise) => (
-                  <div
-                    key={item.id}
-                    className="p-4 border rounded-lg hover:bg-accent"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium">{item.title}</h4>
-                      <Badge variant="secondary">{item.difficulty}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      {item.purpose}
-                    </p>
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block"
+                latestRecommendations.map((item: RecommendedExercise) => {
+                  const trustedUrl = isTrustedLeetCodeExerciseUrl(item.url)
+                    ? item.url
+                    : null;
+                  return (
+                    <div
+                      key={item.id}
+                      className="p-4 border rounded-lg hover:bg-accent"
                     >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-between"
-                      >
-                        前往 LeetCode 挑战
-                        <ArrowRight className="w-4 h-4" />
-                      </Button>
-                    </a>
-                  </div>
-                ))
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{item.title}</h4>
+                        <Badge variant="secondary">{item.difficulty}</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        {item.purpose}
+                      </p>
+                      {trustedUrl ? (
+                        <a
+                          href={trustedUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-between"
+                          >
+                            前往 LeetCode 挑战
+                            <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </a>
+                      ) : (
+                        <p className="py-2 text-center text-xs text-muted-foreground">
+                          练习链接暂不可用
+                        </p>
+                      )}
+                    </div>
+                  );
+                })
               ) : (
                 <div className="text-sm text-muted-foreground text-center py-10 border-dashed border-2 rounded-xl">
                   暂无推荐

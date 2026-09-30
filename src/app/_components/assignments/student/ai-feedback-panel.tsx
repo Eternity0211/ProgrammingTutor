@@ -1,10 +1,16 @@
 "use client";
 
-import { BrainCircuit, Heart, Lightbulb, Loader2 } from "lucide-react";
+import {
+  BrainCircuit,
+  ExternalLink,
+  Heart,
+  Lightbulb,
+  Loader2,
+} from "lucide-react";
 import { Card } from "@/app/_components/ui/card";
 import { Badge } from "@/app/_components/ui/badge";
-import Link from "next/link";
 import { AIFeedback } from "@/lib/types/code-types";
+import { isTrustedLeetCodeExerciseUrl } from "@/lib/leetcode";
 import { LearningNavigationResult } from "@/server/model/neural/navigationAgent";
 import { EmotionAnalysisResult } from "@/server/model/neural/emotionAgent";
 
@@ -199,13 +205,16 @@ export function AIFeedbackPanel({
             针对性练习推荐
           </div>
           <div className="grid gap-3">
-            {recommendedExercises.map((ex) => (
-              <Link
-                key={ex.id}
-                href={`/exercise/${ex.id}`}
-                className="block group"
-              >
-                <Card className="p-4 group-hover:border-orange-400 transition-all border-dashed bg-orange-50/20">
+            {recommendedExercises.map((ex) => {
+              const trustedUrl = isTrustedLeetCodeExerciseUrl(ex.url)
+                ? ex.url
+                : null;
+              const content = (
+                <Card
+                  className={`p-4 transition-all border-dashed bg-orange-50/20 ${
+                    trustedUrl ? "group-hover:border-orange-400" : "opacity-70"
+                  }`}
+                >
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-bold">{ex.title}</span>
                     <Badge className="bg-orange-100 text-orange-700 text-[10px]">
@@ -215,9 +224,33 @@ export function AIFeedbackPanel({
                   <p className="text-xs text-muted-foreground mt-2 line-clamp-1">
                     {ex.purpose}
                   </p>
+                  <div className="mt-3 flex items-center justify-end gap-1 text-xs font-medium text-orange-700">
+                    {trustedUrl ? (
+                      <>
+                        前往 LeetCode 练习
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </>
+                    ) : (
+                      "练习链接暂不可用"
+                    )}
+                  </div>
                 </Card>
-              </Link>
-            ))}
+              );
+
+              return trustedUrl ? (
+                <a
+                  key={ex.id}
+                  href={trustedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block group"
+                >
+                  {content}
+                </a>
+              ) : (
+                <div key={ex.id}>{content}</div>
+              );
+            })}
           </div>
         </div>
       )}
