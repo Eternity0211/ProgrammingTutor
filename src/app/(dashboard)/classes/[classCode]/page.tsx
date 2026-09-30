@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/app/_components/ui/tabs";
 import { AssignmentList } from "@/app/_components/assignments/assignment-list";
 import { ClassHeader } from "@/app/_components/classes/class-header";
 import { PeopleTab } from "@/app/_components/classes/people-tab";
 import { ClassSettingsTab } from "@/app/_components/classes/settings-tab";
+import { ClassTabs } from "@/app/_components/classes/class-tabs";
 import {
   getClassbyCode,
   getMembersByClassId,
@@ -24,13 +19,10 @@ export const metadata: Metadata = {
 
 export default async function ClassPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ classCode: string }>;
-  searchParams: Promise<{ tab?: string }>;
 }) {
   const { classCode } = await params;
-  const { tab } = await searchParams;
   const { classroom } = await getClassbyCode(classCode);
   const { role } = await getUserRole();
   const { assignments } = await getAssignments(classroom?.id || "");
@@ -40,41 +32,28 @@ export default async function ClassPage({
     return notFound();
   }
 
-  const validTabs = ["assignments", "people", "settings"];
-  const activeTab = tab && validTabs.includes(tab) ? tab : "assignments";
-
   return (
     <div className="flex flex-col">
       <ClassHeader classData={classroom} />
       <div className="mx-auto max-w-6xl w-full px-6 pt-6">
-        <Tabs defaultValue={activeTab} className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="assignments">Assignments</TabsTrigger>
-            <TabsTrigger value="people">People</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="assignments">
+        <ClassTabs
+          assignments={
             <AssignmentList
               classCode={classCode}
               role={role || "STUDENT"}
               assignments={assignments || []}
             />
-          </TabsContent>
-
-          <TabsContent value="people">
+          }
+          people={
             <PeopleTab
               classCode={classCode}
               teachers={teachers || []}
               students={students || []}
               role={role || "STUDENT"}
             />
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <ClassSettingsTab classData={classroom} role={role} />
-          </TabsContent>
-        </Tabs>
+          }
+          settings={<ClassSettingsTab classData={classroom} role={role} />}
+        />
       </div>
     </div>
   );
