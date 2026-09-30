@@ -36,7 +36,8 @@
     "test:watch": "jest --watch",
     "typecheck": "tsc --noEmit",
     "validate:dataset": "node scripts/validate-neural-dataset.mjs",
-    "validate:dataset:strict": "node scripts/validate-neural-dataset.mjs --require-complete"
+    "validate:dataset:strict": "node scripts/validate-neural-dataset.mjs --require-complete",
+    "validate:exercises": "node scripts/validate-exercise-catalog.mjs"
   },
   "prisma": {
     "seed": "ts-node --project tsconfig.seed.json --transpile-only prisma/seed.ts"

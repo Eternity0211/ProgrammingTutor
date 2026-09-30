@@ -36,6 +36,7 @@ jobs:
       - name: Verify generated dataset is committed
         run: git diff --exit-code -- data/neural
       - run: npm run validate:dataset:strict
+      - run: npm run validate:exercises
       - run: npm run lint:multi-agent
       - run: npm run typecheck
       - run: npm run test:observability

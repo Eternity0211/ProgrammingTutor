@@ -1,5 +1,14 @@
 # Data catalog
 
+## Exercise recommendation catalog
+
+- `exercises/leetcode-catalog.metadata.json` versions the external practice
+  catalog and defines its required topic coverage.
+- `public/leetcode-questions.json` is the runtime catalog consumed by the
+  navigation agent.
+- Run `npm run validate:exercises` after changing either file. CI rejects
+  duplicate IDs or URLs, untrusted hosts, unknown fields, and coverage gaps.
+
 The repository deliberately separates three kinds of data:
 
 | Dataset                        | Location              | Purpose                                                                                   | Source of truth                                              |

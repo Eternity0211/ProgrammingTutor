@@ -1,0 +1,16 @@
+{
+  "version": "2026.09.30-v1",
+  "source": "https://leetcode.cn/problemset/",
+  "catalog": "public/leetcode-questions.json",
+  "requiredTopics": [
+    "指针/引用",
+    "内存管理",
+    "STL容器",
+    "面向对象",
+    "递归算法",
+    "异常处理"
+  ],
+  "allowedDifficulties": ["入门", "初级", "中级", "高级"],
+  "minimumItemsPerTopic": 5,
+  "minimumTotalItems": 50
+}
