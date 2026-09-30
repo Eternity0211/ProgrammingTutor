@@ -1,9 +1,5 @@
 import { darkCardColors, lightCardColors } from "@/config/constants";
 import {
-  getAssigmentTitleFromId,
-  getClassNameFromCode,
-} from "@/server/actions/utility-actions";
-import {
   StudentProgress,
   GradingTableHeaderData,
   GradingTableData,
@@ -19,32 +15,6 @@ import { SourceLocation } from "./types/symbolic-types";
 // Tailwind 样式合并核心工具
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-// 项目路由导航核心
-export async function generateBreadcrumbs(pathname: string) {
-  const paths = pathname.split("/").filter(Boolean);
-  const breadcrumbs = [];
-
-  for (let i = 0; i < paths.length; i++) {
-    let label = paths[i];
-    const href = `/${paths.slice(0, i + 1).join("/")}`;
-    const isLast = i === paths.length - 1;
-
-    if (i === 1) {
-      const className = await getClassNameFromCode(paths[i]);
-      if (className) label = className;
-    }
-
-    if (i === 2) {
-      const assignmentTitle = await getAssigmentTitleFromId(paths[i]);
-      if (assignmentTitle) label = assignmentTitle;
-    }
-
-    breadcrumbs.push({ href, label, isLast });
-  }
-
-  return breadcrumbs;
 }
 
 /**

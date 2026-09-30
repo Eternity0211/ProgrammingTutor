@@ -41,24 +41,6 @@ export async function getClassIdFromCode(code: string) {
   return classroom?.id;
 }
 
-export async function getClassNameFromCode(code: string) {
-  const classroom = await prisma.classroom.findUnique({
-    where: {
-      code: code,
-    },
-  });
-  return classroom?.name;
-}
-
-export async function getAssigmentTitleFromId(id: string) {
-  const assignment = await prisma.assignment.findUnique({
-    where: {
-      id: id,
-    },
-  });
-  return assignment?.title;
-}
-
 export async function setStudentCookie(studentId: string) {
   (await cookies()).set("student", studentId, {
     httpOnly: true, // Only accessible by the server
