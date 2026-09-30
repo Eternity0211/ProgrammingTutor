@@ -15,7 +15,11 @@ const customJestConfig = {
   },
 
   // 忽略构建目录
-  testPathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/node_modules/"],
+  testPathIgnorePatterns: [
+    "<rootDir>/.next/",
+    "<rootDir>/node_modules/",
+    "<rootDir>/tests/e2e/",
+  ],
 };
 
 module.exports = createJestConfig(customJestConfig);

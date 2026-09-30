@@ -52,6 +52,13 @@ jobs:
           METRICS_TOKEN: ci-placeholder
           OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://localhost:4318/v1/traces
           EVALUATION_EXECUTION_MODE: queue
+      - name: Install browser for end-to-end smoke tests
+        run: npx playwright install --with-deps chromium
+      - name: Run browser end-to-end smoke tests
+        run: npm run test:e2e
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          AUTH_SECRET: ci-only-secret-at-least-32-characters
 
   external-integration:
     if: github.event_name == 'push' || github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.run_external)

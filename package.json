@@ -19,6 +19,7 @@
     "prepare": "husky",
     "test": "jest",
     "test:ci": "jest --runInBand",
+    "test:e2e": "node scripts/run-playwright-e2e.mjs",
     "test:integration:external": "cross-env RUN_EXTERNAL_INTEGRATION=1 jest tests/integration/external-services.integration.test.ts --runInBand",
     "test:observability": "jest tests/server/observability tests/server/config/production-config.test.ts tests/integration/metrics-api.test.ts --runInBand",
     "test:resilience": "jest tests/server/resilience tests/integration/submission-retry-api.test.ts tests/server/model/pipeline/evaluation-failure.test.ts tests/server/model/pipeline/evaluation-job-service.test.ts tests/server/model/mcp/tool-registry.test.ts --runInBand",
@@ -92,6 +93,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "1.63.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
