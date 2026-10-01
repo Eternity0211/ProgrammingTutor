@@ -120,6 +120,16 @@ jobs:
         env:
           AUTH_SECRET: ci-only-secret-at-least-32-characters
           DEMO_PASSWORD: ci-demo-password
+      - name: Upload authenticated acceptance diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: authenticated-acceptance-diagnostics-${{ github.run_attempt }}
+          path: |
+            .data/e2e-status.json
+            .data/playwright-results
+          if-no-files-found: warn
+          retention-days: 7
       - name: Print service diagnostics
         if: always()
         run: docker compose ps -a && docker compose logs --no-color --tail=200 db neo4j judge0-server judge0-worker
