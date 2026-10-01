@@ -127,6 +127,39 @@
       ],
       "title": "Estimated LLM cost (1h)",
       "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "id": 9,
+      "targets": [
+        {
+          "expr": "sum(rate(programming_tutor_exercise_recommendation_events_total[15m])) by (action, source, surface)",
+          "legendFormat": "{{surface}} / {{source}} / {{action}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Exercise recommendation engagement",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "min": 0, "max": 1, "unit": "percentunit" },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "id": 10,
+      "targets": [
+        {
+          "expr": "sum(rate(programming_tutor_exercise_recommendation_events_total{action=\"click\"}[15m])) by (source, surface) / clamp_min(sum(rate(programming_tutor_exercise_recommendation_events_total{action=\"impression\"}[15m])) by (source, surface), 0.001)",
+          "legendFormat": "{{surface}} / {{source}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Exercise recommendation click-through rate",
+      "type": "timeseries"
     }
   ],
   "refresh": "15s",

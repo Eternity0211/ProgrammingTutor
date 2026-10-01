@@ -54,7 +54,7 @@ docker compose -f docker-compose.yml -f docker-compose.observability.yml up -d
 - Tempo API：`http://localhost:3200`；
 - OpenTelemetry Collector 健康检查：`http://localhost:13133`。
 
-Grafana 会自动配置 Prometheus、Tempo 和 “Programming Tutor Operations” 仪表盘，无需手工导入。开发栈内部使用固定的 `local-observability-token` 采集指标；该值仅用于本机 Compose 网络，生产部署必须生成独立的 `METRICS_TOKEN` 并同步到采集系统的密钥配置，不能沿用本地值。
+Grafana 会自动配置 Prometheus、Tempo 和 “Programming Tutor Operations” 仪表盘，无需手工导入。仪表盘包含推荐曝光/点击趋势以及按来源和入口拆分的点击率面板。开发栈内部使用固定的 `local-observability-token` 采集指标；该值仅用于本机 Compose 网络，生产部署必须生成独立的 `METRICS_TOKEN` 并同步到采集系统的密钥配置，不能沿用本地值。
 
 监控容器已设置总计约 1.9GB 的内存上限。若本机同时运行另一套 Judge0 或其他重型容器，建议先停止不用的容器；Windows 报“页面文件太小”时应扩大系统页面文件或降低并发容器数量，而不是重置 Docker 数据盘。
 
