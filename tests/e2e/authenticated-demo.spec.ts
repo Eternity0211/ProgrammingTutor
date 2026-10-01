@@ -23,7 +23,7 @@ test.describe("seeded authenticated journeys", () => {
     await login(page, "lin.faculty@gradeit.local");
     await page.getByText("C++ Fundamentals", { exact: true }).first().click();
     await expect(page).toHaveURL(/\/classes\/DEMOCPP$/);
-    await page.getByRole("tab", { name: "People" }).click();
+    await page.getByRole("link", { name: "People", exact: true }).click();
     await expect(page).toHaveURL(/\/classes\/DEMOCPP\?tab=people$/);
     await expect(page.getByText("Anna Liu", { exact: true })).toBeVisible();
   });
