@@ -2,6 +2,7 @@ import {
   incrementCounter,
   observeHttpRequest,
   recordEvaluationJobTransition,
+  recordExerciseRecommendationEvent,
   recordLlmTokenMetrics,
   renderPrometheusMetrics,
   resetMetricsForTests,
@@ -45,6 +46,19 @@ describe("observability metrics", () => {
     );
     expect(output).toContain(
       'programming_tutor_evaluation_jobs_total{status="completed"} 1',
+    );
+  });
+
+  it("records low-cardinality recommendation funnel events", () => {
+    recordExerciseRecommendationEvent("impression", "classroom", "profile");
+    recordExerciseRecommendationEvent("click", "classroom", "profile");
+
+    const output = renderPrometheusMetrics();
+    expect(output).toContain(
+      'programming_tutor_exercise_recommendation_events_total{action="impression",source="classroom",surface="profile"} 1',
+    );
+    expect(output).toContain(
+      'programming_tutor_exercise_recommendation_events_total{action="click",source="classroom",surface="profile"} 1',
     );
   });
 });

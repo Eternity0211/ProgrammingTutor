@@ -197,6 +197,18 @@ export function recordPromptInvocation(
   );
 }
 
+export function recordExerciseRecommendationEvent(
+  action: "impression" | "click",
+  source: "classroom" | "leetcode",
+  surface: "assignment_feedback" | "profile",
+): void {
+  incrementCounter(
+    "programming_tutor_exercise_recommendation_events_total",
+    "Total exercise recommendation impressions and clicks.",
+    { action, source, surface },
+  );
+}
+
 export function recordDependencyCall(
   dependency: string,
   outcome: string,

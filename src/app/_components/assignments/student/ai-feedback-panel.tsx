@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   BrainCircuit,
   ExternalLink,
@@ -14,6 +13,7 @@ import { AIFeedback } from "@/lib/types/code-types";
 import { getTrustedExerciseDestination } from "@/lib/exercise-url";
 import { LearningNavigationResult } from "@/server/model/neural/navigationAgent";
 import { EmotionAnalysisResult } from "@/server/model/neural/emotionAgent";
+import { TrackedExerciseLink } from "@/app/_components/recommendations/tracked-exercise-link";
 
 type AIFeedbackPanelProps = {
   aiAnalysis: AIFeedback | null;
@@ -242,23 +242,23 @@ export function AIFeedbackPanel({
               );
 
               return destination?.kind === "classroom" ? (
-                <Link
+                <TrackedExerciseLink
                   key={ex.id}
-                  href={destination.url}
+                  destination={destination}
+                  surface="assignment_feedback"
                   className="block group"
                 >
                   {content}
-                </Link>
+                </TrackedExerciseLink>
               ) : destination?.kind === "leetcode" ? (
-                <a
+                <TrackedExerciseLink
                   key={ex.id}
-                  href={destination.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  destination={destination}
+                  surface="assignment_feedback"
                   className="block group"
                 >
                   {content}
-                </a>
+                </TrackedExerciseLink>
               ) : (
                 <div key={ex.id}>{content}</div>
               );

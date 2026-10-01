@@ -21,6 +21,7 @@ import { Badge } from "@/app/_components/ui/badge";
 import { getStudentFeedbackHistory } from "@/server/actions/submission-actions";
 import { SkillRadar } from "./_components/skill-radar";
 import Link from "next/link";
+import { TrackedExerciseLink } from "@/app/_components/recommendations/tracked-exercise-link";
 import type {
   LearningPathStep,
   RecommendedExercise,
@@ -324,7 +325,11 @@ export default async function ProfilePage() {
                         {item.purpose}
                       </p>
                       {destination?.kind === "classroom" ? (
-                        <Link href={destination.url} className="block">
+                        <TrackedExerciseLink
+                          destination={destination}
+                          surface="profile"
+                          className="block"
+                        >
                           <Button
                             variant="ghost"
                             size="sm"
@@ -333,12 +338,11 @@ export default async function ProfilePage() {
                             打开班级作业
                             <ArrowRight className="w-4 h-4" />
                           </Button>
-                        </Link>
+                        </TrackedExerciseLink>
                       ) : destination?.kind === "leetcode" ? (
-                        <a
-                          href={destination.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <TrackedExerciseLink
+                          destination={destination}
+                          surface="profile"
                           className="block"
                         >
                           <Button
@@ -349,7 +353,7 @@ export default async function ProfilePage() {
                             前往 LeetCode 挑战
                             <ArrowRight className="w-4 h-4" />
                           </Button>
-                        </a>
+                        </TrackedExerciseLink>
                       ) : (
                         <p className="py-2 text-center text-xs text-muted-foreground">
                           练习链接暂不可用

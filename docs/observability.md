@@ -7,6 +7,7 @@
 - `GET /api/health/live`：只检查应用进程是否存活，适合作为容器 liveness probe。
 - `GET /api/health/ready`：检查 PostgreSQL、DeepSeek 配置、Neo4j 和 Judge0。硬依赖失败返回 HTTP 503；可选依赖失败返回 HTTP 200 和 `degraded`。
 - `GET /api/metrics`：Prometheus 指标。在生产环境必须使用 `Authorization: Bearer <METRICS_TOKEN>`。
+- `POST /api/recommendations/events`：登录用户的推荐曝光/点击埋点。接口只接受固定的动作、来源和页面枚举，不记录用户 ID、题目 ID 或 URL，避免指标标签产生高基数和个人数据泄露。
 
 默认情况下 PostgreSQL、DeepSeek 是硬依赖；Neo4j、Judge0 是允许降级的可选依赖。可用 `HEALTHCHECK_NEO4J`、`HEALTHCHECK_JUDGE0`、`HEALTHCHECK_LLM` 将策略设为 `required`、`optional` 或 `disabled`。
 
@@ -32,6 +33,7 @@
 - `programming_tutor_llm_prompt_tokens_total`、`programming_tutor_llm_completion_tokens_total`：模型实际返回的 token 用量。
 - `programming_tutor_llm_estimated_cost_total`：按 `EVAL_INPUT_PRICE_PER_1M`、`EVAL_INPUT_CACHE_HIT_PRICE_PER_1M`、`EVAL_OUTPUT_PRICE_PER_1M` 以及供应商返回的缓存命中 Token 计算的估算费用。用 `EVAL_PRICING_LABEL` 标记执行时采用的模型和峰谷价格版本。
 - `programming_tutor_dependency_ready`：依赖就绪状态。
+- `programming_tutor_exercise_recommendation_events_total`：按 `impression/click`、`classroom/leetcode` 和入口页面统计推荐漏斗。点击率可用同一组来源与入口标签下的 `click / impression` 计算。
 
 当前指标注册表位于单个应用进程内。单实例部署可直接采集；多实例或 Serverless 部署应让 Prometheus 分别抓取每个常驻实例，或将指标改由 OpenTelemetry Collector 聚合。
 
